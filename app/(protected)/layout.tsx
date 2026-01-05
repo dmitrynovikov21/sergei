@@ -1,15 +1,13 @@
 import { redirect } from "next/navigation";
 
-import { sidebarLinks } from "@/config/dashboard";
 import { getCurrentUser } from "@/lib/session";
-import { SearchCommand } from "@/components/dashboard/search-command";
 import {
   DashboardSidebar,
   MobileSheetSidebar,
 } from "@/components/layout/dashboard-sidebar";
-import { ModeToggle } from "@/components/layout/mode-toggle";
-import { UserAccountNav } from "@/components/layout/user-account-nav";
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
+import { getFeaturedAgents } from "@/actions/agents";
+import { HeaderProvider, HeaderDisplay } from "@/components/dashboard/header-context";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -20,37 +18,34 @@ export default async function Dashboard({ children }: ProtectedLayoutProps) {
 
   if (!user) redirect("/login");
 
-  const filteredLinks = sidebarLinks.map((section) => ({
-    ...section,
-    items: section.items.filter(
-      ({ authorizeOnly }) => !authorizeOnly || authorizeOnly === user.role,
-    ),
-  }));
+  // Fetch data
+  const starterAgents = await getFeaturedAgents();
 
   return (
-    <div className="relative flex min-h-screen w-full">
-      <DashboardSidebar links={filteredLinks} />
+    <HeaderProvider>
+      <div className="relative flex h-screen w-full overflow-hidden">
+        <DashboardSidebar
+          agents={starterAgents}
+          user={user}
+        />
 
-      <div className="flex flex-1 flex-col">
-        <header className="sticky top-0 z-50 flex h-14 bg-background px-4 lg:h-[60px] xl:px-8">
-          <MaxWidthWrapper className="flex max-w-7xl items-center gap-x-3 px-0">
-            <MobileSheetSidebar links={filteredLinks} />
+        {/* Main content wrapper with dark mode support */}
+        <div className="flex flex-1 flex-col overflow-hidden bg-[#F9FAFB] dark:bg-[#0f0f0f]">
+          <header className="flex-none flex h-14 px-4 lg:h-[60px] xl:px-8 bg-transparent">
+            <MaxWidthWrapper className="flex max-w-7xl items-center gap-x-3 px-0">
+              <MobileSheetSidebar
+                agents={starterAgents}
+              />
 
-            <div className="w-full flex-1">
-              <SearchCommand links={filteredLinks} />
-            </div>
+              <HeaderDisplay />
+            </MaxWidthWrapper>
+          </header>
 
-            <ModeToggle />
-            <UserAccountNav />
-          </MaxWidthWrapper>
-        </header>
-
-        <main className="flex-1 p-4 xl:px-8">
-          <MaxWidthWrapper className="flex h-full max-w-7xl flex-col gap-4 px-0 lg:gap-6">
+          <main className="flex-1 overflow-y-auto">
             {children}
-          </MaxWidthWrapper>
-        </main>
+          </main>
+        </div>
       </div>
-    </div>
+    </HeaderProvider>
   );
 }

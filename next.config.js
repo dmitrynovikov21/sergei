@@ -20,10 +20,25 @@ const nextConfig = {
         protocol: "https",
         hostname: "randomuser.me",
       },
+      {
+        protocol: "https",
+        hostname: "**.cdninstagram.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.fbcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "images.weserv.nl",
+      },
     ],
   },
   experimental: {
     serverComponentsExternalPackages: ["@prisma/client"],
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
   },
 };
 

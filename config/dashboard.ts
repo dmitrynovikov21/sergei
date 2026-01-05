@@ -1,54 +1,45 @@
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/lib/types";
 
 import { SidebarNavItem } from "types";
 
 export const sidebarLinks: SidebarNavItem[] = [
   {
-    title: "MENU",
+    title: "TOP_ACTIONS", // Special section for New Chat, Search, Images
     items: [
       {
-        href: "/admin",
-        icon: "laptop",
-        title: "Admin Panel",
-        authorizeOnly: UserRole.ADMIN,
+        href: "/dashboard/chat/new",
+        icon: "edit",
+        title: "Новый чат",
       },
-      { href: "/dashboard", icon: "dashboard", title: "Dashboard" },
+      // Removed Search and Images as per request
+    ],
+  },
+  {
+    title: "GPTS",
+    items: [], // Will be populated dynamically
+  },
+  {
+    title: "PROJECTS",
+    items: [
       {
-        href: "/dashboard/billing",
-        icon: "billing",
-        title: "Billing",
-        authorizeOnly: UserRole.USER,
+        title: "Новый проект",
+        href: "#",
+        icon: "folderPlus",
       },
-      { href: "/dashboard/charts", icon: "lineChart", title: "Charts" },
       {
-        href: "/admin/orders",
-        icon: "package",
-        title: "Orders",
-        badge: 2,
-        authorizeOnly: UserRole.ADMIN,
+        title: "личка/бизнес/развитие",
+        href: "#",
+        icon: "folder",
       },
       {
-        href: "#/dashboard/posts",
-        icon: "post",
-        title: "User Posts",
-        authorizeOnly: UserRole.USER,
-        disabled: true,
+        title: "транскрибатор",
+        href: "#",
+        icon: "folder",
       },
     ],
   },
   {
-    title: "OPTIONS",
-    items: [
-      { href: "/dashboard/settings", icon: "settings", title: "Settings" },
-      { href: "/", icon: "home", title: "Homepage" },
-      { href: "/docs", icon: "bookOpen", title: "Documentation" },
-      {
-        href: "#",
-        icon: "messages",
-        title: "Support",
-        authorizeOnly: UserRole.USER,
-        disabled: true,
-      },
-    ],
+    title: "HISTORY",
+    items: [],
   },
 ];

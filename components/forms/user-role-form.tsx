@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { updateUserRole, type FormData } from "@/actions/update-user-role";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { User, UserRole } from "@prisma/client";
+import { User } from "@prisma/client";
+import { UserRole } from "@/lib/types";
 import { useSession } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -54,13 +55,13 @@ export function UserRoleForm({ user }: UserNameFormProps) {
       const { status } = await updateUserRoleWithId(data);
 
       if (status !== "success") {
-        toast.error("Something went wrong.", {
-          description: "Your role was not updated. Please try again.",
+        toast.error("Ошибка", {
+          description: "Роль не была обновлена. Попробуйте ещё раз.",
         });
       } else {
         await update();
         setUpdated(false);
-        toast.success("Your role has been updated.");
+        toast.success("Роль успешно обновлена.");
       }
     });
   };
@@ -69,8 +70,8 @@ export function UserRoleForm({ user }: UserNameFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <SectionColumns
-          title="Your Role"
-          description="Select the role what you want for test the app."
+          title="Ваша роль"
+          description="Выберите роль для тестирования приложения."
         >
           <div className="flex w-full items-center gap-2">
             <FormField
@@ -78,7 +79,7 @@ export function UserRoleForm({ user }: UserNameFormProps) {
               name="role"
               render={({ field }) => (
                 <FormItem className="w-full space-y-0">
-                  <FormLabel className="sr-only">Role</FormLabel>
+                  <FormLabel className="sr-only">Роль</FormLabel>
                   <Select
                     // TODO:(FIX) Option value not update. Use useState for the moment
                     onValueChange={(value: UserRole) => {
@@ -91,7 +92,7 @@ export function UserRoleForm({ user }: UserNameFormProps) {
                   >
                     <FormControl>
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a role" />
+                        <SelectValue placeholder="Выберите роль" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -115,16 +116,13 @@ export function UserRoleForm({ user }: UserNameFormProps) {
               {isPending ? (
                 <Icons.spinner className="size-4 animate-spin" />
               ) : (
-                <p>
-                  Save
-                  <span className="hidden sm:inline-flex">&nbsp;Changes</span>
-                </p>
+                <p>Сохранить</p>
               )}
             </Button>
           </div>
           <div className="flex flex-col justify-between p-1">
             <p className="text-[13px] text-muted-foreground">
-              Remove this field on real production
+              Удалите это поле в продакшене
             </p>
           </div>
         </SectionColumns>

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
-import { UserRole } from "@prisma/client";
+import { UserRole } from "@/lib/types";
 
 import { prisma } from "@/lib/db";
 import { userRoleSchema } from "@/lib/validations/user";

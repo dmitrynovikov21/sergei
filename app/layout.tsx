@@ -38,7 +38,25 @@ export default function RootLayout({ children }: RootLayoutProps) {
           >
             <ModalProvider>{children}</ModalProvider>
             <Analytics />
-            <Toaster richColors closeButton />
+            <Toaster
+              theme="dark"
+              closeButton
+              visibleToasts={1}
+              position="bottom-right"
+              toastOptions={{
+                classNames: {
+                  toast: 'bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl text-white',
+                  title: 'text-white font-medium text-sm',
+                  description: 'text-zinc-400 text-sm',
+                  actionButton: 'bg-white text-black',
+                  cancelButton: 'bg-zinc-800 text-white',
+                  closeButton: 'bg-zinc-800 border-zinc-700 text-zinc-400 hover:text-white',
+                  success: 'bg-zinc-900 border-zinc-800',
+                  error: 'bg-zinc-900 border-red-800',
+                  info: 'bg-zinc-900 border-zinc-800',
+                },
+              }}
+            />
             <TailwindIndicator />
           </ThemeProvider>
         </SessionProvider>

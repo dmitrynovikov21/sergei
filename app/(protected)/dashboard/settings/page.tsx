@@ -18,16 +18,16 @@ export default async function SettingsPage() {
   if (!user?.id) redirect("/login");
 
   return (
-    <>
+    <div className="mx-auto max-w-3xl px-4 py-6">
       <DashboardHeader
-        heading="Settings"
-        text="Manage account and website settings."
+        heading="Настройки"
+        text="Управление аккаунтом и настройками."
       />
       <div className="divide-y divide-muted pb-10">
         <UserNameForm user={{ id: user.id, name: user.name || "" }} />
         <UserRoleForm user={{ id: user.id, role: user.role }} />
         <DeleteAccountSection />
       </div>
-    </>
+    </div>
   );
 }

@@ -1,7 +1,9 @@
+
 import { User } from "@prisma/client";
 import type { Icon } from "lucide-react";
 
 import { Icons } from "@/components/shared/icons";
+import { UserRole } from "@/lib/types";
 
 export type SiteConfig = {
   name: string;
@@ -22,7 +24,7 @@ export type NavItem = {
   disabled?: boolean;
   external?: boolean;
   authorizeOnly?: UserRole;
-  icon?: keyof typeof Icons;
+  icon?: keyof typeof Icons | string; // Allow emoji strings
 };
 
 export type MainNavItem = NavItem;

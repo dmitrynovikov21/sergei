@@ -1,18 +1,10 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider     = "postgresql"
-  url          = env("DATABASE_URL")
-}
-
-enum UserRole {
-  ADMIN
-  USER
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 model Account {
@@ -21,21 +13,20 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?  @db.Text
-  access_token      String?  @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?  @db.Text
+  id_token          String?
   session_state     String?
-  createdAt         DateTime @default(now()) @map(name: "created_at")
-  updatedAt         DateTime @default(now()) @map(name: "updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @default(now()) @map("updated_at")
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
   @@index([userId])
-  @@map(name: "accounts")
+  @@map("accounts")
 }
 
 model Session {
@@ -46,28 +37,30 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
-  @@map(name: "sessions")
+  @@map("sessions")
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime  @default(now()) @map(name: "created_at")
-  updatedAt     DateTime  @default(now()) @map(name: "updated_at")
-  role          UserRole  @default(USER)
+  id                     String    @id @default(cuid())
+  name                   String?
+  email                  String?   @unique
+  emailVerified          DateTime?
+  image                  String?
+  createdAt              DateTime  @default(now()) @map("created_at")
+  updatedAt              DateTime  @default(now()) @map("updated_at")
+  role                   String    @default("USER")
+  stripeCustomerId       String?   @unique @map("stripe_customer_id")
+  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
+  stripePriceId          String?   @map("stripe_price_id")
+  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
+  accounts               Account[]
+  agents                 Agent[]
+  chats                  Chat[]
+  datasets               Dataset[]
+  projects               Project[]
+  sessions               Session[]
 
-  accounts Account[]
-  sessions Session[]
-
-  stripeCustomerId       String?   @unique @map(name: "stripe_customer_id")
-  stripeSubscriptionId   String?   @unique @map(name: "stripe_subscription_id")
-  stripePriceId          String?   @map(name: "stripe_price_id")
-  stripeCurrentPeriodEnd DateTime? @map(name: "stripe_current_period_end")
-
-  @@map(name: "users")
+  @@map("users")
 }
 
 model VerificationToken {
@@ -76,5 +69,172 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
-  @@map(name: "verification_tokens")
+  @@map("verification_tokens")
+}
+
+model Agent {
+  id               String      @id @default(cuid())
+  userId           String?
+  name             String
+  description      String?
+  systemPrompt     String
+  emoji            String?
+  isPublic         Boolean     @default(false)
+  model            String      @default("claude-3-5-sonnet")
+  useEmoji         Boolean     @default(false)
+  useSubscribe     Boolean     @default(false)
+  useLinkInBio     Boolean     @default(false)
+  codeWord         String?
+  audienceQuestion String?
+  isFavorite       Boolean     @default(false)
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
+  files            AgentFile[]
+  user             User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chats            Chat[]
+
+  @@index([userId])
+  @@map("agents")
+}
+
+model AgentFile {
+  id        String   @id @default(cuid())
+  agentId   String
+  name      String
+  content   String
+  type      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@map("agent_files")
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  icon      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  chats     Chat[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  agentId   String
+  userId    String
+  projectId String?
+  datasetId String?
+  title     String?   @default("New Chat")
+  icon      String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  dataset   Dataset?  @relation(fields: [datasetId], references: [id])
+  project   Project?  @relation(fields: [projectId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  messages  Message[]
+
+  @@index([userId])
+  @@index([agentId])
+  @@index([projectId])
+  @@index([datasetId])
+  @@map("chats")
+}
+
+model Message {
+  id               String       @id @default(cuid())
+  chatId           String
+  role             String
+  content          String
+  promptTokens     Int          @default(0)
+  completionTokens Int          @default(0)
+  cost             Float        @default(0.0)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  attachments      Attachment[]
+  chat             Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("messages")
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  url       String
+  name      String?
+  type      String?
+  messageId String
+  createdAt DateTime @default(now()) @map("created_at")
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("attachments")
+}
+
+model Dataset {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  isPublic    Boolean          @default(false)
+  createdAt   DateTime         @default(now()) @map("created_at")
+  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at")
+  chats       Chat[]
+  items       ContentItem[]
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sources     TrackingSource[]
+
+  @@index([userId])
+  @@map("datasets")
+}
+
+model TrackingSource {
+  id             String    @id @default(cuid())
+  url            String
+  username       String?
+  datasetId      String
+  isActive       Boolean   @default(true)
+  minViewsFilter Int       @default(0)
+  fetchLimit     Int       @default(20)
+  lastScrapedAt  DateTime?
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
+  daysLimit      Int       @default(30)
+  contentTypes   String    @default("Video,Sidecar,Image")
+  dataset        Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId])
+  @@map("tracking_sources")
+}
+
+model ContentItem {
+  id              String    @id @default(cuid())
+  instagramId     String
+  originalUrl     String
+  sourceUrl       String?
+  coverUrl        String?
+  videoUrl        String?
+  views           Int       @default(0)
+  likes           Int       @default(0)
+  comments        Int       @default(0)
+  publishedAt     DateTime?
+  headline        String?
+  transcript      String?
+  isProcessed     Boolean   @default(false)
+  isApproved      Boolean   @default(false)
+  processingError String?
+  datasetId       String
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  dataset         Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@unique([instagramId, datasetId])
+  @@index([datasetId])
+  @@index([isApproved])
+  @@map("content_items")
 }

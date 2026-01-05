@@ -36,10 +36,9 @@ export function UserAccountNav() {
     return (
       <Drawer.Root open={open} onClose={closeDrawer}>
         <Drawer.Trigger onClick={() => setOpen(true)}>
-          <UserAvatar
-            user={{ name: user.name || null, image: user.image || null }}
-            className="size-9 border"
-          />
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border bg-background text-lg transition-colors hover:bg-muted">
+            👤
+          </div>
         </Drawer.Trigger>
         <Drawer.Portal>
           <Drawer.Overlay
@@ -83,7 +82,7 @@ export function UserAccountNav() {
                   className="flex w-full items-center gap-3 px-2.5 py-2"
                 >
                   <LayoutDashboard className="size-4" />
-                  <p className="text-sm">Dashboard</p>
+                  <p className="text-sm">Дашборд</p>
                 </Link>
               </li>
 
@@ -94,7 +93,18 @@ export function UserAccountNav() {
                   className="flex w-full items-center gap-3 px-2.5 py-2"
                 >
                   <Settings className="size-4" />
-                  <p className="text-sm">Settings</p>
+                  <p className="text-sm">Настройки</p>
+                </Link>
+              </li>
+
+              <li className="rounded-lg text-foreground hover:bg-muted">
+                <Link
+                  href="/dashboard/billing"
+                  onClick={closeDrawer}
+                  className="flex w-full items-center gap-3 px-2.5 py-2"
+                >
+                  <Lock className="size-4" />
+                  <p className="text-sm">Оплата</p>
                 </Link>
               </li>
 
@@ -109,7 +119,7 @@ export function UserAccountNav() {
               >
                 <div className="flex w-full items-center gap-3 px-2.5 py-2">
                   <LogOut className="size-4" />
-                  <p className="text-sm">Log out </p>
+                  <p className="text-sm">Выйти </p>
                 </div>
               </li>
             </ul>
@@ -123,10 +133,9 @@ export function UserAccountNav() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger>
-        <UserAvatar
-          user={{ name: user.name || null, image: user.image || null }}
-          className="size-8 border"
-        />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full border bg-background text-lg transition-colors hover:bg-muted">
+          👤
+        </div>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <div className="flex items-center justify-start gap-2 p-2">
@@ -153,7 +162,7 @@ export function UserAccountNav() {
         <DropdownMenuItem asChild>
           <Link href="/dashboard" className="flex items-center space-x-2.5">
             <LayoutDashboard className="size-4" />
-            <p className="text-sm">Dashboard</p>
+            <p className="text-sm">Дашборд</p>
           </Link>
         </DropdownMenuItem>
 
@@ -163,7 +172,17 @@ export function UserAccountNav() {
             className="flex items-center space-x-2.5"
           >
             <Settings className="size-4" />
-            <p className="text-sm">Settings</p>
+            <p className="text-sm">Настройки</p>
+          </Link>
+        </DropdownMenuItem>
+
+        <DropdownMenuItem asChild>
+          <Link
+            href="/dashboard/billing"
+            className="flex items-center space-x-2.5"
+          >
+            <Lock className="size-4" />
+            <p className="text-sm">Оплата</p>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -178,7 +197,7 @@ export function UserAccountNav() {
         >
           <div className="flex items-center space-x-2.5">
             <LogOut className="size-4" />
-            <p className="text-sm">Log out </p>
+            <p className="text-sm">Выйти </p>
           </div>
         </DropdownMenuItem>
       </DropdownMenuContent>

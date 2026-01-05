@@ -113,6 +113,26 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
         )}{" "}
         Google
       </button>
+
+      <button
+        type="button"
+        className={cn(buttonVariants({ variant: "outline" }), "bg-green-500/10 hover:bg-green-500/20 text-green-700 hover:text-green-800 border-green-200")}
+        onClick={() => {
+          setIsGoogleLoading(true);
+          signIn("credentials", {
+            email: "dev@example.com",
+            callbackUrl: "/dashboard/agents"
+          });
+        }}
+        disabled={isLoading || isGoogleLoading}
+      >
+        {isGoogleLoading ? (
+          <Icons.spinner className="mr-2 size-4 animate-spin" />
+        ) : (
+          <Icons.laptop className="mr-2 size-4" />
+        )}
+        Dev Login (Bypass)
+      </button>
     </div>
   );
 }
