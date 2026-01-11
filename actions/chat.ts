@@ -6,27 +6,40 @@ import { revalidatePath } from "next/cache"
 // import { MessageRole } from "@prisma/client"
 
 export async function createChat(agentId: string, projectId?: string) {
+    console.log("[createChat] Starting for agentId:", agentId, "projectId:", projectId)
     const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    console.log("[createChat] Session:", session?.user?.id)
 
-    // Get agent name for chat title
-    const agent = await prisma.agent.findUnique({
-        where: { id: agentId },
-        select: { name: true }
-    })
+    if (!session?.user?.id) {
+        console.error("[createChat] No session found")
+        throw new Error("Unauthorized")
+    }
 
-    const chat = await prisma.chat.create({
-        data: {
-            userId: session.user.id,
-            agentId,
-            projectId: projectId || null,
-            title: agent?.name ? `Чат с ${agent.name}` : "Новый чат",
-        },
-    })
+    try {
+        // Get agent name for chat title
+        const agent = await prisma.agent.findUnique({
+            where: { id: agentId },
+            select: { name: true }
+        })
+        console.log("[createChat] Agent found:", agent?.name)
 
-    revalidatePath("/dashboard", "layout")
-    revalidatePath("/dashboard")
-    return chat.id
+        const chat = await prisma.chat.create({
+            data: {
+                userId: session.user.id,
+                agentId,
+                projectId: projectId || null,
+                title: agent?.name ? `Чат с ${agent.name}` : "Новый чат",
+            },
+        })
+        console.log("[createChat] Chat created:", chat.id)
+
+        revalidatePath("/dashboard", "layout")
+        revalidatePath("/dashboard")
+        return chat.id
+    } catch (error) {
+        console.error("[createChat] DB Error:", error)
+        throw error
+    }
 }
 
 export async function getUserChats() {

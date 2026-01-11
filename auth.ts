@@ -1,4 +1,5 @@
 import authConfig from "@/auth.config";
+import { UserRole } from "@/lib/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 // import { UserRole } from "@prisma/client";
 import NextAuth, { type DefaultSession } from "next-auth";
@@ -57,7 +58,7 @@ export const {
       token.name = dbUser.name;
       token.email = dbUser.email;
       token.picture = dbUser.image;
-      token.role = dbUser.role;
+      token.role = dbUser.role as UserRole;
 
       return token;
     },

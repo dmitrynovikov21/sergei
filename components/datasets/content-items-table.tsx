@@ -93,6 +93,7 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                     <TableRow>
                         <TableHead className="w-[80px]">Обложка</TableHead>
                         <TableHead className="w-[120px]">Источник</TableHead>
+                        <TableHead className="w-[100px]">Дата</TableHead>
                         <TableHead>Заголовок</TableHead>
                         <TableHead className="w-[100px] text-right">Действия</TableHead>
                     </TableRow>
@@ -127,7 +128,7 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                     </Dialog>
                                 ) : (
                                     <div className="h-20 w-14 bg-muted rounded-md flex items-center justify-center">
-                                        <Icons.image className="h-5 w-5 text-muted-foreground" />
+                                        <Icons.media className="h-5 w-5 text-muted-foreground" />
                                     </div>
                                 )}
                             </TableCell>
@@ -148,6 +149,23 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                             {item.likes.toLocaleString()}
                                         </span>
                                     </div>
+                                </div>
+                            </TableCell>
+
+                            {/* Published Date */}
+                            <TableCell>
+                                <div className="text-sm text-muted-foreground">
+                                    {item.publishedAt ? (
+                                        <span>
+                                            {new Date(item.publishedAt).toLocaleDateString('ru-RU', {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                year: 'numeric'
+                                            })}
+                                        </span>
+                                    ) : (
+                                        <span className="italic">—</span>
+                                    )}
                                 </div>
                             </TableCell>
 

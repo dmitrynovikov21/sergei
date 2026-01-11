@@ -1,12 +1,13 @@
 "use client"
-
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
+import Link from 'next/link'
 
 type HeaderData = {
     title: string
     icon?: React.ReactNode
     description?: string
     settingsButton?: React.ReactNode
+    href?: string
 } | null
 
 type HeaderContextType = {
@@ -37,18 +38,28 @@ export function HeaderDisplay() {
 
     if (!headerData) return <div className="flex-1" />
 
+    const content = (
+        <div className="flex items-center gap-2 px-2 hover:opacity-80 transition-opacity cursor-pointer">
+            {headerData.icon && (
+                <div className="flex items-center justify-center text-lg">
+                    {headerData.icon}
+                </div>
+            )}
+            <div className="flex flex-col justify-center">
+                <h1 className="text-base font-semibold leading-none truncate text-zinc-900 dark:text-white">{headerData.title}</h1>
+            </div>
+        </div>
+    )
+
     return (
         <div className="flex-1 flex items-center justify-between min-w-0">
-            <div className="flex items-center gap-2 px-2">
-                {headerData.icon && (
-                    <div className="flex items-center justify-center text-lg">
-                        {headerData.icon}
-                    </div>
-                )}
-                <div className="flex flex-col justify-center">
-                    <h1 className="text-base font-semibold leading-none truncate text-zinc-900 dark:text-white">{headerData.title}</h1>
-                </div>
-            </div>
+            {headerData.href ? (
+                <Link href={headerData.href}>
+                    {content}
+                </Link>
+            ) : (
+                <div>{content}</div>
+            )}
             {headerData.settingsButton && (
                 <div className="flex items-center">
                     {headerData.settingsButton}
@@ -58,21 +69,22 @@ export function HeaderDisplay() {
     )
 }
 
-export function HeaderUpdater({ title, icon, description, settingsButton }: {
+export function HeaderUpdater({ title, icon, description, settingsButton, href }: {
     title: string
     icon?: React.ReactNode
     description?: string
     settingsButton?: React.ReactNode
+    href?: string
 }) {
     const { setHeaderData } = useHeader()
 
     useEffect(() => {
         // Set immediate
-        setHeaderData({ title, icon, description, settingsButton })
+        setHeaderData({ title, icon, description, settingsButton, href })
 
         // Cleanup on unmount
         return () => setHeaderData(null)
-    }, [title, icon, description, settingsButton, setHeaderData])
+    }, [title, icon, description, settingsButton, href, setHeaderData])
 
     return null
 }

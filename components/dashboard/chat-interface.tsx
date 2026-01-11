@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useRef, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useRef, useEffect, useCallback, useMemo } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import ReactMarkdown from "react-markdown"
 import { saveMessage, createChat } from "@/actions/chat"
 import type { Agent } from "@prisma/client"
@@ -55,6 +55,7 @@ interface Attachment {
     name: string
     type: string
     url: string
+    isUploading?: boolean
 }
 
 interface ChatInputProps {
@@ -67,11 +68,18 @@ interface ChatInputProps {
     onFileDrop: (files: FileList) => void
     attachments: Attachment[]
     removeAttachment: (index: number) => void
+    onStop?: () => void
 }
 
-function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onFileSelect, onFileDrop, attachments, removeAttachment }: ChatInputProps) {
+function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onFileSelect, onFileDrop, attachments, removeAttachment, onStop }: ChatInputProps) {
+    // Separate refs for different file types if needed, or share one
+    const imageInputRef = useRef<HTMLInputElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isDragging, setIsDragging] = useState(false)
+
+    // Stop handler passed from parent? We need it here or handle in parent.
+    // For now, let's assume parent handles stop via a new prop or we just show the visual state here.
+    // User asked for "Stop request". We need a callback `onStop`.
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault()
@@ -85,6 +93,7 @@ function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onF
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault()
+        e.stopPropagation()
         setIsDragging(false)
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             onFileDrop(e.dataTransfer.files)
@@ -116,16 +125,28 @@ function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onF
                     {attachments.map((att, i) => (
                         <div key={i} className="relative group rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                             {att.type.startsWith('image/') ? (
-                                <img src={att.url} alt={att.name} className="h-16 w-16 object-cover" />
+                                <div className="relative">
+                                    <img src={att.url} alt={att.name} className={cn("h-16 w-16 object-cover", att.isUploading && "opacity-50")} />
+                                    {att.isUploading && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                            <Icons.spinner className="h-4 w-4 animate-spin text-zinc-900" />
+                                        </div>
+                                    )}
+                                </div>
                             ) : (
-                                <div className="h-16 w-16 flex items-center justify-center text-zinc-500">
-                                    <Icons.paperclip className="h-6 w-6" />
+                                <div className="h-16 w-16 flex items-center justify-center text-zinc-500 relative">
+                                    {att.isUploading ? (
+                                        <Icons.spinner className="h-5 w-5 animate-spin" />
+                                    ) : (
+                                        <Icons.paperclip className="h-6 w-6" />
+                                    )}
                                 </div>
                             )}
                             <button
                                 type="button"
                                 onClick={() => removeAttachment(i)}
-                                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                disabled={att.isUploading}
+                                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
                             >
                                 <Icons.close className="h-3 w-3" />
                             </button>
@@ -148,41 +169,86 @@ function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onF
                 placeholder="Введите ваш запрос..."
                 className="w-full min-h-[48px] max-h-[200px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-1 py-1 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                 rows={1}
+                onDrop={handleDrop}
             />
 
+            {/* Hidden Inputs */}
+            <input
+                type="file"
+                ref={imageInputRef}
+                className="hidden"
+                multiple
+                accept="image/*"
+                onChange={onFileSelect}
+            />
             <input
                 type="file"
                 ref={fileInputRef}
                 className="hidden"
                 multiple
-                accept="image/*,application/pdf"
+                accept=".pdf,.txt,.md,.json,.csv"
                 onChange={onFileSelect}
             />
 
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 rounded-lg text-zinc-500 hover:bg-zinc-200/50 hover:text-zinc-700 -ml-1"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        <Icons.add className="h-5 w-5" />
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-9 w-9 rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-all"
+                            >
+                                <Icons.add className="h-5 w-5" />
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="w-48 p-1">
+                            <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                onClick={() => imageInputRef.current?.click()}
+                            >
+                                <Icons.image className="h-4 w-4" />
+                                <span>Фото</span>
+                            </button>
+                            <button
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                <Icons.paperclip className="h-4 w-4" />
+                                <span>Документ</span>
+                            </button>
+                        </PopoverContent>
+                    </Popover>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {/* Send / Stop Button */}
                     <Button
-                        type="submit"
+                        type={isPending ? "button" : "submit"}
                         size="icon"
-                        disabled={isPending || (!input.trim() && attachments.length === 0)}
+                        onClick={(e) => {
+                            if (isPending && onStop) {
+                                e.preventDefault()
+                                onStop()
+                            }
+                        }}
                         className={cn(
-                            "h-8 w-8 rounded-lg bg-[#D97757] text-white hover:bg-[#c56a4c] shrink-0 transition-opacity disabled:opacity-40 disabled:bg-zinc-200 disabled:text-zinc-400"
+                            "h-8 w-8 rounded-lg shrink-0 transition-opacity",
+                            isPending
+                                ? "bg-zinc-200 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200"
+                                : "bg-[#D97757] text-white hover:bg-[#c56a4c] disabled:opacity-40 disabled:bg-zinc-200 disabled:text-zinc-400"
                         )}
+                        disabled={!isPending && (!input.trim() && attachments.length === 0)}
                     >
-                        <Icons.arrowUp className="h-4 w-4" />
-                        <span className="sr-only">Отправить</span>
+                        {isPending ? (
+                            <div className="h-3 w-3 bg-current rounded-sm" />
+                        ) : (
+                            <Icons.arrowUp className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">{isPending ? "Остановить" : "Отправить"}</span>
                     </Button>
                 </div>
             </div>
@@ -192,12 +258,28 @@ function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onF
 
 export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput }: ChatInterfaceProps) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const [chatId, setChatId] = useState(initialChatId)
     // Update messages type to include attachments
     const [messages, setMessages] = useState<any[]>(initialMessages)
     const [input, setInput] = useState(initialInput || "")
     const [isLoading, setIsLoading] = useState(false)
-    const [attachments, setAttachments] = useState<Attachment[]>([])
+
+    // Parse initial attachments from URL
+    const initialAttachments = useMemo(() => {
+        const attParam = searchParams.get("attachments")
+        if (attParam) {
+            try {
+                return JSON.parse(decodeURIComponent(attParam))
+            } catch (e) {
+                console.error("Failed to parse attachments", e)
+                return []
+            }
+        }
+        return []
+    }, [searchParams])
+
+    const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments)
 
     const isPending = isLoading
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -250,22 +332,61 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     }, [messages, shouldAutoScroll, initialMessages])
 
     // File handlers
+    // Unified upload handler
+    const uploadFile = async (file: File) => {
+        // Create optimistic attachment
+        const tempId = Math.random().toString(36).substring(7)
+        const reader = new FileReader()
+
+        return new Promise<void>((resolve) => {
+            reader.onload = async (e) => {
+                const previewUrl = e.target?.result as string
+
+                // Add to state immediately with uploading flag
+                setAttachments(prev => [...prev, {
+                    name: file.name,
+                    type: file.type,
+                    url: previewUrl,
+                    isUploading: true
+                }])
+
+                try {
+                    // Upload to API
+                    const formData = new FormData()
+                    formData.append('file', file)
+
+                    const res = await fetch('/api/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+
+                    if (!res.ok) throw new Error('Upload failed')
+
+                    const data = await res.json()
+
+                    // Update URL with server URL and clear uploading flag
+                    setAttachments(prev => prev.map(att =>
+                        att.url === previewUrl ? { ...att, url: data.url, isUploading: false } : att
+                    ))
+                } catch (error) {
+                    console.error('Upload failed:', error)
+                    toast.error(`Ошибка загрузки: ${file.name}`)
+                    // Remove failed attachment
+                    setAttachments(prev => prev.filter(att => att.url !== previewUrl))
+                } finally {
+                    resolve()
+                }
+            }
+            reader.readAsDataURL(file)
+        })
+    }
+
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
-            Array.from(e.target.files).forEach(file => {
-                const reader = new FileReader()
-                reader.onload = (e) => {
-                    if (e.target?.result) {
-                        setAttachments(prev => [...prev, {
-                            name: file.name,
-                            type: file.type,
-                            url: e.target!.result as string
-                        }])
-                    }
-                }
-                reader.readAsDataURL(file)
-            })
+            Array.from(e.target.files).forEach(uploadFile)
         }
+        // Reset input
+        e.target.value = ''
     }
 
     const removeAttachment = (index: number) => {
@@ -275,19 +396,22 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const handleFileDrop = (files: FileList) => {
         Array.from(files).forEach(file => {
             if (file.type.startsWith('image/') || file.type === 'application/pdf') {
-                const reader = new FileReader()
-                reader.onload = (e) => {
-                    if (e.target?.result) {
-                        setAttachments(prev => [...prev, {
-                            name: file.name,
-                            type: file.type,
-                            url: e.target!.result as string
-                        }])
-                    }
-                }
-                reader.readAsDataURL(file)
+                uploadFile(file)
             }
         })
+    }
+
+    // ... (imports remain)
+
+    const abortControllerRef = useRef<AbortController | null>(null)
+
+    // Handle Stop
+    const handleStop = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort()
+            abortControllerRef.current = null
+            setIsLoading(false)
+        }
     }
 
     const handleSendMessage = async (content: string) => {
@@ -296,8 +420,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         const userMessage = content.trim()
         const currentAttachments = [...attachments]
 
-        // Optimistic UI
-        const userMsg: any = {
+        const userMsg: Message = {
             id: Date.now().toString(),
             role: "user",
             content: userMessage,
@@ -307,12 +430,13 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
         setMessages((prev) => [...prev, userMsg])
         setInput("")
-        setAttachments([]) // Clear attachments
+        setAttachments([])
         isUserScrollingRef.current = false
         setShouldAutoScroll(true)
 
-        // For first message: dispatch event to immediately add chat to sidebar
+        // For first message event dispatch 
         if (initialMessages.length === 0 && messages.length === 0) {
+            // ... (event dispatch logic same)
             const newChatForSidebar = {
                 id: chatId,
                 userId: '',
@@ -325,7 +449,6 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
             window.dispatchEvent(new CustomEvent('newChatCreated', { detail: newChatForSidebar }));
         }
 
-        // Create placeholder for AI response
         const aiMsgId = (Date.now() + 1).toString()
         const aiMsg: Message = {
             id: aiMsgId,
@@ -335,11 +458,14 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         }
         setMessages((prev) => [...prev, aiMsg])
 
-        // Use regular async - don't block navigation
         setIsLoading(true)
+
+        // Abort Controller Setup
+        const controller = new AbortController()
+        abortControllerRef.current = controller
+
             ; (async () => {
                 try {
-                    // Call streaming API
                     const response = await fetch(`/api/chat/${chatId}`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -347,13 +473,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             message: userMessage,
                             attachments: currentAttachments
                         }),
+                        signal: controller.signal // Pass signal
                     })
 
-                    if (!response.ok) {
-                        throw new Error(await response.text())
-                    }
+                    if (!response.ok) throw new Error(await response.text())
 
-                    // Read streaming response
                     const reader = response.body?.getReader()
                     const decoder = new TextDecoder()
                     let fullContent = ""
@@ -366,50 +490,60 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             const chunk = decoder.decode(value, { stream: true })
                             fullContent += chunk
 
-                            // Update the AI message with accumulated content
+                            // Fix for "Incorrect line at end" -> remove trailing horizontal rules if they appear alone
+                            const cleanedContent = fullContent.replace(/\n---\s*$/, '').replace(/\n_+\s*$/, '')
+
                             setMessages((prev) =>
                                 prev.map((msg) =>
                                     msg.id === aiMsgId
-                                        ? { ...msg, content: fullContent }
+                                        ? { ...msg, content: cleanedContent }
                                         : msg
                                 )
                             )
-                            // NOTE: Do NOT set shouldAutoScroll here - respect user's scroll position
                         }
                     }
 
-                } catch (error) {
-                    console.error("Failed to send message:", error)
-                    // Update AI message with error
-                    setMessages((prev) =>
-                        prev.map((msg) =>
-                            msg.id === aiMsgId
-                                ? { ...msg, content: "Ошибка: не удалось получить ответ от AI" }
-                                : msg
+                } catch (error: any) {
+                    if (error.name === 'AbortError') {
+                        console.log('Request aborted')
+                        setMessages((prev) =>
+                            prev.map((msg) =>
+                                msg.id === aiMsgId
+                                    ? { ...msg, content: msg.content + " [Остановлено]" }
+                                    : msg
+                            )
                         )
-                    )
+                    } else {
+                        console.error("Failed to send message:", error)
+                        setMessages((prev) =>
+                            prev.map((msg) =>
+                                msg.id === aiMsgId
+                                    ? { ...msg, content: "Ошибка: не удалось получить ответ от AI" }
+                                    : msg
+                            )
+                        )
+                    }
                 } finally {
                     setIsLoading(false)
+                    abortControllerRef.current = null
                 }
             })()
     }
 
+    // ... (onSubmit, effects, regenerate remains same) ...
     const onSubmit = (e: React.FormEvent) => {
         e.preventDefault()
         handleSendMessage(input)
     }
 
-    // Auto-submit effect
     useEffect(() => {
         if (initialInput && !hasAutoSubmittedRef.current && messages.length === 0) {
             hasAutoSubmittedRef.current = true
             handleSendMessage(initialInput)
-            // Clear search params
             window.history.replaceState(null, '', window.location.pathname)
         }
     }, [initialInput, messages.length])
 
-    // Find the last user message for regeneration
     const getLastUserMessage = () => {
         for (let i = messages.length - 1; i >= 0; i--) {
             if (messages[i].role === "user") {
@@ -419,12 +553,9 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         return null
     }
 
-    // Regenerate: resend the last user message as new message
     const handleRegenerate = () => {
         const lastUserMessage = getLastUserMessage()
         if (!lastUserMessage || isPending) return
-
-        // Just resend the same message without deleting anything
         setInput(lastUserMessage)
         setTimeout(() => {
             const form = document.querySelector('form')
@@ -435,23 +566,18 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     // Submit feedback
     const handleSubmitFeedback = () => {
         if (!feedbackText.trim()) return
-
-        // Here you could save to database
         console.log("Feedback for message:", feedbackMessageId, "Text:", feedbackText)
         toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
-
         setFeedbackOpen(false)
         setFeedbackText("")
         setFeedbackMessageId(null)
     }
 
-    // Open dislike dialog
     const handleDislike = (messageId: string) => {
         setFeedbackMessageId(messageId)
         setFeedbackOpen(true)
     }
 
-    // Display Logic to hide Instructions
     const getDisplayContent = (content: string) => {
         if (content.startsWith('[ИНСТРУКЦИИ:')) {
             return content.replace(/^\[ИНСТРУКЦИИ:[\s\S]*?\]\n\n/, '')
@@ -463,7 +589,29 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
     if (isEmpty) {
         return (
-            <div className="flex h-full flex-col items-center justify-center p-4">
+            <div className="flex h-full flex-col items-center justify-center p-4 relative">
+                {/* Header Buttons (Top Right) */}
+                <div className="absolute top-4 right-4 flex items-center gap-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                        onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
+                        title="Все чаты агента"
+                    >
+                        <Icons.chevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                        onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
+                        title="Настройки агента"
+                    >
+                        <Icons.settings className="h-4 w-4" />
+                    </Button>
+                </div>
+
                 <div className="flex flex-col items-center gap-6 max-w-2xl w-full -mt-20">
                     {/* Greeting / Logo */}
                     <div className="flex flex-col items-center gap-2 text-center">
@@ -474,15 +622,19 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                 <Icons.bot className="h-16 w-16 text-muted-foreground/50" />
                             )}
                         </div>
-                        <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-                            {agentName}
-                        </h2>
+                        <button
+                            onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
+                            className="group relative z-10 transition-all hover:opacity-80"
+                        >
+                            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white group-hover:underline decoration-zinc-400 underline-offset-4">
+                                {agentName}
+                            </h2>
+                        </button>
                         <p className="text-zinc-500 dark:text-zinc-200 text-sm">
                             Я готов помочь вам создать контент.
                         </p>
                     </div>
 
-                    {/* Centered Input */}
                     <div className="w-full">
                         <ChatInput
                             input={input}
@@ -496,27 +648,35 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             removeAttachment={removeAttachment}
                         />
                     </div>
-
-                    {/* Action Chips - No background, subtle border like chatlyai */}
+                    {/* Action Chips */}
                     <div className="grid grid-cols-2 gap-3 w-full max-w-2xl">
                         {(
                             (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
                                 [
-                                    { emoji: "🔥", text: "10 кликбейтных заголовков" },
-                                    { emoji: "🧐", text: "Заголовки с интригой" },
-                                    { emoji: "📉", text: "Анализ болей ЦА" },
-                                    { emoji: "✍️", text: "Переписать скучные заголовки" },
+                                    { emoji: "🔥", text: "Дай 10 заголовков" },
+                                    { emoji: "💡", text: "Дай 10 на тему" },
                                 ] :
-                                [
-                                    { emoji: "📝", text: "Создать пост для LinkedIn" },
-                                    { emoji: "🎬", text: "Написать сценарий" },
-                                    { emoji: "📊", text: "Анализ трендов" },
-                                    { emoji: "💡", text: "Идеи для контента" },
-                                ]
+                                (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
+                                    [
+                                        { emoji: "📝", text: "Дай 10" },
+                                        { emoji: "🎯", text: "Дай 10 на тему" },
+                                    ] :
+                                    [
+                                        { emoji: "📝", text: "Дай 10 вариантов описания" },
+                                        { emoji: "🎯", text: "Дай 10 описаний на тему" },
+                                        { emoji: "🎬", text: "Написать сценарий" },
+                                        { emoji: "📊", text: "Анализ трендов" },
+                                    ]
                         ).map((item) => (
                             <button
                                 key={item.text}
-                                onClick={() => setInput(item.text)}
+                                onClick={() => {
+                                    if (item.text.includes("на тему")) {
+                                        setInput(item.text + " ")
+                                    } else {
+                                        handleSendMessage(item.text)
+                                    }
+                                }}
                                 className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-100 bg-transparent border border-zinc-200 dark:border-zinc-700/60 rounded-xl px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-white transition-colors text-left"
                             >
                                 <span>{item.emoji}</span>
@@ -531,7 +691,28 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
     return (
         <>
-            {/* Messages Area - The ONLY scrollable part */}
+            {/* Header Buttons */}
+            <div className="flex-none flex justify-end px-4 pt-4 gap-2">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                    onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
+                    title="Все чаты агента"
+                >
+                    <Icons.chevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
+                    onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
+                    title="Настройки агента"
+                >
+                    <Icons.settings className="h-4 w-4" />
+                </Button>
+            </div>
+
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
                 <div className="mx-auto max-w-3xl px-4">
                     <div className="flex flex-col gap-6 py-6">
@@ -582,11 +763,60 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                     >
                                         {msg.role === "user" ? (
                                             getDisplayContent(msg.content)
-                                        ) : msg.content ? (
-                                            <ReactMarkdown>
-                                                {msg.content}
-                                            </ReactMarkdown>
-                                        ) : (
+                                        ) : msg.content ? (() => {
+                                            // Check if this is description agent
+                                            const isDescAgent = agent && (agent.name.toLowerCase().includes("reels") && (agent.name.toLowerCase().includes("description") || agent.name.toLowerCase().includes("описание")))
+
+                                            if (isDescAgent) {
+                                                // Strip incomplete markers during streaming for cleaner display
+                                                let cleanContent = msg.content
+                                                    .replace(/【DESC】/g, '')  // Remove opening markers
+                                                    .replace(/【\/DESC】/g, '') // Remove closing markers
+
+                                                // Parse and render with inline counters (only for complete markers)
+                                                const parts = msg.content.split(/(【DESC】[\s\S]*?【\/DESC】)/g)
+                                                const hasCompleteMarkers = parts.some(p => /【DESC】[\s\S]*?【\/DESC】/.test(p))
+
+                                                if (hasCompleteMarkers) {
+                                                    return (
+                                                        <>
+                                                            {parts.map((part, idx) => {
+                                                                const descMatch = part.match(/【DESC】([\s\S]*?)【\/DESC】/)
+                                                                if (descMatch) {
+                                                                    const descText = descMatch[1]
+                                                                    // Count ALL characters including spaces, emojis, punctuation
+                                                                    const charCount = [...descText].length
+                                                                    return (
+                                                                        <div key={idx} className="mb-4">
+                                                                            <ReactMarkdown>{descText}</ReactMarkdown>
+                                                                            <div className={cn(
+                                                                                "text-[11px] font-medium mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full",
+                                                                                charCount > 2200
+                                                                                    ? "text-red-600 bg-red-50 dark:bg-red-900/30"
+                                                                                    : charCount > 1800
+                                                                                        ? "text-amber-600 bg-amber-50 dark:bg-amber-900/30"
+                                                                                        : "text-green-600 bg-green-50 dark:bg-green-900/30"
+                                                                            )}>
+                                                                                📝 {charCount} / 2200
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                }
+                                                                // Regular text without markers - also strip any incomplete markers
+                                                                const cleanPart = part.replace(/【DESC】/g, '').replace(/【\/DESC】/g, '')
+                                                                return cleanPart ? <ReactMarkdown key={idx}>{cleanPart}</ReactMarkdown> : null
+                                                            })}
+                                                        </>
+                                                    )
+                                                }
+
+                                                // No complete markers yet (still streaming) - show clean content
+                                                return <ReactMarkdown>{cleanContent}</ReactMarkdown>
+                                            }
+
+                                            // Default rendering for non-description agents
+                                            return <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                        })() : (
                                             <span className="flex items-center gap-1.5 text-zinc-400 h-6">
                                                 <span className="inline-block w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                                                 <span className="inline-block w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
@@ -595,62 +825,74 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                         )}
                                     </div>
 
-                                    {/* Claude-like Action Bar for AI */}
-                                    {msg.role === "assistant" && msg.content && (
-                                        <div className="flex items-center gap-1 -ml-2">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                onClick={() => {
-                                                    navigator.clipboard.writeText(msg.content)
-                                                    toast.success("Скопировано в буфер обмена")
-                                                }}
-                                            >
-                                                <Icons.copy className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                onClick={() => toast.success("👍 Спасибо за оценку!")}
-                                            >
-                                                <Icons.thumbsUp className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                onClick={() => handleDislike(msg.id)}
-                                            >
-                                                <Icons.thumbsDown className="h-3.5 w-3.5" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                onClick={handleRegenerate}
-                                                disabled={isPending}
-                                            >
-                                                <Icons.refresh className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </div>
-                                    )}
+
+                                    {/* Action Bar */}
+                                    <div className={cn("flex items-center gap-1", msg.role === "user" ? "justify-end -mr-2" : "-ml-2")}>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
+                                            onClick={() => {
+                                                navigator.clipboard.writeText(msg.content)
+                                                toast.success("Скопировано")
+                                            }}
+                                        >
+                                            <Icons.copy className="h-3.5 w-3.5" />
+                                        </Button>
+
+                                        {msg.role === "assistant" && msg.content && (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
+                                                    onClick={() => toast.success("👍 Спасибо за оценку!")}
+                                                >
+                                                    <Icons.thumbsUp className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
+                                                    onClick={() => handleDislike(msg.id)}
+                                                >
+                                                    <Icons.thumbsDown className="h-3.5 w-3.5" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
+                                                    onClick={handleRegenerate}
+                                                    disabled={isPending}
+                                                >
+                                                    <Icons.refresh className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+
                                 </div>
                             </div>
                         ))}
                         <div ref={scrollRef} />
-                    </div>
-                </div>
-            </div>
+                    </div >
+                </div >
+            </div >
 
-            {/* Fixed Input Area at Bottom */}
             <div className="flex-none bg-transparent p-4">
                 <div className="mx-auto max-w-3xl px-4">
                     <ChatInput
                         input={input}
                         setInput={setInput}
-                        onSubmit={onSubmit}
+                        onSubmit={(e) => {
+                            if (isPending) {
+                                e.preventDefault()
+                                handleStop()
+                            } else {
+                                onSubmit(e)
+                            }
+                        }}
+                        onStop={handleStop}
                         isPending={isPending}
                         onFileSelect={handleFileSelect}
                         onFileDrop={handleFileDrop}
@@ -660,7 +902,6 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                 </div>
             </div>
 
-            {/* Feedback Dialog */}
             <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
                 <DialogContent className="sm:max-w-md dark:bg-[#1a1a1a] dark:border-zinc-800">
                     <DialogHeader>

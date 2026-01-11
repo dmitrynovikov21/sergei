@@ -44,7 +44,7 @@ export async function GET() {
         }
 
         // 3. Add Sources
-        const results = []
+        const results: any[] = []
         for (const url of TEST_SOURCES) {
             const usernameMatch = url.match(/instagram\.com\/([^/?]+)/)
             const username = usernameMatch ? usernameMatch[1] : null

@@ -25,6 +25,8 @@ import {
 import { MoreHorizontal } from "lucide-react";
 import { Icons } from "@/components/shared/icons";
 import { SidebarUser } from "./sidebar-user";
+import { SidebarAgentLink } from "./SidebarAgentLink"; // Note: Filename case sensitivity
+import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog";
 
 interface DashboardSidebarProps {
   agents: Agent[];
@@ -64,7 +66,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
           {/* Toggle & Header Area */}
           <div className="flex h-14 items-center justify-between px-3 pt-2 mb-6">
             {isSidebarExpanded && (
-              <Link href="/dashboard" className="font-extrabold text-xl tracking-tight text-zinc-900 dark:text-white uppercase px-2 hover:opacity-80 transition-opacity flex items-center gap-2">
+              <Link href="/dashboard/agents" className="font-extrabold text-xl tracking-tight text-zinc-900 dark:text-white uppercase px-2 hover:opacity-80 transition-opacity flex items-center gap-2">
                 <Icons.logo className="h-6 w-6" />
                 <span>AI PLATFORM</span>
               </Link>
@@ -109,72 +111,113 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
               </Tooltip>
             </div>
 
-            {/* Knowledge Base (Admin Only) */}
-            {/* TODO: Add proper role check. For now assuming user prop has role or we fetch it. 
-                Using a client-side check if available or passing from layout. 
-                The prompt asks for "Admin only". We might need to pass `userRole` to this component.
-            */}
+            {/* KNOWLEDGE BASE */}
+            <div className="mb-6 px-1">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/dashboard/datasets"
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-all text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      path.startsWith("/dashboard/datasets") && "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                    )}
+                  >
+                    <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
+                      <Database className="h-5 w-5" />
+                    </span>
+                    {isSidebarExpanded && <span className="font-medium">База знаний</span>}
+                  </Link>
+                </TooltipTrigger>
+                {!isSidebarExpanded && <TooltipContent side="right">База знаний</TooltipContent>}
+              </Tooltip>
+            </div>
 
-            {/* Data Sets Link */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/dashboard/datasets"
-                  className={cn(
-                    "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors group mb-4",
-                    path.includes("/dashboard/datasets")
-                      ? "bg-zinc-200/50 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium"
-                      : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
-                  )}
-                >
-                  <span className={cn("flex items-center justify-center shrink-0 text-zinc-500", !isSidebarExpanded && "mx-auto")}>
-                    <Database className="h-5 w-5" />
-                  </span>
-                  {isSidebarExpanded && <span>База знаний</span>}
-                </Link>
-              </TooltipTrigger>
-              {!isSidebarExpanded && <TooltipContent side="right">База знаний</TooltipContent>}
-            </Tooltip>
-
-            {/* SECTION: AGENTS */}
-            <div className="flex flex-col gap-0.5">
+            {/* REELS GROUP */}
+            <div className="flex flex-col gap-1 mb-6">
               {isSidebarExpanded && (
                 <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
-                  Агенты
+                  Reels
                 </h4>
               )}
+              {agents
+                .filter(a => {
+                  const n = a.name.toLowerCase()
+                  return n.includes("тренд") || n.includes("trend") ||
+                    (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
+                    (n.includes("reels") && (n.includes("описание") || n.includes("description")))
+                })
+                .sort((a, b) => {
+                  // Order: Trends, Headlines, Description
+                  const getRank = (name: string) => {
+                    const n = name.toLowerCase()
+                    if (n.includes("тренд") || n.includes("trend")) return 1
+                    if (n.includes("заголовки") || n.includes("headlines")) return 2
+                    if (n.includes("описание") || n.includes("description")) return 3
+                    return 10
+                  }
+                  return getRank(a.name) - getRank(b.name)
+                })
+                .map((agent) => (
+                  <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} />
+                ))}
+            </div>
 
-              {/* All Agents Link - potentially redundant if we list all 4, but good to keep */}
-              {/* Tooltip for All Agents... removed if not needed or kept as "Home" for agents */}
+            {/* CAROUSEL GROUP */}
+            <div className="flex flex-col gap-1">
+              {isSidebarExpanded && (
+                <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
+                  Carousels
+                </h4>
+              )}
+              {agents
+                .filter(a => {
+                  const n = a.name.toLowerCase()
+                  return (n.includes("карусел") || n.includes("carousel")) &&
+                    (n.includes("заголовки") || n.includes("headlines") ||
+                      n.includes("описание") || n.includes("description") ||
+                      n.includes("создать") || n.includes("create") || n.includes("структура"))
+                })
+                .sort((a, b) => {
+                  // Order: Headlines, Description, Create
+                  const getRank = (name: string) => {
+                    const n = name.toLowerCase()
+                    if (n.includes("заголовки") || n.includes("headlines")) return 1
+                    if (n.includes("описание") || n.includes("description")) return 2
+                    if (n.includes("создать") || n.includes("create") || n.includes("структура")) return 3
+                    return 10
+                  }
+                  return getRank(a.name) - getRank(b.name)
+                })
+                .map((agent) => (
+                  <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} />
+                ))}
+            </div>
 
-              {/* List of Agents */}
-              {agents.map((agent) => {
-                const isAgentPage = path === `/dashboard/agents/${agent.id}`;
-
-                return (
-                  <Tooltip key={agent.id}>
-                    <TooltipTrigger asChild>
-                      <Link
-                        href={`/dashboard/agents/${agent.id}`}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors group",
-                          isAgentPage
-                            ? "bg-zinc-200/50 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium shadow-sm"
-                            : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200"
-                        )}
-                      >
-                        <span className={cn("flex items-center justify-center w-5 h-5 shrink-0 text-base leading-none", !isSidebarExpanded && "mx-auto")}>
-                          {agent.emoji || "🤖"}
-                        </span>
-                        {isSidebarExpanded && (
-                          <span className="truncate">{agent.name}</span>
-                        )}
-                      </Link>
-                    </TooltipTrigger>
-                    {!isSidebarExpanded && <TooltipContent side="right" className="bg-zinc-900 text-white border-zinc-800">{agent.name}</TooltipContent>}
-                  </Tooltip>
-                )
-              })}
+            {/* CREATE AGENT BUTTON */}
+            <div className="mt-6 px-1">
+              {isSidebarExpanded ? (
+                <CreateAgentDialog
+                  trigger={
+                    <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-dashed border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500">
+                      <Plus className="h-4 w-4" />
+                      <span>Создать агента</span>
+                    </button>
+                  }
+                />
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <CreateAgentDialog
+                      trigger={
+                        <button className="mx-auto flex items-center justify-center h-9 w-9 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+                          <Plus className="h-5 w-5" />
+                        </button>
+                      }
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="right">Создать агента</TooltipContent>
+                </Tooltip>
+              )}
             </div>
           </nav>
 

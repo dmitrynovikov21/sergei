@@ -46,7 +46,7 @@ export function UserRoleForm({ user }: UserNameFormProps) {
   const form = useForm<FormData>({
     resolver: zodResolver(userRoleSchema),
     values: {
-      role: role,
+      role: role as UserRole,
     },
   });
 

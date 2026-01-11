@@ -153,8 +153,8 @@ export async function extractHeadlineFromCover(imageUrl: string): Promise<string
                 contentType.includes("webp") ? "image/webp" : "image/jpeg"
 
         const response = await anthropic.messages.create({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 500,
+            model: "claude-sonnet-4-5-20250929",
+            max_tokens: 8192,
             messages: [
                 {
                     role: "user",

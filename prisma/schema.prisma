@@ -80,12 +80,14 @@ model Agent {
   systemPrompt     String
   emoji            String?
   isPublic         Boolean     @default(false)
-  model            String      @default("claude-3-5-sonnet")
+  model            String      @default("claude-4-5-sonnet")
   useEmoji         Boolean     @default(false)
   useSubscribe     Boolean     @default(false)
   useLinkInBio     Boolean     @default(false)
   codeWord         String?
   audienceQuestion String?
+  subscribeLink    String?
+  userContext      String?
   isFavorite       Boolean     @default(false)
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
@@ -194,22 +196,41 @@ model Dataset {
 }
 
 model TrackingSource {
-  id             String    @id @default(cuid())
+  id             String         @id @default(cuid())
   url            String
   username       String?
   datasetId      String
-  isActive       Boolean   @default(true)
-  minViewsFilter Int       @default(0)
-  fetchLimit     Int       @default(20)
+  isActive       Boolean        @default(true)
+  minViewsFilter Int            @default(0)
+  fetchLimit     Int            @default(20)
   lastScrapedAt  DateTime?
-  createdAt      DateTime  @default(now()) @map("created_at")
-  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at")
-  daysLimit      Int       @default(30)
-  contentTypes   String    @default("Video,Sidecar,Image")
-  dataset        Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
+  daysLimit      Int            @default(30)
+  contentTypes   String         @default("Video,Sidecar,Image")
+  dataset        Dataset        @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  parseHistory   ParseHistory[]
 
   @@index([datasetId])
   @@map("tracking_sources")
+}
+
+model ParseHistory {
+  id           String          @id @default(cuid())
+  sourceId     String
+  source       TrackingSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  startedAt    DateTime        @default(now()) @map("started_at")
+  completedAt  DateTime?       @map("completed_at")
+  status       String          @default("running") // "running", "completed", "failed"
+  daysRange    Int             @default(7) // 7 or 14
+  postsFound   Int             @default(0) @map("posts_found")
+  postsAdded   Int             @default(0) @map("posts_added")
+  postsSkipped Int             @default(0) @map("posts_skipped")
+  error        String?
+
+  @@index([sourceId])
+  @@index([startedAt])
+  @@map("parse_history")
 }
 
 model ContentItem {

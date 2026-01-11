@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/dialog"
 import { Icons } from "@/components/shared/icons"
 import { toast } from "sonner"
-import { Trash2, Upload, FileText, Settings, Eye, Image as ImageIcon, X } from "lucide-react"
+import { Trash2, Upload, FileText, Settings, Eye, Image as ImageIcon, X, AlertTriangle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface EditAgentDialogProps {
     agent: Agent & { files?: AgentFile[] }
@@ -48,11 +49,24 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
     const [useEmoji, setUseEmoji] = useState(agent.useEmoji || false)
     const [useSubscribe, setUseSubscribe] = useState(agent.useSubscribe || false)
     const [useLinkInBio, setUseLinkInBio] = useState(agent.useLinkInBio || false)
+    // Alias for compatibility with my previous code
+    const useTgLink = useLinkInBio
+    const setUseTgLink = setUseLinkInBio
+
     const [codeWord, setCodeWord] = useState(agent.codeWord || "")
+    const [useCodeWord, setUseCodeWord] = useState(!!agent.codeWord) // Toggle state
+
     const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
+    const [useAudienceQuestion, setUseAudienceQuestion] = useState(!!agent.audienceQuestion) // Toggle state
+
+    const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
 
     // Check if this is Description agent
     const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
+
+    // Limits
+    const charCount = systemPrompt.length
+    const charLimit = 2200
 
     // Fetch fresh data when dialog opens
     const fetchFreshData = async () => {
@@ -68,8 +82,14 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 setUseEmoji(freshAgent.useEmoji || false)
                 setUseSubscribe(freshAgent.useSubscribe || false)
                 setUseLinkInBio(freshAgent.useLinkInBio || false)
+
                 setCodeWord(freshAgent.codeWord || "")
+                setUseCodeWord(!!freshAgent.codeWord)
+
                 setAudienceQuestion(freshAgent.audienceQuestion || "")
+                setUseAudienceQuestion(!!freshAgent.audienceQuestion)
+
+                setSubscribeLink(freshAgent.subscribeLink || "")
             }
         } catch (error) {
             console.error("Failed to fetch agent data:", error)
@@ -109,30 +129,15 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
         })
     }
 
-    // Save codeWord and audienceQuestion (text inputs)
-    const handleSaveSettings = () => {
-        startTransition(async () => {
-            try {
-                await updateAgentSettings(agent.id, {
-                    codeWord,
-                    audienceQuestion
-                })
-                // Refetch to update textarea with new settings block
-                await fetchFreshData()
-                toast.success("Настройки сохранены")
-            } catch (error) {
-                toast.error("Ошибка сохранения")
-            }
-        })
-    }
+
 
     const handleFileUpload = async (file: File) => {
         if (!file) return
 
-        // Check file size
-        const maxSize = file.type === 'application/pdf' ? 5 * 1024 * 1024 : 2 * 1024 * 1024
+        // Check file size - increased to 10MB
+        const maxSize = 10 * 1024 * 1024 // 10MB for all files
         if (file.size > maxSize) {
-            toast.error(`Файл слишком большой. Максимум: ${file.type === 'application/pdf' ? '5' : '2'}MB`)
+            toast.error(`Файл слишком большой. Максимум: 10MB`)
             return
         }
 
@@ -219,6 +224,14 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 )}
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0 gap-0 border-zinc-200 dark:border-zinc-700">
+                {/* Safety Banner */}
+                {isDescriptionAgent && (
+                    <div className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 p-3 flex items-center justify-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-medium">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span>В меня вложили уже много сил и времени, пожалуйста не сломай меня! 🥺</span>
+                    </div>
+                )}
+
                 {/* Header */}
                 <DialogHeader className="p-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
                     <DialogTitle className="flex items-center gap-3 text-xl">
@@ -233,15 +246,25 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 <div className="p-6 space-y-8">
                     {/* System Prompt */}
                     <div className="space-y-3">
-                        <Label htmlFor="systemPrompt" className="text-sm font-medium">
-                            Системный промпт (инструкции)
-                        </Label>
+                        <div className="flex justify-between items-center">
+                            <Label htmlFor="systemPrompt" className="text-sm font-medium">
+                                Системный промпт (инструкции)
+                            </Label>
+                            {isDescriptionAgent && (
+                                <span className={cn("text-xs font-mono", charCount > charLimit ? "text-red-500 font-bold" : "text-emerald-500")}>
+                                    {charCount} / {charLimit}
+                                </span>
+                            )}
+                        </div>
                         <Textarea
                             id="systemPrompt"
                             value={systemPrompt}
                             onChange={(e) => setSystemPrompt(e.target.value)}
                             placeholder="Опишите поведение и роль AI агента..."
-                            className="min-h-[180px] font-mono text-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl resize-none"
+                            className={cn(
+                                "min-h-[180px] font-mono text-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl resize-none",
+                                isDescriptionAgent && charCount > charLimit && "border-red-500 focus-visible:ring-red-500"
+                            )}
                         />
                         <Button
                             onClick={handleSavePrompt}
@@ -263,84 +286,277 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                                 Настройки описаний
                             </Label>
 
-                            <div className="grid gap-4 sm:grid-cols-3">
-                                <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 rounded-xl">
-                                    <Label htmlFor="edit-emoji" className="text-sm">Эмодзи 😎</Label>
+                            <div className="space-y-6">
+                                {/* 1. Emoji */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-emoji" className="text-base font-medium">Эмоджи</Label>
                                     <Switch
                                         id="edit-emoji"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
                                         checked={useEmoji}
                                         onCheckedChange={(checked) => {
                                             setUseEmoji(checked)
                                             saveSetting("useEmoji", checked)
+
+                                            const TARGET_SUBHEADER = "ЭМОДЗИ:"
+                                            const TARGET_BODY = "Добавляй в текст эмоджи, где это уместно, но без фанатизма. Например вместо пунктов в тексте, можно сделать соответствующие эмодзи, но если подразумевается нумерованный список, то сделай цифры, а не эмодзи."
+                                            const TARGET_MAIN_HEADER = "НАСТРОЙКИ ОПИСАНИЯ"
+
+                                            // Robust Cleanup
+                                            let newPrompt = systemPrompt || ""
+                                            const escapeRegExp = (string: string) => string.replace(/[.*+?^${ }()|[\]\\]/g, '\\$&');
+
+                                            // Headers Lookahead Pattern
+                                            const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+
+                                            // 1. Remove Section (Subheader + content until next header)
+                                            const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+                                            newPrompt = newPrompt.replace(sectionRegex, "")
+
+                                            // 2. Remove Main Header if it matches exactly (optional cleanup)
+                                            // newPrompt = newPrompt.replace("НАСТРОЙКИ ОПИСАНИЯ", "") 
+
+                                            newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                            // 3. Insert if checked
+                                            if (checked) {
+                                                // Check if Main Header exists, if not adds it
+                                                const hasMainHeader = newPrompt.includes(TARGET_MAIN_HEADER)
+                                                const headerBlock = hasMainHeader ? "" : `\n\n${TARGET_MAIN_HEADER}`
+
+                                                const CLEAN_BLOCK = `${headerBlock}\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                newPrompt = newPrompt + CLEAN_BLOCK
+                                            }
+
+                                            setSystemPrompt(newPrompt)
+                                            updateAgentPrompt(agent.id, newPrompt)
                                         }}
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 rounded-xl">
-                                    <Label htmlFor="edit-subscribe" className="text-sm">Подписаться</Label>
+                                {/* 2. Subscribe */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-subscribe" className="text-base font-medium">Призыв подписаться</Label>
                                     <Switch
                                         id="edit-subscribe"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
                                         checked={useSubscribe}
                                         onCheckedChange={(checked) => {
                                             setUseSubscribe(checked)
                                             saveSetting("useSubscribe", checked)
+
+                                            const TARGET_SUBHEADER = "ПРИЗЫВ ПОДПИСАТЬСЯ:"
+                                            const TARGET_BODY = `В конце каждого ответа добавляй призыв подписаться на этот аккаунт: ${subscribeLink || "[ССЫЛКА]"}`
+
+                                            let newPrompt = systemPrompt || ""
+                                            const escapeRegExp = (string: string) => string.replace(/[.*+?^${ }()|[\]\\]/g, '\\$&');
+
+                                            const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                            const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                            newPrompt = newPrompt.replace(sectionRegex, "")
+                                            newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                            if (checked) {
+                                                const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                newPrompt = newPrompt + CLEAN_BLOCK
+                                            }
+                                            setSystemPrompt(newPrompt)
+                                            updateAgentPrompt(agent.id, newPrompt)
                                         }}
                                     />
                                 </div>
 
-                                <div className="flex items-center justify-between p-3 bg-white dark:bg-zinc-800 rounded-xl">
-                                    <Label htmlFor="edit-link" className="text-sm">Ссылка в био</Label>
+                                {/* Subscribe Link Input */}
+                                {useSubscribe && (
+                                    <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="subscribe-link" className="text-sm text-muted-foreground mb-2 block">
+                                            Ссылка для подписки
+                                        </Label>
+                                        <Input
+                                            id="subscribe-link"
+                                            value={subscribeLink}
+                                            onChange={(e) => setSubscribeLink(e.target.value)}
+                                            onBlur={() => {
+                                                // Update prompt immediately when link changes
+                                                // Update prompt immediately when link changes
+                                                if (useSubscribe) {
+                                                    saveSetting("subscribeLink", subscribeLink)
+
+                                                    const TARGET_SUBHEADER = "ПРИЗЫВ ПОДПИСАТЬСЯ:"
+                                                    const TARGET_BODY = `В конце каждого ответа добавляй призыв подписаться на этот аккаунт: ${subscribeLink}`
+
+                                                    let newPrompt = systemPrompt || ""
+                                                    const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                                                    const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                                    const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                                    newPrompt = newPrompt.replace(sectionRegex, "")
+                                                    newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                                    const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                    newPrompt = newPrompt + CLEAN_BLOCK
+
+                                                    setSystemPrompt(newPrompt)
+                                                    updateAgentPrompt(agent.id, newPrompt)
+                                                }
+                                            }}
+                                            placeholder="https://instagram.com/..."
+                                            className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* 3. Telegram Link */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-tg" className="text-base font-medium">Призыв на ТГ в шапке профиля</Label>
                                     <Switch
-                                        id="edit-link"
+                                        id="edit-tg"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
                                         checked={useLinkInBio}
                                         onCheckedChange={(checked) => {
                                             setUseLinkInBio(checked)
                                             saveSetting("useLinkInBio", checked)
+
+                                            const TARGET_SUBHEADER = "ПРИЗЫВ НА ТГ КАНАЛ:"
+                                            const TARGET_BODY = "В конце каждого ответа добавляй призыв перейти по ссылке в шапке профиля и подписаться на ТГ канал."
+
+                                            let newPrompt = systemPrompt || ""
+                                            const escapeRegExp = (string: string) => string.replace(/[.*+?^${ }()|[\]\\]/g, '\\$&');
+
+                                            const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                            const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                            newPrompt = newPrompt.replace(sectionRegex, "")
+                                            newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                            if (checked) {
+                                                const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                newPrompt = newPrompt + CLEAN_BLOCK
+                                            }
+                                            setSystemPrompt(newPrompt)
+                                            updateAgentPrompt(agent.id, newPrompt)
                                         }}
                                     />
                                 </div>
-                            </div>
 
-                            <div className="grid gap-4 sm:grid-cols-2">
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-codeword" className="text-xs text-zinc-500">
-                                        Кодовое слово
-                                    </Label>
-                                    <Input
+                                {/* 4. Code Word */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-codeword" className="text-base font-medium">Кодовое слово</Label>
+                                    <Switch
                                         id="edit-codeword"
-                                        placeholder="Например: ГАЙД"
-                                        value={codeWord}
-                                        onChange={(e) => setCodeWord(e.target.value)}
-                                        className="h-10 bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={!!codeWord}
+                                        onCheckedChange={(checked) => {
+                                            // CodeWord Logic
+                                            let currentWord = ""
+                                            if (!checked) {
+                                                setCodeWord("")
+                                                saveSetting("codeWord", "")
+                                            } else {
+                                                currentWord = "START"
+                                                setCodeWord(currentWord)
+                                                saveSetting("codeWord", currentWord)
+                                            }
+
+                                            const TARGET_SUBHEADER = "КОДОВОЕ СЛОВО:"
+                                            const TARGET_BODY = `В конце каждого ответа пиши: "Напиши в директ кодовое слово '${currentWord || codeWord || "СЛОВО"}' чтобы получить гайд/бонус"`
+
+                                            let newPrompt = systemPrompt || ""
+                                            const escapeRegExp = (string: string) => string.replace(/[.*+?^${ }()|[\]\\]/g, '\\$&');
+
+                                            const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                            const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                            newPrompt = newPrompt.replace(sectionRegex, "")
+                                            newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                            if (checked) {
+                                                const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                newPrompt = newPrompt + CLEAN_BLOCK
+                                            }
+                                            setSystemPrompt(newPrompt)
+                                            updateAgentPrompt(agent.id, newPrompt)
+                                        }}
                                     />
                                 </div>
 
-                                <div className="space-y-2">
-                                    <Label htmlFor="edit-question" className="text-xs text-zinc-500">
-                                        Вопрос аудитории
-                                    </Label>
-                                    <Input
+                                {!!codeWord && (
+                                    <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="code-word-input" className="text-sm text-muted-foreground mb-2 block">
+                                            Слово
+                                        </Label>
+                                        <Input
+                                            id="code-word-input"
+                                            value={codeWord}
+                                            onChange={(e) => setCodeWord(e.target.value)}
+                                            onBlur={() => {
+                                                if (!!codeWord) {
+                                                    saveSetting("codeWord", codeWord)
+
+                                                    const TARGET_SUBHEADER = "КОДОВОЕ СЛОВО:"
+                                                    const TARGET_BODY = `В конце каждого ответа пиши: "Напиши в директ кодовое слово '${codeWord}' чтобы получить гайд/бонус"`
+
+                                                    let newPrompt = systemPrompt || ""
+                                                    const escapeRegExp = (string: string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+                                                    const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                                    const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                                    newPrompt = newPrompt.replace(sectionRegex, "")
+                                                    newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                                    const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                    newPrompt = newPrompt + CLEAN_BLOCK
+
+                                                    setSystemPrompt(newPrompt)
+                                                    updateAgentPrompt(agent.id, newPrompt)
+                                                }
+                                            }}
+                                            placeholder="СТАРТ"
+                                            className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
+                                        />
+                                    </div>
+                                )}
+
+
+                                {/* 5. Audience Question */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-question" className="text-base font-medium">Вопрос аудитории</Label>
+                                    <Switch
                                         id="edit-question"
-                                        placeholder="Ваш вопрос..."
-                                        value={audienceQuestion}
-                                        onChange={(e) => setAudienceQuestion(e.target.value)}
-                                        className="h-10 bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-xl"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={useAudienceQuestion}
+                                        onCheckedChange={(checked) => {
+                                            setUseAudienceQuestion(checked)
+                                            saveSetting("useAudienceQuestion", checked)
+
+                                            const TARGET_SUBHEADER = "ВОПРОС АУДИТОРИИ:"
+                                            const TARGET_BODY = `В конце каждого ответа задавай вовлекающий вопрос аудитории по теме поста: "${audienceQuestion || "ВОПРОС"}"`
+
+                                            let newPrompt = systemPrompt || ""
+                                            const escapeRegExp = (string: string) => string.replace(/[.*+?^${ }()|[\]\\]/g, '\\$&');
+
+                                            const HEADERS_LOOKAHEAD = "(?=ЭМОДЗИ:|ПРИЗЫВ ПОДПИСАТЬСЯ:|ПРИЗЫВ НА ТГ КАНАЛ:|КОДОВОЕ СЛОВО:|ВОПРОС АУДИТОРИИ:|!!!|$)"
+                                            const sectionRegex = new RegExp(`(${escapeRegExp(TARGET_SUBHEADER)})([\\s\\S]*?)${HEADERS_LOOKAHEAD}`, 'i')
+
+                                            newPrompt = newPrompt.replace(sectionRegex, "")
+                                            newPrompt = newPrompt.replace(/\n{3,}/g, "\n\n").trim()
+
+                                            if (checked) {
+                                                const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
+                                                newPrompt = newPrompt + CLEAN_BLOCK
+                                            }
+                                            setSystemPrompt(newPrompt)
+                                            updateAgentPrompt(agent.id, newPrompt)
+                                        }}
                                     />
                                 </div>
-                            </div>
+                                {/* Audience Question text input removed - now just toggle */}
 
-                            <Button
-                                onClick={handleSaveSettings}
-                                disabled={isPending}
-                                size="sm"
-                                variant="outline"
-                                className="rounded-lg"
-                            >
-                                {isPending ? (
-                                    <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                                ) : null}
-                                Сохранить настройки
-                            </Button>
+                                {/* Removed Save Button as we now auto-save on change/blur */}
+                            </div>
                         </div>
                     )}
 
@@ -416,10 +632,22 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                                                 className="h-8 w-8 text-zinc-500 hover:text-zinc-700"
                                                 onClick={() => {
                                                     if (isImageFile(file.name) || isPdfFile(file.name)) {
-                                                        // Open in new tab
-                                                        window.open(file.content, '_blank')
+                                                        try {
+                                                            const isDataUrl = file.content.startsWith('data:')
+                                                            const fetchUrl = isDataUrl ? file.content : `data:${isPdfFile(file.name) ? 'application/pdf' : 'image/png'};base64,${file.content}`
+
+                                                            fetch(fetchUrl)
+                                                                .then(res => res.blob())
+                                                                .then(blob => {
+                                                                    const url = URL.createObjectURL(blob)
+                                                                    window.open(url, '_blank')
+                                                                    setTimeout(() => URL.revokeObjectURL(url), 60000)
+                                                                })
+                                                        } catch (e) {
+                                                            console.error("Failed to open file", e)
+                                                            window.open(file.content, '_blank')
+                                                        }
                                                     } else {
-                                                        // Show text in modal
                                                         setPreviewFile(file)
                                                     }
                                                 }}
@@ -476,7 +704,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                         Закрыть
                     </Button>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
+            </DialogContent >
+        </Dialog >
     )
 }

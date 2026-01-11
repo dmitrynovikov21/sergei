@@ -60,6 +60,7 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
         <div className="flex h-full flex-col overflow-hidden bg-[#F9FAFB] dark:bg-[#0f0f0f]">
             <HeaderUpdater
                 title={chat.agent.name}
+                href={`/dashboard/agents/${chat.agent.id}`}
                 description={chat.agent.description || "AI Ассистент"}
                 icon={chat.agent.emoji ? (
                     <span className="text-xl leading-none">

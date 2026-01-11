@@ -36,15 +36,20 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     const [previewFile, setPreviewFile] = useState<AgentFile | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
 
+    // User Context state
+    const [userContext, setUserContext] = useState((agent as any).userContext || "")
+
     // Settings state
     const [useEmoji, setUseEmoji] = useState(agent.useEmoji || false)
     const [useSubscribe, setUseSubscribe] = useState(agent.useSubscribe || false)
     const [useLinkInBio, setUseLinkInBio] = useState(agent.useLinkInBio || false)
     const [codeWord, setCodeWord] = useState(agent.codeWord || "")
     const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
+    const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
 
-    // Check if this is the "Description" agent
+    // Check agent types
     const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
+    const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
 
     const saveSettings = (updates: Partial<{
         useEmoji: boolean
@@ -52,6 +57,7 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
         useLinkInBio: boolean
         codeWord: string
         audienceQuestion: string
+        subscribeLink: string
     }>) => {
         startTransition(async () => {
             try {
@@ -60,6 +66,18 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                 router.refresh()
             } catch (error) {
                 toast.error("Ошибка сохранения настроек")
+            }
+        })
+    }
+
+    const saveUserContext = () => {
+        startTransition(async () => {
+            try {
+                await updateAgentSettings(agent.id, { userContext } as any)
+                toast.success("Контекст сохранен")
+                router.refresh()
+            } catch (error) {
+                toast.error("Ошибка сохранения")
             }
         })
     }
@@ -226,6 +244,40 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     return (
         <>
             <div className="w-[280px] shrink-0 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 flex flex-col gap-6 h-fit ml-6">
+
+                {/* Headlines Badge */}
+                {isHeadlinesAgent && (
+                    <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                        Обновляется автоматически
+                    </div>
+                )}
+
+                {/* "Invested" Badge (High Value) - Minimalist Style */}
+                {isDescriptionAgent && (
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+                        <span>💎</span>
+                        <span>В меня вложили уже много</span>
+                    </div>
+                )}
+
+                {/* User Context Section ("Pencil") */}
+                <div>
+                    <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ваш контекст ✏️</h3>
+                    </div>
+                    <textarea
+                        className="w-full text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-zinc-400"
+                        placeholder="Моя ЦА - мамочки, стиль общения дружелюбный..."
+                        value={userContext}
+                        onChange={(e) => setUserContext(e.target.value)}
+                        onBlur={saveUserContext}
+                    />
+                </div>
+
                 {/* Instructions Section */}
                 <div>
                     <div className="flex items-center justify-between mb-3">
@@ -246,131 +298,15 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                     </p>
                 </div>
 
-                {/* Files Section */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Файлы</h3>
-                        <Dialog open={fileDialogOpen} onOpenChange={setFileDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <Plus className="h-4 w-4 text-zinc-500" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Загрузить файл</DialogTitle>
-                                    <DialogDescription>
-                                        Выберите файл для добавления в контекст агента
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="py-4">
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept=".txt,.md,.json,.csv,.xml,.pdf,.jpg,.jpeg,.png,.gif,.webp"
-                                        onChange={handleInputChange}
-                                        className="hidden"
-                                    />
-                                    <Button
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="w-full"
-                                        disabled={isPending}
-                                    >
-                                        {isPending ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Upload className="mr-2 h-4 w-4" />
-                                        )}
-                                        Выбрать файл
-                                    </Button>
-                                    <p className="text-xs text-zinc-500 text-center mt-3">
-                                        Форматы: .txt, .md, .json, .jpg, .png, .pdf
-                                    </p>
-                                </div>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
-
-                    {files.length > 0 ? (
-                        <div className="space-y-2">
-                            {files.map((file) => (
-                                <div
-                                    key={file.id}
-                                    onClick={() => handleFileClick(file)}
-                                    className="flex items-center justify-between p-2.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 group cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
-                                >
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        {getFileIcon(file.name)}
-                                        <span className="text-sm text-zinc-700 dark:text-zinc-300 truncate">{file.name}</span>
-                                    </div>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                        onClick={(e) => handleDeleteFile(file.id, e)}
-                                        disabled={isPending}
-                                    >
-                                        <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                </div>
-                            ))}
-
-                            <div
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                                onDrop={handleDrop}
-                                className={cn(
-                                    "border border-dashed rounded-lg p-3 flex items-center justify-center text-center cursor-pointer transition-colors",
-                                    isDragging
-                                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                        : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                                )}
-                                onClick={() => setFileDialogOpen(true)}
-                            >
-                                <p className="text-xs text-zinc-500">
-                                    {isFileLoading ? "Загрузка..." : "+ Добавить ещё"}
-                                </p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div
-                            onDragOver={handleDragOver}
-                            onDragLeave={handleDragLeave}
-                            onDrop={handleDrop}
-                            onClick={() => setFileDialogOpen(true)}
-                            className={cn(
-                                "border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors",
-                                isDragging
-                                    ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                                    : "border-zinc-200 dark:border-zinc-700 hover:border-zinc-300 dark:hover:border-zinc-600"
-                            )}
-                        >
-                            {isFileLoading ? (
-                                <Loader2 className="h-6 w-6 animate-spin text-zinc-400 mb-2" />
-                            ) : (
-                                <div className="flex gap-1 mb-3 text-zinc-400">
-                                    <FileText className="h-6 w-6" />
-                                    <FileCode className="h-6 w-6" />
-                                </div>
-                            )}
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                                {isFileLoading
-                                    ? "Загрузка файла..."
-                                    : "Перетащите файл сюда или нажмите для загрузки"}
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Chat Settings (only for Description agent) */}
+                {/* Chat Settings (only for Description agent) - MOVED UP BEFORE FILES (Optional, but user said 'Always visible') */}
                 {isDescriptionAgent && (
                     <div>
-                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Настройки описаний</h3>
+                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 mb-3">Настройки генерации</h3>
 
-                        <div className="space-y-3">
+                        <div className="space-y-4">
                             {/* Emoji Toggle */}
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="emoji" className="text-xs text-zinc-600 dark:text-zinc-400">Эмодзи 😎</Label>
+                                <Label htmlFor="emoji" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Эмодзи</Label>
                                 <Switch
                                     id="emoji"
                                     checked={useEmoji}
@@ -383,7 +319,7 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
 
                             {/* Subscribe Toggle */}
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="subscribe" className="text-xs text-zinc-600 dark:text-zinc-400">Призыв подписаться</Label>
+                                <Label htmlFor="subscribe" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Призыв подписаться</Label>
                                 <Switch
                                     id="subscribe"
                                     checked={useSubscribe}
@@ -396,7 +332,7 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
 
                             {/* Link in Bio Toggle */}
                             <div className="flex items-center justify-between">
-                                <Label htmlFor="link" className="text-xs text-zinc-600 dark:text-zinc-400">Ссылка в био</Label>
+                                <Label htmlFor="link" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Призыв на ТГ в шапке профиля</Label>
                                 <Switch
                                     id="link"
                                     checked={useLinkInBio}
@@ -407,34 +343,81 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                                 />
                             </div>
 
-                            {/* Code Word Input */}
-                            <div className="space-y-1">
-                                <Label htmlFor="codeword" className="text-xs text-zinc-500">Кодовое слово</Label>
-                                <Input
-                                    id="codeword"
-                                    placeholder="Например: ГАЙД"
-                                    value={codeWord}
-                                    onChange={(e) => setCodeWord(e.target.value)}
-                                    onBlur={() => saveSettings({ codeWord })}
-                                    className="h-8 text-sm"
-                                />
+                            {/* Unified Link Input */}
+                            {(useSubscribe || useLinkInBio) && (
+                                <div className="pt-1 pb-2">
+                                    <Input
+                                        placeholder="@ваш_ник или ссылка (https://...)"
+                                        value={subscribeLink}
+                                        onChange={(e) => setSubscribeLink(e.target.value)}
+                                        onBlur={() => saveSettings({ subscribeLink })}
+                                        className="h-9 text-sm bg-zinc-50 dark:bg-zinc-800"
+                                    />
+                                    <p className="text-[10px] text-zinc-400 mt-1">
+                                        Ссылка будет добавлена в призыв.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Code Word Toggle & Input */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="codeword-toggle" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Кодовое слово</Label>
+                                    <Switch
+                                        id="codeword-toggle"
+                                        checked={!!codeWord}
+                                        onCheckedChange={(checked) => {
+                                            if (!checked) {
+                                                setCodeWord("")
+                                                saveSettings({ codeWord: "" })
+                                            } else {
+                                                // Initialize with space or something if needed, or just let UI show input
+                                                // But we rely on !!codeWord, so we need to set it to something non-empty?
+                                                // Actually, let's use a separate local state for "Expanded" if we want to allow empty input?
+                                                // No, empty string disables it in the backend logic.
+                                                // So we set it to a placeholder or just " " and let user type?
+                                                // Better: Use a local state `showCodeWord` for UI toggle.
+                                                // But I need to simplify.
+                                                // Let's set it to "Гайд" (default) if turning on?
+                                                // Or just force user to type.
+                                                // I'll check `codeWord` state.
+                                                setCodeWord("Гайд") // UX: Set default
+                                                saveSettings({ codeWord: "Гайд" })
+                                            }
+                                        }}
+                                    />
+                                </div>
+                                {!!codeWord && (
+                                    <Input
+                                        id="codeword"
+                                        placeholder="Например: ГАЙД"
+                                        value={codeWord}
+                                        onChange={(e) => setCodeWord(e.target.value)}
+                                        onBlur={() => saveSettings({ codeWord })}
+                                        className="h-8 text-sm"
+                                    />
+                                )}
                             </div>
 
-                            {/* Audience Question Input */}
-                            <div className="space-y-1">
-                                <Label htmlFor="question" className="text-xs text-zinc-500">Вопрос аудитории</Label>
-                                <Input
-                                    id="question"
-                                    placeholder="Ваш вопрос..."
-                                    value={audienceQuestion}
-                                    onChange={(e) => setAudienceQuestion(e.target.value)}
-                                    onBlur={() => saveSettings({ audienceQuestion })}
-                                    className="h-8 text-sm"
+                            {/* Audience Question Toggle (No Input) */}
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="question-toggle" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Вопрос аудитории</Label>
+                                <Switch
+                                    id="question-toggle"
+                                    checked={!!audienceQuestion}
+                                    onCheckedChange={(checked) => {
+                                        const val = checked ? "Какая у вас ниша?" : ""
+                                        setAudienceQuestion(val)
+                                        saveSettings({ audienceQuestion: val })
+                                    }}
                                 />
                             </div>
                         </div>
                     </div>
                 )}
+
+                {/* Active Instructions Preview (To reassure user) */}
+
             </div>
 
             {/* File Preview Dialog */}

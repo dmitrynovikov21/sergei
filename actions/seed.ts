@@ -28,6 +28,12 @@ const DEFAULT_AGENTS = [
         role: "Helpful AI Assistant",
         systemPrompt: "You are a helpful and polite AI assistant. Answer questions clearly and concisely.",
         icon: "🤖"
+    },
+    {
+        name: "Схожие заголовки",
+        role: "Expert in Viral Headline Variations",
+        systemPrompt: "You are an expert in viral marketing and copywriting. Your task is to analyze the input headline and generate 10 variations using similar hooks, structures, and psychological triggers. Maintain the original tone but maximize click-through potential (CTR). Output exactly 10 numbered variations.",
+        icon: "⚡"
     }
 ]
 
@@ -53,7 +59,7 @@ export async function seedDefaultAgents() {
                 name: agentData.name,
                 description: agentData.role, // Mapping role to description as per schema
                 systemPrompt: agentData.systemPrompt,
-                icon: agentData.icon,
+                emoji: agentData.icon,
             },
         })
         createdAgents.push(agent)

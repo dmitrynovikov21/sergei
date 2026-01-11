@@ -45,7 +45,13 @@ export async function getDataset(id: string) {
         },
         include: {
             sources: {
-                orderBy: { createdAt: "desc" }
+                orderBy: { createdAt: "desc" },
+                include: {
+                    parseHistory: {
+                        orderBy: { startedAt: 'desc' },
+                        take: 1
+                    }
+                }
             },
             items: {
                 orderBy: { views: "desc" },
@@ -128,7 +134,7 @@ export async function addTrackingSource(
 
     revalidatePath(`/dashboard/datasets/${datasetId}`)
     // Auto-start parsing
-    processTrackingSource(source.id).catch(console.error)
+    await processTrackingSource(source.id)
 
     return source
 }

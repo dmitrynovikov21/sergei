@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useTransition } from "react"
+import Link from "next/link"
 import { Agent } from "@prisma/client"
 import { Star, MoreHorizontal } from "lucide-react"
 import { toggleAgentFavorite } from "@/actions/agents"
@@ -37,22 +38,11 @@ export function AgentHeader({ agent }: AgentHeaderProps) {
     return (
         <div className="mb-10">
             {/* Title Row */}
-            <div className="flex items-center gap-3">
+            {/* Title Row */}
+            <Link href={`/dashboard/agents/${agent.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                 <span className="text-3xl">{agent.emoji || "🤖"}</span>
-                <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">{agent.name}</h1>
-                <button
-                    onClick={handleToggleFavorite}
-                    disabled={isPending}
-                    className={cn(
-                        "transition-colors ml-2",
-                        isFavorite
-                            ? "text-yellow-500 hover:text-yellow-600"
-                            : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"
-                    )}
-                >
-                    <Star className={cn("h-5 w-5", isFavorite && "fill-current")} />
-                </button>
-            </div>
+                <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white cursor-pointer">{agent.name}</h1>
+            </Link>
 
             {/* Auto-update indicator - UNDER the title row, only for Headlines */}
             {showAutoUpdate && (

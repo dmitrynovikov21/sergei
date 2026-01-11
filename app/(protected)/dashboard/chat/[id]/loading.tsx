@@ -8,7 +8,6 @@ export default function Loading() {
             <HeaderUpdater
                 title=""
                 description=""
-                isLoading={true} // Add isLoading prop support to HeaderUpdater or just show empty
                 icon={<Skeleton className="h-6 w-6 rounded-full" />}
             />
 

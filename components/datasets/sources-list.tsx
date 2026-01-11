@@ -21,6 +21,15 @@ interface TrackingSource {
     minViewsFilter: number
     fetchLimit: number
     lastScrapedAt: Date | null
+    parseHistory?: Array<{
+        id: string
+        startedAt: Date
+        completedAt: Date | null
+        status: string
+        daysRange: number
+        postsAdded: number
+        error: string | null
+    }>
 }
 
 interface SourcesListProps {
@@ -37,6 +46,10 @@ export function SourcesList({ sources }: SourcesListProps) {
         startTransition(async () => {
             try {
                 const result = await forceScrapeSource(sourceId)
+
+                if (!result) {
+                    throw new Error("Не удалось получить результат парсинга")
+                }
 
                 if (result.saved > 0) {
                     toast.success(`Сохранено: ${result.saved} постов`)
@@ -130,11 +143,31 @@ export function SourcesList({ sources }: SourcesListProps) {
                                     Min views: {source.minViewsFilter.toLocaleString()} |
                                     Limit: {source.fetchLimit}
                                 </p>
-                                {source.lastScrapedAt && (
-                                    <p className="text-xs text-muted-foreground">
-                                        Последний парсинг: {new Date(source.lastScrapedAt).toLocaleString()}
-                                    </p>
-                                )}
+                                {/* Parse History - Latest */}
+                                {source.parseHistory && source.parseHistory.length > 0 && (() => {
+                                    const latest = source.parseHistory[0]
+                                    const isSuccess = latest.status === 'completed'
+                                    const isFailed = latest.status === 'failed'
+
+                                    return (
+                                        <p className="text-xs mt-1 flex items-center gap-1">
+                                            <span className={isSuccess ? "text-green-600" : isFailed ? "text-red-600" : "text-muted-foreground"}>
+                                                Парсинг: {new Date(latest.startedAt).toLocaleDateString('ru-RU', {
+                                                    day: 'numeric',
+                                                    month: 'short',
+                                                    hour: '2-digit',
+                                                    minute: '2-digit'
+                                                })}
+                                                {isSuccess && latest.postsAdded > 0 && (
+                                                    <span className="font-medium"> (+{latest.postsAdded} постов)</span>
+                                                )}
+                                                {isFailed && latest.error && (
+                                                    <span className="font-medium"> (Ошибка)</span>
+                                                )}
+                                            </span>
+                                        </p>
+                                    )
+                                })()}
                             </div>
                         </div>
 

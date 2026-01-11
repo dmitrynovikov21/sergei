@@ -34,10 +34,11 @@ export async function createAgent(data: CreateAgentData) {
             name,
             description: finalDescription,
             systemPrompt,
-            icon,
+            emoji: icon,
         },
     })
 
+    revalidatePath("/dashboard", "layout")
     revalidatePath("/dashboard/agents")
 }
 
@@ -53,7 +54,8 @@ export async function getAgents() {
             OR: [
                 { userId: session.user.id },
                 { isPublic: true }
-            ]
+            ],
+            name: { not: "Claude Assistant" }
         },
         orderBy: {
             createdAt: "desc",
@@ -72,7 +74,8 @@ export async function getFeaturedAgents() {
             OR: [
                 { isPublic: true },
                 ...(session?.user?.id ? [{ userId: session.user.id }] : [])
-            ]
+            ],
+            name: { not: "Claude Assistant" }
         },
         include: {
             files: {
@@ -130,7 +133,7 @@ export async function updateAgentIcon(agentId: string, icon: string) {
             userId: session.user.id,
         },
         data: {
-            icon,
+            emoji: icon,
         },
     })
 
@@ -207,35 +210,19 @@ export async function updateAgentSettings(
 
     const newSettings = { ...currentSettings, ...settings }
 
-    // Build settings block text
-    const settingsLines: string[] = []
-    if (newSettings.useEmoji) settingsLines.push("• Используй эмодзи в тексте")
-    if (newSettings.useSubscribe) settingsLines.push("• Добавь призыв подписаться")
-    if (newSettings.useLinkInBio) settingsLines.push("• Упомяни ссылку в шапке профиля")
-    if (newSettings.codeWord) settingsLines.push(`• Добавь призыв написать кодовое слово "${newSettings.codeWord}"`)
-    if (newSettings.audienceQuestion) settingsLines.push(`• Задай вопрос аудитории: "${newSettings.audienceQuestion}"`)
+    // Update the agent with new settings ONLY. 
+    // System prompt modification is now handled 100% client-side in EditAgentDialog (or via specific updateAgentPrompt calls).
+    // This prevents "Zombie" text injection like "=== НАСТРОЙКА ===".
 
-    // Remove existing settings block from systemPrompt
-    const settingsBlockRegex = /\n?\n?=== НАСТРОЙКА ОПИСАНИЯ ===\n[\s\S]*?(?=\n\n[^•]|$)/g
-    let cleanPrompt = agent.systemPrompt.replace(settingsBlockRegex, "").trim()
-
-    // Add new settings block if there are any settings
-    let newSystemPrompt = cleanPrompt
-    if (settingsLines.length > 0) {
-        const settingsBlock = `\n\n=== НАСТРОЙКА ОПИСАНИЯ ===\n${settingsLines.join("\n")}`
-        newSystemPrompt = cleanPrompt + settingsBlock
-    }
-
-    // Update the agent with new settings AND updated systemPrompt
     await prisma.agent.update({
         where: { id: agentId },
         data: {
-            ...settings,
-            systemPrompt: newSystemPrompt
+            ...settings
         }
     })
 
     // Revalidate to sync UI
+    revalidatePath("/dashboard", "layout")
     revalidatePath(`/dashboard/agents/${agentId}`)
 }
 
@@ -317,6 +304,7 @@ export async function addAgentFile(agentId: string, name: string, content: strin
         }
     })
 
+    revalidatePath("/dashboard", "layout")
     revalidatePath("/dashboard")
     return file
 }

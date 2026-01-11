@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 import { anthropic, DEFAULT_MODEL, CLAUDE_MODELS } from "@/lib/anthropic"
 import { getDatasetContext } from "@/actions/datasets"
+import { generateChatTitle } from "@/lib/chat-titles"
 
 export const runtime = "nodejs"
 export const maxDuration = 60 // Allow up to 60 seconds for streaming
@@ -35,7 +36,8 @@ export async function POST(
                 },
                 messages: {
                     orderBy: { createdAt: "asc" },
-                    take: 50, // Limit context window
+                    // Reduced from 50 to 20 to prevent 200k token overflow (216k > 200k witnessed)
+                    take: 20,
                     include: {
                         attachments: true
                     }
@@ -58,6 +60,15 @@ export async function POST(
             systemPrompt += `\n\n=== Reference Files ===${filesContext}`
         }
 
+        // Encourage reasoning
+        systemPrompt += "\n\nTake your time to think step by step before answering."
+
+        // 4.1 Append User Context (Target Audience, etc.)
+        const agentWithContext = chat.agent as any
+        if (agentWithContext.userContext) {
+            systemPrompt += `\n\n=== USER CONTEXT (Target Audience, Style) ===\n${agentWithContext.userContext}`
+        }
+
         // 5. RAG: Inject context from SELECTED dataset
         if (chat.datasetId) {
             const datasetContext = await getDatasetContext(chat.datasetId)
@@ -75,14 +86,19 @@ export async function POST(
             const instructions: string[] = []
 
             if (agent.useEmoji) {
-                instructions.push("Используй эмодзи в тексте")
+                instructions.push("Добавляй в текст эмодзи, где это уместно, но без фанатизма. Например вместо пунктов в тексте, можно сделать соответствующие эмодзи, но если подразумевается нумерованный список, то сделай цифры, а не эмодзи.")
             }
-            if (agent.useSubscribe) {
-                instructions.push("Добавь призыв подписаться в конце")
+
+            const userLink = agent.subscribeLink || "@ваш_ник"
+
+            if (agent.useSubscribe && agent.useLinkInBio) {
+                instructions.push(`В конце текста должен быть призыв подписаться на мою страницу ${userLink} и в ТГ в шапке профиля. Важно, чтобы это было нативно, то есть призыв был связан с темой текста.`)
+            } else if (agent.useSubscribe) {
+                instructions.push(`В конце текста должен быть призыв подписаться на мою страницу ${userLink}. Важно, чтобы это было нативно, то есть призыв был связан с темой текста.`)
+            } else if (agent.useLinkInBio) {
+                instructions.push(`Упомяни что полезная информация есть в ТГ по ссылке в шапке профиля.`)
             }
-            if (agent.useLinkInBio) {
-                instructions.push("Упомяни ссылку в шапке профиля")
-            }
+
             if (agent.codeWord) {
                 instructions.push(`Добавь призыв написать кодовое слово "${agent.codeWord}" в директ/комментарии`)
             }
@@ -93,6 +109,20 @@ export async function POST(
             if (instructions.length > 0) {
                 systemPrompt += `\n\n=== ВАЖНЫЕ ИНСТРУКЦИИ ДЛЯ ЭТОГО ОТВЕТА ===\n${instructions.join("\n")}`
             }
+
+            // Always add formatting instruction for description agent
+            systemPrompt += `\n\n=== ОБЯЗАТЕЛЬНЫЙ ФОРМАТ ===
+КАЖДОЕ описание оборачивай в маркеры:
+【DESC】текст описания здесь【/DESC】
+
+Пример правильного ответа:
+**1. Заголовок**
+【DESC】🎯 Полный текст первого описания со всеми эмодзи и призывами...【/DESC】
+
+**2. Заголовок**  
+【DESC】💡 Полный текст второго описания...【/DESC】
+
+ВАЖНО: маркеры 【DESC】 и 【/DESC】 ставь ТОЛЬКО вокруг самого описания, НЕ включай заголовки и нумерацию внутрь маркеров.`
         }
 
         // 5. Build messages array for Claude
@@ -139,9 +169,12 @@ export async function POST(
 
         if (attachments && Array.isArray(attachments)) {
             attachments.forEach((att: any) => {
-                if (att.url.startsWith('data:image')) {
-                    const match = att.url.match(/^data:(image\/[a-z]+);base64,(.+)$/)
+                // Support all image formats: jpeg, jpg, png, gif, webp, svg+xml, etc.
+                if (att.url && att.url.startsWith('data:image')) {
+                    // More flexible regex to match image/jpeg, image/png, image/webp, image/gif, image/svg+xml, etc.
+                    const match = att.url.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
                     if (match) {
+                        console.log('[Chat API] Processing image:', match[1], 'size:', match[2].length)
                         newMsgContent.push({
                             type: "image",
                             source: {
@@ -150,10 +183,14 @@ export async function POST(
                                 data: match[2]
                             }
                         })
+                    } else {
+                        console.log('[Chat API] Failed to parse image URL:', att.url.substring(0, 50))
                     }
                 }
             })
         }
+
+        console.log('[Chat API] newMsgContent items:', newMsgContent.length)
 
         if (message) {
             newMsgContent.push({ type: "text", text: message })
@@ -184,7 +221,26 @@ export async function POST(
                         type: att.contentType
                     }
                 })
+
+
             }))
+        }
+
+        // Generate AI title for first message in chat
+        // We use chat.messages.length which is from the initial fetch (before current message)
+        if (chat.messages.length === 0) {
+            try {
+                // If message is empty (e.g. only attachment), use a fallback prompt
+                const titlePrompt = message || (attachments && attachments.length > 0 ? "Analyzed file" : "New Chat")
+                const title = await generateChatTitle(titlePrompt)
+
+                await prisma.chat.update({
+                    where: { id: params.chatId },
+                    data: { title }
+                })
+            } catch (error) {
+                console.error("Failed to generate chat title:", error)
+            }
         }
 
         // 7. Get model from agent or use default
@@ -192,12 +248,30 @@ export async function POST(
         const model = CLAUDE_MODELS[modelKey] || DEFAULT_MODEL
 
         // 8. Create streaming response
-        const stream = await anthropic.messages.stream({
+        console.log("-----------------------------------------")
+        console.log("DEBUG: Using Model:", model)
+        console.log("DEBUG: System Prompt Length:", systemPrompt?.length)
+        console.log("-----------------------------------------")
+
+        // Enable Thinking for supported models (3.7 Sonnet, 4.5 Sonnet)
+        const isThinkingModel = model.includes("sonnet-4-5") || model.includes("sonnet-3-7")
+
+        const messagingOptions: any = {
             model,
-            max_tokens: 4096,
+            max_tokens: isThinkingModel ? 32000 : 8192, // Increased to accommodate 16k thinking + output
             system: systemPrompt,
             messages: claudeMessages,
-        })
+            metadata: { user_id: session.user.id },
+        }
+
+        if (isThinkingModel) {
+            messagingOptions.thinking = {
+                type: "enabled",
+                budget_tokens: 16000 // Maximum effective budget for deep reasoning
+            }
+        }
+
+        const stream = await anthropic.messages.stream(messagingOptions)
 
         // 9. Create a TransformStream to process the response
         const encoder = new TextEncoder()
@@ -239,12 +313,14 @@ export async function POST(
             async start(controller) {
                 try {
                     for await (const event of stream) {
+                        // Only stream the actual text response, not thinking blocks
                         if (event.type === "content_block_delta") {
-                            const delta = event.delta
-                            if ("text" in delta) {
+                            const delta = event.delta as any
+                            if (delta.type === "text_delta" && delta.text) {
                                 fullResponse += delta.text
                                 controller.enqueue(encoder.encode(delta.text))
                             }
+                            // Thinking is processed internally but NOT shown to user
                         }
                     }
 
@@ -280,9 +356,10 @@ export async function POST(
 
         return new Response(readable, {
             headers: {
-                "Content-Type": "text/plain; charset=utf-8",
+                "Content-Type": "text/event-stream",
                 "Cache-Control": "no-cache",
                 "Connection": "keep-alive",
+                "X-Accel-Buffering": "no", // Disable buffering in Nginx/Cloudflare
             },
         })
     } catch (error) {
