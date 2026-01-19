@@ -48,11 +48,19 @@ const APIFY_ACTOR = "apify/instagram-scraper"
  */
 export async function scrapeInstagram(
     username: string,
-    limit: number = 20
+    limit: number = 20,
+    daysLimit: number = 30
 ): Promise<ApifyInstagramPost[]> {
     if (!APIFY_TOKEN) {
         throw new Error("APIFY_TOKEN not configured")
     }
+
+    // Calculate the cutoff date for filtering posts
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - daysLimit)
+    const onlyPostsNewerThan = cutoffDate.toISOString()
+
+    console.log(`[Apify] Scraping @${username}, limit: ${limit}, only posts newer than: ${onlyPostsNewerThan}`)
 
     // Apify API uses username~actorname format in URLs
     const actorId = APIFY_ACTOR.replace("/", "~")
@@ -63,6 +71,7 @@ export async function scrapeInstagram(
         resultsType: "posts",
         resultsLimit: limit,
         addParentData: false,
+        onlyPostsNewerThan, // Filter posts by date on Apify side
         // Use Apify proxy to avoid IP bans
         proxy: {
             useApifyProxy: true,

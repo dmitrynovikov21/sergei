@@ -265,19 +265,25 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const [input, setInput] = useState(initialInput || "")
     const [isLoading, setIsLoading] = useState(false)
 
-    // Parse initial attachments from URL
+    // Parse initial attachments from sessionStorage (moved from URL to avoid 414)
     const initialAttachments = useMemo(() => {
-        const attParam = searchParams.get("attachments")
-        if (attParam) {
+        if (typeof window === 'undefined') return []
+
+        const storageKey = `chat_attachments_${initialChatId}`
+        const stored = sessionStorage.getItem(storageKey)
+        if (stored) {
             try {
-                return JSON.parse(decodeURIComponent(attParam))
+                const parsed = JSON.parse(stored)
+                // Clean up after reading
+                sessionStorage.removeItem(storageKey)
+                return parsed
             } catch (e) {
-                console.error("Failed to parse attachments", e)
+                console.error("Failed to parse attachments from storage", e)
                 return []
             }
         }
         return []
-    }, [searchParams])
+    }, [initialChatId])
 
     const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments)
 
@@ -881,6 +887,25 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
             <div className="flex-none bg-transparent p-4">
                 <div className="mx-auto max-w-3xl px-4">
+                    {/* Quick Actions - Ещё / Дай другие (Task 5.1) */}
+                    {messages.length > 0 && !isLoading && (
+                        <div className="flex justify-center gap-2 mb-3">
+                            <button
+                                type="button"
+                                onClick={() => handleSendMessage("Ещё")}
+                                className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                🔄 Ещё
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleSendMessage("Дай другие варианты")}
+                                className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                            >
+                                ✨ Дай другие
+                            </button>
+                        </div>
+                    )}
                     <ChatInput
                         input={input}
                         setInput={setInput}

@@ -4,6 +4,7 @@ import React, { useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Agent, AgentFile } from "@prisma/client"
 import { addAgentFile, deleteAgentFile, updateAgentSettings } from "@/actions/agents"
+import { getDataset } from "@/actions/datasets" // Для получения имени датасета
 import { FileText, FileCode, Plus, Trash2, Upload, Loader2, X, Image as ImageIcon } from "lucide-react"
 import { EditAgentDialog } from "@/components/dashboard/edit-agent-dialog"
 import { Button } from "@/components/ui/button"
@@ -45,7 +46,20 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     const [useLinkInBio, setUseLinkInBio] = useState(agent.useLinkInBio || false)
     const [codeWord, setCodeWord] = useState(agent.codeWord || "")
     const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
+    const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
     const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
+
+    // Dataset info for Headlines agent
+    const [datasetName, setDatasetName] = useState<string | null>(null)
+    const datasetId = (agent as any).datasetId
+
+    React.useEffect(() => {
+        if (datasetId) {
+            getDataset(datasetId).then(ds => {
+                if (ds) setDatasetName(ds.name)
+            })
+        }
+    }, [datasetId])
 
     // Check agent types
     const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
@@ -245,14 +259,11 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
         <>
             <div className="w-[280px] shrink-0 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 flex flex-col gap-6 h-fit ml-6">
 
-                {/* Headlines Badge */}
-                {isHeadlinesAgent && (
-                    <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                        </span>
-                        Обновляется автоматически
+                {/* Headlines Badge - Fixed per user request (No green bg, show dataset name) */}
+                {isHeadlinesAgent && datasetName && (
+                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
+                        <Icons.database className="h-3 w-3" />
+                        <span>Датасет: {datasetName}</span>
                     </div>
                 )}
 
@@ -264,39 +275,28 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                     </div>
                 )}
 
-                {/* User Context Section ("Pencil") */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Ваш контекст ✏️</h3>
-                    </div>
-                    <textarea
-                        className="w-full text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-zinc-400"
-                        placeholder="Моя ЦА - мамочки, стиль общения дружелюбный..."
-                        value={userContext}
-                        onChange={(e) => setUserContext(e.target.value)}
-                        onBlur={saveUserContext}
-                    />
-                </div>
 
-                {/* Instructions Section */}
-                <div>
-                    <div className="flex items-center justify-between mb-3">
-                        <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Инструкции</h3>
-                        <EditAgentDialog
-                            agent={agent}
-                            trigger={
-                                <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <Settings className="h-4 w-4 text-zinc-500" />
-                                </Button>
-                            }
-                        />
+                {/* Instructions Section - Hide for Headlines agent (per task 3.1) */}
+                {!isHeadlinesAgent && (
+                    <div>
+                        <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Инструкции</h3>
+                            <EditAgentDialog
+                                agent={agent}
+                                trigger={
+                                    <Button variant="ghost" size="icon" className="h-7 w-7">
+                                        <Settings className="h-4 w-4 text-zinc-500" />
+                                    </Button>
+                                }
+                            />
+                        </div>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                            {agent.systemPrompt
+                                ? `${agent.systemPrompt.slice(0, 100)}...`
+                                : "Добавьте инструкции для настройки ответов Claude"}
+                        </p>
                     </div>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                        {agent.systemPrompt
-                            ? `${agent.systemPrompt.slice(0, 100)}...`
-                            : "Добавьте инструкции для настройки ответов Claude"}
-                    </p>
-                </div>
+                )}
 
                 {/* Chat Settings (only for Description agent) - MOVED UP BEFORE FILES (Optional, but user said 'Always visible') */}
                 {isDescriptionAgent && (

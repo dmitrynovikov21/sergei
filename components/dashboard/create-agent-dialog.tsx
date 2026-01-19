@@ -39,9 +39,10 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
     const [isPending, startTransition] = useTransition()
 
     const [name, setName] = useState("")
-    const [description, setDescription] = useState("")
-    const [systemPrompt, setSystemPrompt] = useState("Ты полезный AI-ассистент. Отвечай на русском языке.")
     const [emoji, setEmoji] = useState(getRandomEmoji())
+
+    // Default system prompt - user can customize in settings later
+    const DEFAULT_SYSTEM_PROMPT = "Ты полезный AI-ассистент. Отвечай на русском языке."
 
     const handleRandomEmoji = () => {
         setEmoji(getRandomEmoji())
@@ -57,8 +58,7 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
             try {
                 await createAgent({
                     name: name.trim(),
-                    description: description.trim() || undefined,
-                    systemPrompt: systemPrompt.trim(),
+                    systemPrompt: DEFAULT_SYSTEM_PROMPT,
                     icon: emoji
                 })
 
@@ -67,8 +67,6 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
 
                 // Reset form
                 setName("")
-                setDescription("")
-                setSystemPrompt("Ты полезный AI-ассистент. Отвечай на русском языке.")
                 setEmoji(getRandomEmoji())
 
                 router.refresh()
@@ -101,7 +99,7 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                         Создать нового агента
                     </DialogTitle>
                     <DialogDescription>
-                        Настройте своего AI-помощника с уникальным промптом
+                        Введите название, остальное можно настроить потом в настройках
                     </DialogDescription>
                 </DialogHeader>
 
@@ -135,34 +133,6 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                         >
                             <RefreshCw className="h-4 w-4" />
                         </Button>
-                    </div>
-
-                    {/* Description */}
-                    <div>
-                        <Label htmlFor="agent-description" className="text-sm font-medium">
-                            Описание (опционально)
-                        </Label>
-                        <Input
-                            id="agent-description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Краткое описание агента"
-                            className="mt-1"
-                        />
-                    </div>
-
-                    {/* System Prompt */}
-                    <div>
-                        <Label htmlFor="agent-prompt" className="text-sm font-medium">
-                            Системный промпт
-                        </Label>
-                        <Textarea
-                            id="agent-prompt"
-                            value={systemPrompt}
-                            onChange={(e) => setSystemPrompt(e.target.value)}
-                            placeholder="Инструкции для агента..."
-                            className="mt-1 min-h-[120px]"
-                        />
                     </div>
                 </div>
 

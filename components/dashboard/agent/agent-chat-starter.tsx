@@ -98,7 +98,8 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
 
     const handleStartChat = async (messageOverride?: string) => {
         const messageToSend = messageOverride || input
-        if (!messageToSend.trim()) return
+        // Allow sending with attachments only (no text required)
+        if (!messageToSend.trim() && attachments.length === 0) return
 
         try {
             setIsLoading(true)
@@ -107,12 +108,12 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
             // Instructions are now added server-side in the chat API route
             // based on agent settings (useEmoji, useSubscribe, etc.)
 
-            // Pass attachments via URL
-            const attachmentParam = attachments.length > 0
-                ? `&attachments=${encodeURIComponent(JSON.stringify(attachments))}`
-                : ""
+            // Store attachments in sessionStorage to avoid 414 URI Too Large error
+            if (attachments.length > 0) {
+                sessionStorage.setItem(`chat_attachments_${chatId}`, JSON.stringify(attachments))
+            }
 
-            router.push(`/dashboard/chat/${chatId}?init=${encodeURIComponent(messageToSend)}${attachmentParam}`)
+            router.push(`/dashboard/chat/${chatId}?init=${encodeURIComponent(messageToSend)}`)
         } catch (error) {
             console.error(error)
             toast.error("Не удалось создать чат")
@@ -128,12 +129,8 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
             { text: "Дай 10 заголовков", emoji: "🔥" },
             { text: "Дай 10 на тему", emoji: "💡" }
         )
-    } else if (isDescriptionAgent || agent.name.toLowerCase().includes("reels")) {
-        quickActions.push(
-            { text: "Дай 10 вариантов описания", emoji: "📝" },
-            { text: "Дай 10 описаний на тему", emoji: "🎯" }
-        )
     }
+    // NOTE: quickActions removed for Description agent per task 4.1
 
     return (
         <div className="space-y-4">

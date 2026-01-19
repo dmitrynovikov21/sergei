@@ -80,12 +80,13 @@ export async function processTrackingSource(sourceId: string): Promise<{
             throw new Error(`Could not extract username from URL: ${source.url}`)
         }
 
-        // 2. Scrape Instagram
-        console.log(`[Harvester] Scraping @${username} (limit: ${source.fetchLimit})`)
+        // 2. Scrape Instagram with date filter
+        const daysLimit = source.daysLimit || DEFAULT_DAYS_LIMIT
+        console.log(`[Harvester] Scraping @${username} (limit: ${source.fetchLimit}, days: ${daysLimit})`)
 
         let posts: ApifyInstagramPost[]
         try {
-            posts = await scrapeInstagram(username, source.fetchLimit)
+            posts = await scrapeInstagram(username, source.fetchLimit, daysLimit)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Scrape error"
             throw new Error(errorMsg)
@@ -142,18 +143,7 @@ export async function processTrackingSource(sourceId: string): Promise<{
 
         await runProcessingPass()
 
-        // Fallback: If < 5 saved and we have posts (and didn't already look back far), try extending lookback to 14 weeks (98 days)
-        if (savedInPass < 5 && posts.length > 0 && (source.daysLimit || DEFAULT_DAYS_LIMIT) < 90) {
-            console.log(`[Harvester] Fallback: No posts saved. extending lookback to 14 weeks (98 days)...`)
-            // Reset skipped count to avoid double counting? Or just append?
-            // Technically previous skips are valid for that pass. 
-            // We just want to see if we can save *some*.
-            // We should filter out posts already processed? processPost handles dedup (existing check).
-            // But we need to retry "skipped" ones.
-            // processPost checks DB. If not in DB, it proceeds to filters.
-
-            await runProcessingPass(98) // 14 weeks
-        }
+        // Fallback logic removed - respect user's daysLimit setting strictly
 
         // Convert skip counts to array
         result.skipReasons = Object.entries(skipCounts)

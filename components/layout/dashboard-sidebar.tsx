@@ -87,7 +87,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             </Button>
           </div>
 
-          <nav className="flex flex-1 flex-col gap-2 px-3 pb-4 overflow-hidden">
+          <nav className="flex flex-1 flex-col gap-2 px-3 pb-4 overflow-y-auto">
 
             {/* CREATE CLAUDE CHAT BUTTON */}
             <div className="mb-6">
@@ -192,6 +192,22 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                   <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} />
                 ))}
             </div>
+
+            {/* МОИ АГЕНТЫ - User's custom agents */}
+            {agents.filter(a => !a.isPublic).length > 0 && (
+              <div className="flex flex-col gap-1 mt-6">
+                {isSidebarExpanded && (
+                  <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
+                    Мои агенты
+                  </h4>
+                )}
+                {agents
+                  .filter(a => !a.isPublic)
+                  .map((agent) => (
+                    <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} />
+                  ))}
+              </div>
+            )}
 
             {/* CREATE AGENT BUTTON */}
             <div className="mt-6 px-1">

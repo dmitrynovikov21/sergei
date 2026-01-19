@@ -47,7 +47,7 @@ interface DatasetTabsProps {
 
 export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsProps) {
     const [items, setItems] = useState(initialItems)
-    const [daysFilter, setDaysFilter] = useState<number | null>(null) // null = all, 7, 14
+    const [daysFilter, setDaysFilter] = useState<number | null>(30) // Default 30 days, null removed from UI
     const [minViews, setMinViews] = useState<string>("")
     const [minLikes, setMinLikes] = useState<string>("")
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -131,7 +131,7 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                         <h3 className="font-medium">Фильтры</h3>
                         <button
                             onClick={() => {
-                                setDaysFilter(null)
+                                setDaysFilter(30)
                                 setMinViews("")
                                 setMinLikes("")
                             }}
@@ -145,15 +145,6 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                     <div className="space-y-2">
                         <label className="text-sm font-medium">Период</label>
                         <div className="flex items-center gap-2">
-                            <button
-                                onClick={() => setDaysFilter(null)}
-                                className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === null
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-secondary hover:bg-secondary/80"
-                                    }`}
-                            >
-                                Все время
-                            </button>
                             <button
                                 onClick={() => setDaysFilter(7)}
                                 className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === 7
@@ -171,6 +162,15 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                                     }`}
                             >
                                 14 дней
+                            </button>
+                            <button
+                                onClick={() => setDaysFilter(30)}
+                                className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === 30
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary hover:bg-secondary/80"
+                                    }`}
+                            >
+                                30 дней
                             </button>
                         </div>
                     </div>

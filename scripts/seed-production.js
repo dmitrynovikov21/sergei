@@ -4,13 +4,14 @@ const prisma = new PrismaClient()
 async function main() {
     console.log("🌱 Starting production seed...")
 
-    // Cladezavod Agents (Public)
+    // Cladezavod Agents (Public) - Updated to use Claude 4.5 Sonnet
     const agents = [
         {
             name: "Заголовки Reels",
             description: "Анализ и создание вирусных заголовков для Reels",
             emoji: "🎬",
             isPublic: true,
+            model: "claude-sonnet-4-5",
             systemPrompt: `Ты эксперт по анализу вирусных заголовков для Reels.
 
 Твоя задача при получении заголовков конкурентов:
@@ -45,6 +46,7 @@ async function main() {
             description: "Написание текстов для описаний Reels в формате списка",
             emoji: "✍️",
             isPublic: true,
+            model: "claude-sonnet-4-5",
             systemPrompt: `Ты эксперт по написанию текстов для описаний Reels.
 
 Анализируй структуру текста: введение, смысл, как раскрывается тема и заключение. Пиши все тексты в таком стиле, подаче и формате, ОБЯЗАТЕЛЬНО СОХРАНЯЯ логическую последовательность, абзацы и единый текст.
@@ -70,6 +72,7 @@ async function main() {
             description: "Анализ и создание заголовков для Instagram каруселей",
             emoji: "🎠",
             isPublic: true,
+            model: "claude-sonnet-4-5",
             systemPrompt: `Ты эксперт по анализу заголовков для Instagram каруселей.
 
 Твоя задача при получении заголовков конкурентов:
@@ -101,6 +104,7 @@ async function main() {
             description: "Анализ и создание структуры постов-каруселей",
             emoji: "📊",
             isPublic: true,
+            model: "claude-sonnet-4-5",
             systemPrompt: `Ты эксперт по созданию структуры постов-каруселей для Instagram.
 
 Шаг 1: При получении поста конкурента выполни анализ:
@@ -154,9 +158,11 @@ async function main() {
                 data: {
                     description: agentData.description,
                     systemPrompt: agentData.systemPrompt,
-                    emoji: agentData.emoji
+                    emoji: agentData.emoji,
+                    model: agentData.model // Explicity update model
                 }
             })
+            console.log(`✅ Updated agent config: ${agentData.name}`)
         } else {
             await prisma.agent.create({
                 data: {
@@ -164,6 +170,7 @@ async function main() {
                     description: agentData.description,
                     systemPrompt: agentData.systemPrompt,
                     emoji: agentData.emoji,
+                    model: agentData.model, // Explicitly set model
                     isPublic: true,
                     userId: null // Public agent
                 }
