@@ -367,16 +367,23 @@ export async function updateChatDataset(chatId: string, datasetId: string | null
  * Formats data like agent context files:
  * - Numbered list of headlines
  * - Optional scenarios section with transcripts
+ * Only includes content from the last 14 days
  */
 export async function getDatasetContext(
     datasetId: string,
-    limit: number = 50
+    limit: number = 50,
+    daysBack: number = 14
 ): Promise<string> {
+    // Calculate date threshold (14 days ago)
+    const dateThreshold = new Date()
+    dateThreshold.setDate(dateThreshold.getDate() - daysBack)
+
     const items = await prisma.contentItem.findMany({
         where: {
             datasetId,
             isProcessed: true,
-            headline: { not: null }
+            headline: { not: null },
+            createdAt: { gte: dateThreshold } // Only last 14 days
         },
         orderBy: { views: "desc" },
         take: limit

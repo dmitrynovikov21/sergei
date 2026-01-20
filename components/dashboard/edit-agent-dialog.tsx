@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import {
-    Dialog,
+    Dialog as UIDialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
@@ -24,7 +24,7 @@ import { toast } from "sonner"
 import { Trash2, Upload, FileText, Settings, Eye, Image as ImageIcon, X, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Icons } from "@/components/shared/icons"
+
 
 interface EditAgentDialogProps {
     agent: Agent & { files?: AgentFile[] }
@@ -69,8 +69,13 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
 
     const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
 
-    // Check if this is Description agent
-    const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
+    // Check if this agent should show description settings (only for specific system agents)
+    const agentNameLower = agent.name.toLowerCase()
+    const isDescriptionAgent =
+        agentNameLower.includes("описание") && agentNameLower.includes("reels") // Описание Reels
+    const isStructureAgent =
+        agentNameLower.includes("структура") && agentNameLower.includes("карусел") // Структура Карусели
+    const showDescriptionSettings = isDescriptionAgent || isStructureAgent
 
     // Limits removed as per request
 
@@ -245,7 +250,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <UIDialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
                 {trigger || (
                     <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -255,7 +260,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
             </DialogTrigger>
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0 gap-0 border-zinc-200 dark:border-zinc-700">
                 {/* Safety Banner */}
-                {isDescriptionAgent && (
+                {showDescriptionSettings && (
                     <div className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 p-3 flex items-center justify-center text-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-medium">
                         <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                         <span>В меня вложили уже много сил и времени, пожалуйста не сломай меня! 🥺</span>
@@ -282,195 +287,151 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 <div className="p-6 space-y-8">
                     {/* System Prompt */}
                     <div className="space-y-3">
-                        <div className="flex justify-between items-center">
-                            <Label htmlFor="systemPrompt" className="text-sm font-medium">
-                                Системный промпт (инструкции)
+                        <Label htmlFor="systemPrompt" className="text-sm font-medium">
+                            Системный промпт (инструкции)
+                        </Label>
+                        <Textarea
+                            id="systemPrompt"
+                            value={systemPrompt}
+                            onChange={(e) => setSystemPrompt(e.target.value)}
+                            placeholder="Опишите поведение и роль AI агента..."
+                            className="min-h-[400px] font-mono text-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl resize-y"
+                        />
+                    </div>
+
+                    {/* Description Agent Settings - Only for system Description agents, not user-created */}
+                    {showDescriptionSettings && (
+                        <div className="space-y-5 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl">
+                            <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
+                                Настройки описаний
                             </Label>
-                            <Textarea
-                                id="systemPrompt"
-                                value={systemPrompt}
-                                onChange={(e) => setSystemPrompt(e.target.value)}
-                                placeholder="Опишите поведение и роль AI агента..."
-                                className="min-h-[400px] font-mono text-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl resize-y"
-                            />
-                            {/* Removed local Save Prompt button */}
-                        </div>
 
-                        {/* Description Agent Settings */}
-                        {isDescriptionAgent && (
-                            <div className="space-y-5 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl">
-                                <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                                    Настройки описаний
-                                </Label>
+                            <div className="space-y-6">
+                                {/* 1. Emoji */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-emoji" className="text-base font-medium">Эмоджи</Label>
+                                    <Switch
+                                        id="edit-emoji"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={useEmoji}
+                                        onCheckedChange={setUseEmoji}
+                                    />
+                                </div>
 
-                                <div className="space-y-6">
-                                    {/* 1. Emoji */}
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="edit-emoji" className="text-base font-medium">Эмоджи</Label>
-                                        <Switch
-                                            id="edit-emoji"
-                                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                                            checked={useEmoji}
-                                            onCheckedChange={(checked) => {
-                                                setUseEmoji(checked)
-                                                // Local update only
-                                                if (checked) {
-                                                    const hasMainHeader = newPrompt.includes(TARGET_MAIN_HEADER)
-                                                    const headerBlock = hasMainHeader ? "" : `\n\n${TARGET_MAIN_HEADER}`
-                                                    const CLEAN_BLOCK = `${headerBlock}\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
-                                                    newPrompt = newPrompt + CLEAN_BLOCK
-                                                }
-                                                setSystemPrompt(newPrompt)
-                                            }}
-                                        />
-                                    </div>
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-subscribe" className="text-base font-medium">Призыв подписаться</Label>
+                                    <Switch
+                                        id="edit-subscribe"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={useSubscribe}
+                                        onCheckedChange={setUseSubscribe}
+                                    />
+                                </div>
 
-                                    {/* 2. Subscribe */}
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="edit-subscribe" className="text-base font-medium">Призыв подписаться</Label>
-                                        <Switch
-                                            id="edit-subscribe"
-                                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                                            checked={useSubscribe}
-                                            onCheckedChange={(checked) => {
-                                                setUseSubscribe(checked)
-                                                // Local update
-                                                if (checked) {
-                                                    const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
-                                                    newPrompt = newPrompt + CLEAN_BLOCK
-                                                }
-                                                setSystemPrompt(newPrompt)
-                                            }}
-                                        />
-                                    </div>
-
-                                    {/* Subscribe Link Input */}
-                                    {useSubscribe && (
-                                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <Label htmlFor="subscribe-link" className="text-sm text-muted-foreground mb-2 block">
-                                                Ссылка для подписки
-                                            </Label>
-                                            <Input
-                                                id="subscribe-link"
-                                                value={subscribeLink}
-                                                onChange={(e) => setSubscribeLink(e.target.value)}
-                                                onBlur={() => {
-                                                    // Update prompt immediately when link changes
-                                                    // Update prompt immediately when link changes
-                                                }
-                                                }}
+                                {/* Subscribe Link Input */}
+                                {useSubscribe && (
+                                    <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="subscribe-link" className="text-sm text-muted-foreground mb-2 block">
+                                            Ссылка для подписки
+                                        </Label>
+                                        <Input
+                                            id="subscribe-link"
+                                            value={subscribeLink}
+                                            onChange={(e) => setSubscribeLink(e.target.value)}
+                                            onBlur={() => {
+                                                // Update prompt immediately when link changes
+                                                // Update prompt immediately when link changes
+                                            }
+                                            }
                                             placeholder="https://instagram.com/..."
                                             className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
                                         />
-                                        </div>
-                                    )}
-
-                                    {/* 3. Telegram Link */}
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="edit-tg" className="text-base font-medium">Призыв на ТГ в шапке профиля</Label>
-                                        <Switch
-                                            id="edit-tg"
-                                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                                            checked={useLinkInBio}
-                                            onCheckedChange={(checked) => {
-                                                setUseLinkInBio(checked)
-                                                // Local update
-                                                if (checked) {
-                                                    const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
-                                                    newPrompt = newPrompt + CLEAN_BLOCK
-                                                }
-                                                setSystemPrompt(newPrompt)
-                                            }}
-                                        />
                                     </div>
+                                )}
 
-                                    {/* 4. Code Word */}
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="edit-codeword" className="text-base font-medium">Кодовое слово</Label>
-                                        <Switch
-                                            id="edit-codeword"
-                                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                                            checked={!!codeWord}
-                                            onCheckedChange={(checked) => {
-                                                // CodeWord Logic
-                                                let currentWord = ""
-                                                if (!checked) {
-                                                    setCodeWord("")
-                                                    // Local update
-                                                    if (checked) {
-                                                        const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
-                                                        newPrompt = newPrompt + CLEAN_BLOCK
-                                                    }
-                                                    setSystemPrompt(newPrompt)
-                                                }
-                                            }
-                                    />
-                                    </div>
-
-                                    {!!codeWord && (
-                                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
-                                            <Label htmlFor="code-word-input" className="text-sm text-muted-foreground mb-2 block">
-                                                Слово
-                                            </Label>
-                                            <Input
-                                                id="code-word-input"
-                                                value={codeWord}
-                                                onChange={(e) => setCodeWord(e.target.value)}
-                                                onBlur={() => {
-                                                    if (!!codeWord) {
-                                                    }
-                                                }}
-                                                placeholder="СТАРТ"
-                                                className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
-                                            />
-                                        </div>
-                                    )}
-
-
-                                    {/* 5. Audience Question */}
-                                    <div className="flex items-center justify-between">
-                                        <Label htmlFor="edit-question" className="text-base font-medium">Вопрос аудитории</Label>
-                                        <Switch
-                                            id="edit-question"
-                                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                                            checked={useAudienceQuestion}
-                                            onCheckedChange={(checked) => {
-                                                setUseAudienceQuestion(checked)
-                                                // Local update
-                                                if (checked) {
-                                                    const CLEAN_BLOCK = `\n\n${TARGET_SUBHEADER}\n${TARGET_BODY}`
-                                                    newPrompt = newPrompt + CLEAN_BLOCK
-                                                }
-                                                setSystemPrompt(newPrompt)
-                                            }}
-                                        />
-                                    </div>
-                                    />
-                                </div>
-
-                                {/* 6. Dataset Selection */}
+                                {/* 3. Telegram Link */}
                                 <div className="flex items-center justify-between">
-                                    <Label htmlFor="edit-dataset" className="text-base font-medium">Датасет (контекст)</Label>
-                                    <Select
-                                        value={selectedDatasetId || "none"}
-                                        onValueChange={(value) => setSelectedDatasetId(value === "none" ? null : value)}
-                                    >
-                                        <SelectTrigger className="w-[180px]">
-                                            <SelectValue placeholder="Без контекста" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="none">Без контекста</SelectItem>
-                                            {datasets.map(ds => (
-                                                <SelectItem key={ds.id} value={ds.id}>{ds.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Label htmlFor="edit-tg" className="text-base font-medium">Призыв на ТГ в шапке профиля</Label>
+                                    <Switch
+                                        id="edit-tg"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={useLinkInBio}
+                                        onCheckedChange={setUseLinkInBio}
+                                    />
                                 </div>
+
+                                {/* 4. Code Word */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-codeword" className="text-base font-medium">Кодовое слово</Label>
+                                    <Switch
+                                        id="edit-codeword"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={!!codeWord}
+                                        onCheckedChange={(checked) => {
+                                            if (!checked) {
+                                                setCodeWord("")
+                                            } else {
+                                                setCodeWord("СТАРТ")
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                {!!codeWord && (
+                                    <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <Label htmlFor="code-word-input" className="text-sm text-muted-foreground mb-2 block">
+                                            Слово
+                                        </Label>
+                                        <Input
+                                            id="code-word-input"
+                                            value={codeWord}
+                                            onChange={(e) => setCodeWord(e.target.value)}
+                                            onBlur={() => {
+                                                if (!!codeWord) {
+                                                }
+                                            }}
+                                            placeholder="СТАРТ"
+                                            className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
+                                        />
+                                    </div>
+                                )}
+
+
+                                {/* 5. Audience Question */}
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="edit-question" className="text-base font-medium">Вопрос аудитории</Label>
+                                    <Switch
+                                        id="edit-question"
+                                        className="data-[state=checked]:bg-green-500 will-change-transform"
+                                        checked={useAudienceQuestion}
+                                        onCheckedChange={setUseAudienceQuestion}
+                                    />
+                                </div>
+
+                            </div>
+
+                            {/* 6. Dataset Selection */}
+                            <div className="flex items-center justify-between">
+                                <Label htmlFor="edit-dataset" className="text-base font-medium">Датасет (контекст)</Label>
+                                <Select
+                                    value={selectedDatasetId || "none"}
+                                    onValueChange={(value) => setSelectedDatasetId(value === "none" ? null : value)}
+                                >
+                                    <SelectTrigger className="w-[180px]">
+                                        <SelectValue placeholder="Без контекста" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">Без контекста</SelectItem>
+                                        {datasets.map(ds => (
+                                            <SelectItem key={ds.id} value={ds.id}>{ds.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                         </div>
                     )}
 
-                    {/* Files Section */}
+                    {/* Files Section with Dropbox */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <Label className="text-sm font-medium">Файлы контекста</Label>
@@ -496,121 +457,148 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                             </div>
                         </div>
 
-                        <p className="text-xs text-zinc-500">
-                            Перетащите файл или нажмите "Загрузить"
-                        </p>
+                        {/* Dropbox Zone */}
+                        <div
+                            className={cn(
+                                "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors",
+                                isDragging
+                                    ? "border-zinc-900 bg-zinc-100 dark:border-zinc-400 dark:bg-zinc-800"
+                                    : "border-zinc-300 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-600"
+                            )}
+                            onDragOver={(e) => {
+                                e.preventDefault()
+                                setIsDragging(true)
+                            }}
+                            onDragLeave={() => setIsDragging(false)}
+                            onDrop={(e) => {
+                                e.preventDefault()
+                                setIsDragging(false)
+                                const droppedFiles = Array.from(e.dataTransfer.files)
+                                droppedFiles.forEach(file => handleFileUpload(file))
+                            }}
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            <Upload className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                                {isDragging ? "Отпустите файлы" : "Перетащите файлы сюда или нажмите для выбора"}
+                            </p>
+                            <p className="text-xs text-zinc-400 mt-1">
+                                TXT, MD, JSON, CSV, PDF, изображения
+                            </p>
+                        </div>
+                    </div>
 
-                    </p>
-                </div>
-                        ) : null }
 
-                {/* Always show file list if files exist, DO NOT hide dropzone (User Request) 
+                    {/* Always show file list if files exist, DO NOT hide dropzone (User Request) 
                             Actually user complained "only one file added and field disappeared". 
                             This was because of `files.length === 0 ? (...) : (...)` logic.
                             I will show Dropzone ALWAYS, and file list below it.
                         */}
-                <div className="space-y-2 pt-2">
-                    {files.map((file) => (
-                        <div
-                            key={file.id}
-                            className="flex items-center justify-between rounded-xl bg-zinc-50 dark:bg-zinc-800 p-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                {isImageFile(file.name) ? (
-                                    <ImageIcon className="h-4 w-4 text-zinc-400" />
-                                ) : (
-                                    <FileText className="h-4 w-4 text-zinc-400" />
-                                )}
-                                <span className="text-sm font-medium">{file.name}</span>
-                                <span className="text-xs text-zinc-400">
-                                    {file.content.length > 1000
-                                        ? `${Math.round(file.content.length / 1024)}KB`
-                                        : `${file.content.length} симв.`}
-                                </span>
-                            </div>
-                            <div className="flex gap-1">
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-zinc-500 hover:text-zinc-700"
-                                    onClick={() => {
-                                        if (isImageFile(file.name) || isPdfFile(file.name)) {
-                                            try {
-                                                const isDataUrl = file.content.startsWith('data:')
-                                                const fetchUrl = isDataUrl ? file.content : `data:${isPdfFile(file.name) ? 'application/pdf' : 'image/png'};base64,${file.content}`
+                    <div className="space-y-2 pt-2">
+                        {files.map((file) => (
+                            <div
+                                key={file.id}
+                                className="flex items-center justify-between rounded-xl bg-zinc-50 dark:bg-zinc-800 p-3"
+                            >
+                                <div className="flex items-center gap-3">
+                                    {isImageFile(file.name) ? (
+                                        <ImageIcon className="h-4 w-4 text-zinc-400" />
+                                    ) : (
+                                        <FileText className="h-4 w-4 text-zinc-400" />
+                                    )}
+                                    <span className="text-sm font-medium">{file.name}</span>
+                                    <span className="text-xs text-zinc-400">
+                                        {file.content.length > 1000
+                                            ? `${Math.round(file.content.length / 1024)}KB`
+                                            : `${file.content.length} симв.`}
+                                    </span>
+                                </div>
+                                <div className="flex gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-zinc-500 hover:text-zinc-700"
+                                        onClick={() => {
+                                            if (isImageFile(file.name) || isPdfFile(file.name)) {
+                                                try {
+                                                    const isDataUrl = file.content.startsWith('data:')
+                                                    const fetchUrl = isDataUrl ? file.content : `data:${isPdfFile(file.name) ? 'application/pdf' : 'image/png'};base64,${file.content}`
 
-                                                fetch(fetchUrl)
-                                                    .then(res => res.blob())
-                                                    .then(blob => {
-                                                        const url = URL.createObjectURL(blob)
-                                                        window.open(url, '_blank')
-                                                        setTimeout(() => URL.revokeObjectURL(url), 60000)
-                                                    })
-                                            } catch (e) {
-                                                console.error("Failed to open file", e)
-                                                window.open(file.content, '_blank')
+                                                    fetch(fetchUrl)
+                                                        .then(res => res.blob())
+                                                        .then(blob => {
+                                                            const url = URL.createObjectURL(blob)
+                                                            window.open(url, '_blank')
+                                                            setTimeout(() => URL.revokeObjectURL(url), 60000)
+                                                        })
+                                                } catch (e) {
+                                                    console.error("Failed to open file", e)
+                                                    window.open(file.content, '_blank')
+                                                }
+                                            } else {
+                                                setPreviewFile(file)
                                             }
-                                        } else {
-                                            setPreviewFile(file)
-                                        }
-                                    }}
-                                >
-                                    <Eye className="h-4 w-4" />
-                                </Button>
+                                        }}
+                                    >
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        onClick={() => handleDeleteFile(file.id)}
+                                        disabled={isPending}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <DialogFooter className="p-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                    <Button
+                        onClick={handleSaveAll}
+                        className="rounded-lg bg-zinc-900 text-white hover:bg-black w-full"
+                        disabled={isPending}
+                    >
+                        {isPending && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+                        Сохранить настройки
+                    </Button>
+                </DialogFooter>
+            </DialogContent >
+
+
+            {/* File Preview Modal (for text files only) */}
+            {
+                previewFile && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setPreviewFile(null)}>
+                        <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-3xl max-h-[80vh] w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700">
+                                <h3 className="font-semibold">{previewFile.name}</h3>
                                 <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                    onClick={() => handleDeleteFile(file.id)}
-                                    disabled={isPending}
+                                    onClick={() => setPreviewFile(null)}
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <X className="h-4 w-4" />
                                 </Button>
+                            </div>
+                            <div className="p-4 overflow-auto max-h-[calc(80vh-80px)]">
+                                <pre className="whitespace-pre-wrap text-sm font-mono bg-zinc-50 dark:bg-zinc-800 p-4 rounded-lg overflow-auto">
+                                    {previewFile.content}
+                                </pre>
                             </div>
                         </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-
-                    {/* File Preview Modal (for text files only) */ }
-    {
-        previewFile && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50" onClick={() => setPreviewFile(null)}>
-                <div className="bg-white dark:bg-zinc-900 rounded-2xl max-w-3xl max-h-[80vh] w-full mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-between p-4 border-b border-zinc-200 dark:border-zinc-700">
-                        <h3 className="font-semibold">{previewFile.name}</h3>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setPreviewFile(null)}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
                     </div>
-                    <div className="p-4 overflow-auto max-h-[calc(80vh-80px)]">
-                        <pre className="whitespace-pre-wrap text-sm font-mono bg-zinc-50 dark:bg-zinc-800 p-4 rounded-lg overflow-auto">
-                            {previewFile.content}
-                        </pre>
-                    </div>
-                </div>
-            </div>
-        )
-    }
-                </div >
+                )
+            }
 
-        {/* Footer */ }
-        < DialogFooter className = "p-6 pt-4 border-t border-zinc-100 dark:border-zinc-800" >
-            <Button
-                onClick={handleSaveAll}
-                className="rounded-lg bg-zinc-900 text-white hover:bg-black w-full"
-                disabled={isPending}
-            >
-                {isPending && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-                Сохранить настройки
-            </Button>
-                </DialogFooter >
-            </DialogContent >
-        </Dialog >
+
+
+
+        </UIDialog >
     )
 }

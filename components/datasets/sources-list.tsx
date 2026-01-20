@@ -140,7 +140,7 @@ export function SourcesList({ sources }: SourcesListProps) {
                             <div>
                                 <p className="font-medium">@{source.username}</p>
                                 <p className="text-sm text-muted-foreground">
-                                    Min views: {source.minViewsFilter.toLocaleString()} |
+                                    Min views: {source.minViewsFilter.toLocaleString('ru-RU')} |
                                     Limit: {source.fetchLimit}
                                 </p>
                                 {/* Parse History - Latest */}

@@ -107,7 +107,10 @@ export function buildSystemPrompt(
 
     // Append dataset context (RAG)
     if (datasetContext) {
+        console.log("[ChatService] Adding dataset context, length:", datasetContext.length)
         systemPrompt += datasetContext
+    } else {
+        console.log("[ChatService] No dataset context provided")
     }
 
     // Add dynamic instructions for description agents

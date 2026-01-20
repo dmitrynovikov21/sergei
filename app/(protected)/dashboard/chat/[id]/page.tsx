@@ -6,11 +6,6 @@ import { auth } from "@/auth";
 import { ChatInterface } from "@/components/dashboard/chat-interface";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { HeaderUpdater } from "@/components/dashboard/header-context";
-import { EditAgentDialog } from "@/components/dashboard/edit-agent-dialog";
-import { DatasetSelector } from "@/components/dashboard/dataset-selector";
-import { getUserDatasets } from "@/actions/datasets";
-import { Settings } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface ChatPageProps {
     params: {
@@ -37,8 +32,10 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
     if (!chat) {
         const agent = await getAgentById(params.id);
         if (agent) {
-            // Create a new chat for this agent using the 'id' (which is agent.id)
-            const newChatId = await createChat(agent.id);
+            // Get datasetId from searchParams (passed from client with localStorage value)
+            const datasetId = typeof searchParams.datasetId === 'string' ? searchParams.datasetId : undefined;
+            // Create a new chat for this agent with optional datasetId
+            const newChatId = await createChat(agent.id, undefined, datasetId);
             redirect(`/dashboard/chat/${newChatId}`);
         }
 
@@ -47,9 +44,8 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
     }
 
     // Parallelize detailed data fetching and auth
-    const [agentWithFiles, datasets, session] = await Promise.all([
+    const [agentWithFiles, session] = await Promise.all([
         getAgentWithFiles(chat.agentId),
-        getUserDatasets(),
         auth()
     ]);
 
@@ -72,27 +68,6 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
                         <AvatarFallback className="text-[10px]">{chat.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                 )}
-                settingsButton={
-                    <div className="flex items-center gap-2">
-                        {datasets.length > 0 && (
-                            <DatasetSelector
-                                chatId={chat.id}
-                                currentDatasetId={chat.datasetId}
-                                datasets={datasets}
-                            />
-                        )}
-                        {isOwner && agentWithFiles && (
-                            <EditAgentDialog
-                                agent={agentWithFiles}
-                                trigger={
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                        <Settings className="h-4 w-4" />
-                                    </Button>
-                                }
-                            />
-                        )}
-                    </div>
-                }
             />
 
             {/* Chat Interface - No local header */}

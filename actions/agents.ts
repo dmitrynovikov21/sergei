@@ -80,8 +80,11 @@ export async function createAgent(data: CreateAgentData) {
         emoji: icon
     })
 
+    // Aggressive revalidation to show agent immediately in sidebar
+    revalidatePath("/", "layout")
     revalidatePath("/dashboard", "layout")
     revalidatePath("/dashboard/agents")
+    revalidatePath("/dashboard/agents", "page")
 }
 
 export async function updateAgentIcon(agentId: string, icon: string) {
@@ -195,4 +198,43 @@ export async function deleteAgentFile(fileId: string) {
     await AgentService.deleteAgentFile(fileId)
 
     revalidatePath("/dashboard")
+}
+
+export async function deleteAgent(agentId: string) {
+    const userId = await requireAuth()
+
+    // Find agent and verify ownership
+    const agent = await prisma.agent.findUnique({
+        where: { id: agentId }
+    })
+
+    if (!agent) {
+        throw new Error("Agent not found")
+    }
+
+    // Only allow deleting user's own agents (non-public)
+    if (agent.userId !== userId || agent.isPublic) {
+        throw new Error("Cannot delete this agent")
+    }
+
+    // Delete associated chats, files, messages first
+    await prisma.agentFile.deleteMany({
+        where: { agentId }
+    })
+
+    await prisma.message.deleteMany({
+        where: { chat: { agentId } }
+    })
+
+    await prisma.chat.deleteMany({
+        where: { agentId }
+    })
+
+    // Delete the agent
+    await prisma.agent.delete({
+        where: { id: agentId }
+    })
+
+    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/agents")
 }

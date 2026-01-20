@@ -5,8 +5,8 @@ import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 // import { MessageRole } from "@prisma/client"
 
-export async function createChat(agentId: string, projectId?: string) {
-    console.log("[createChat] Starting for agentId:", agentId, "projectId:", projectId)
+export async function createChat(agentId: string, projectId?: string, datasetId?: string) {
+    console.log("[createChat] Starting for agentId:", agentId, "projectId:", projectId, "datasetId:", datasetId)
     const session = await auth()
     console.log("[createChat] Session:", session?.user?.id)
 
@@ -28,10 +28,11 @@ export async function createChat(agentId: string, projectId?: string) {
                 userId: session.user.id,
                 agentId,
                 projectId: projectId || null,
+                datasetId: datasetId || null,
                 title: agent?.name ? `Чат с ${agent.name}` : "Новый чат",
             },
         })
-        console.log("[createChat] Chat created:", chat.id)
+        console.log("[createChat] Chat created:", chat.id, "with datasetId:", datasetId)
 
         revalidatePath("/dashboard", "layout")
         revalidatePath("/dashboard")

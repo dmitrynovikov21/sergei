@@ -543,12 +543,12 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     }
 
     useEffect(() => {
-        if (initialInput && !hasAutoSubmittedRef.current && messages.length === 0) {
+        if ((initialInput || attachments.length > 0) && !hasAutoSubmittedRef.current && messages.length === 0) {
             hasAutoSubmittedRef.current = true
-            handleSendMessage(initialInput)
+            handleSendMessage(initialInput || "")
             window.history.replaceState(null, '', window.location.pathname)
         }
-    }, [initialInput, messages.length])
+    }, [initialInput, messages.length, attachments.length])
 
     const getLastUserMessage = () => {
         for (let i = messages.length - 1; i >= 0; i--) {
@@ -596,27 +596,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     if (isEmpty) {
         return (
             <div className="flex h-full flex-col items-center justify-center p-4 relative">
-                {/* Header Buttons (Top Right) */}
-                <div className="absolute top-4 right-4 flex items-center gap-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-                        onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
-                        title="Все чаты агента"
-                    >
-                        <Icons.chevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-                        onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
-                        title="Настройки агента"
-                    >
-                        <Icons.settings className="h-4 w-4" />
-                    </Button>
-                </div>
+
 
                 <div className="flex flex-col items-center gap-6 max-w-2xl w-full -mt-20">
                     {/* Greeting / Logo */}
@@ -697,27 +677,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
     return (
         <>
-            {/* Header Buttons */}
-            <div className="flex-none flex justify-end px-4 pt-4 gap-2">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-                    onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
-                    title="Все чаты агента"
-                >
-                    <Icons.chevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-zinc-500 hover:text-zinc-900 dark:hover:text-white"
-                    onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
-                    title="Настройки агента"
-                >
-                    <Icons.settings className="h-4 w-4" />
-                </Button>
-            </div>
+
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
                 <div className="mx-auto max-w-3xl px-4">

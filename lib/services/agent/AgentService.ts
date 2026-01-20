@@ -42,6 +42,7 @@ export type AgentWithFiles = Agent & {
 
 /**
  * Get all agents accessible by a user (owned + public)
+ * Public (system) agents come first, then user's agents
  */
 export async function getAgentsByUser(userId: string): Promise<Agent[]> {
     return prisma.agent.findMany({
@@ -52,7 +53,10 @@ export async function getAgentsByUser(userId: string): Promise<Agent[]> {
             ],
             name: { not: "Claude Assistant" }
         },
-        orderBy: { createdAt: "desc" }
+        orderBy: [
+            { isPublic: "desc" }, // Public (system) agents first
+            { createdAt: "desc" }
+        ]
     })
 }
 
@@ -127,7 +131,8 @@ export async function getFeaturedAgents(userId?: string): Promise<AgentWithFiles
             name: { not: "Claude Assistant" }
         },
         include: {
-            files: { orderBy: { createdAt: "desc" } }
+            files: { orderBy: { createdAt: "desc" } },
+            dataset: { select: { name: true, id: true } }
         },
         orderBy: { createdAt: "desc" }
     })

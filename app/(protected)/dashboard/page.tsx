@@ -3,7 +3,9 @@ import { getCurrentUser } from "@/lib/session";
 import { constructMetadata } from "@/lib/utils";
 import { getUserChats } from "@/actions/chat";
 import { getFeaturedAgents } from "@/actions/agents";
+import { getDatasets } from "@/actions/datasets";
 import { AgentGrid } from "@/components/dashboard/agent-grid";
+import { ContextSelector } from "@/components/dashboard/context-selector";
 
 export const metadata = constructMetadata({
   title: "Dashboard – AI Agents",
@@ -23,6 +25,7 @@ export default async function DashboardPage() {
 
   // Otherwise show agent selection
   const agents = await getFeaturedAgents();
+  const datasets = await getDatasets();
 
   return (
     <div className="flex h-full flex-col items-center justify-center p-8">
@@ -33,7 +36,10 @@ export default async function DashboardPage() {
         <p className="text-zinc-500 dark:text-zinc-400">
           Нажмите на агента, чтобы начать новый чат
         </p>
-        <div className="mt-8">
+        <div className="mt-8 space-y-6">
+          <div className="flex justify-center">
+            <ContextSelector datasets={datasets} />
+          </div>
           <AgentGrid agents={agents} />
         </div>
       </div>

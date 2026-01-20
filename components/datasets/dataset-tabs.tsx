@@ -47,7 +47,7 @@ interface DatasetTabsProps {
 
 export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsProps) {
     const [items, setItems] = useState(initialItems)
-    const [daysFilter, setDaysFilter] = useState<number | null>(30) // Default 30 days, null removed from UI
+    const [daysFilter, setDaysFilter] = useState<number | null>(14)
     const [minViews, setMinViews] = useState<string>("")
     const [minLikes, setMinLikes] = useState<string>("")
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
@@ -125,29 +125,15 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
             </TabsList>
 
             <TabsContent value="content" className="space-y-4">
-                {/* Comprehensive Filter Panel */}
-                <div className="space-y-4 p-4 rounded-lg border bg-card">
-                    <div className="flex items-center justify-between">
-                        <h3 className="font-medium">Фильтры</h3>
-                        <button
-                            onClick={() => {
-                                setDaysFilter(30)
-                                setMinViews("")
-                                setMinLikes("")
-                            }}
-                            className="text-sm text-muted-foreground hover:text-foreground"
-                        >
-                            Сбросить
-                        </button>
-                    </div>
-
+                {/* Compact Filter Panel */}
+                <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg border bg-card">
                     {/* Time Period Filter */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Период</label>
-                        <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium whitespace-nowrap">Период:</span>
+                        <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setDaysFilter(7)}
-                                className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === 7
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${daysFilter === 7
                                     ? "bg-primary text-primary-foreground"
                                     : "bg-secondary hover:bg-secondary/80"
                                     }`}
@@ -156,57 +142,65 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                             </button>
                             <button
                                 onClick={() => setDaysFilter(14)}
-                                className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === 14
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${daysFilter === 14
                                     ? "bg-primary text-primary-foreground"
                                     : "bg-secondary hover:bg-secondary/80"
                                     }`}
                             >
                                 14 дней
                             </button>
-                            <button
-                                onClick={() => setDaysFilter(30)}
-                                className={`px-3 py-1.5 text-sm rounded-md transition ${daysFilter === 30
-                                    ? "bg-primary text-primary-foreground"
-                                    : "bg-secondary hover:bg-secondary/80"
-                                    }`}
-                            >
-                                30 дней
-                            </button>
                         </div>
                     </div>
 
-                    {/* Views and Likes Filters */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Минимум просмотров</label>
-                            <input
-                                type="number"
-                                value={minViews}
-                                onChange={(e) => setMinViews(e.target.value)}
-                                placeholder="Например: 10000"
-                                className="w-full px-3 py-2 text-sm rounded-md border bg-background"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Минимум лайков</label>
-                            <input
-                                type="number"
-                                value={minLikes}
-                                onChange={(e) => setMinLikes(e.target.value)}
-                                placeholder="Например: 500"
-                                className="w-full px-3 py-2 text-sm rounded-md border bg-background"
-                            />
-                        </div>
+                    <div className="h-6 w-px bg-border hidden sm:block" />
+
+                    {/* Views Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium whitespace-nowrap">Просмотры:</span>
+                        <input
+                            type="number"
+                            value={minViews}
+                            onChange={(e) => setMinViews(e.target.value)}
+                            placeholder="> 10k"
+                            className="w-24 px-2 py-1.5 text-xs rounded-md border bg-background"
+                        />
                     </div>
 
-                    {/* Active Filters Summary */}
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-2">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                            Обновляется автоматически
-                        </span>
-                        <span>•</span>
-                        <span>{filteredItems.length} постов из {items.length}</span>
+                    {/* Likes Filter */}
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium whitespace-nowrap">Лайки:</span>
+                        <input
+                            type="number"
+                            value={minLikes}
+                            onChange={(e) => setMinLikes(e.target.value)}
+                            placeholder="> 500"
+                            className="w-24 px-2 py-1.5 text-xs rounded-md border bg-background"
+                        />
+                    </div>
+
+                    <div className="flex-1" />
+
+                    {/* Reset & Summary */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground whitespace-nowrap">
+                            <span className="flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                                Auto
+                            </span>
+                            <span>•</span>
+                            <span>{filteredItems.length} шт.</span>
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                setDaysFilter(14)
+                                setMinViews("")
+                                setMinLikes("")
+                            }}
+                            className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-4"
+                        >
+                            Сбросить
+                        </button>
                     </div>
                 </div>
 

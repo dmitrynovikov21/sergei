@@ -27,7 +27,10 @@ export function AgentItem({ agent }: AgentItemProps) {
     const onStartChat = () => {
         startTransition(async () => {
             try {
-                const chatId = await createChat(agent.id)
+                // Read datasetId from localStorage (set by ContextSelector)
+                const datasetId = localStorage.getItem("global_dataset_context") || undefined
+                console.log("[AgentItem] Creating chat with datasetId:", datasetId)
+                const chatId = await createChat(agent.id, undefined, datasetId)
                 router.refresh() // Update sidebar with new chat
                 router.push(`/dashboard/chat/${chatId}`)
             } catch (error) {

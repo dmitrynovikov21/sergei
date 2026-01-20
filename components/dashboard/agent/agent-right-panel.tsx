@@ -3,8 +3,8 @@
 import React, { useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { Agent, AgentFile } from "@prisma/client"
-import { addAgentFile, deleteAgentFile, updateAgentSettings } from "@/actions/agents"
-import { getDataset } from "@/actions/datasets" // Для получения имени датасета
+import { addAgentFile, deleteAgentFile, updateAgentSettings, updateAgentDataset } from "@/actions/agents"
+import { getDataset, getDatasets } from "@/actions/datasets"
 import { FileText, FileCode, Plus, Trash2, Upload, Loader2, X, Image as ImageIcon } from "lucide-react"
 import { EditAgentDialog } from "@/components/dashboard/edit-agent-dialog"
 import { Button } from "@/components/ui/button"
@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { Icons } from "@/components/shared/icons"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface AgentRightPanelProps {
     agent: Agent & { files?: AgentFile[] }
@@ -46,20 +48,38 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     const [useLinkInBio, setUseLinkInBio] = useState(agent.useLinkInBio || false)
     const [codeWord, setCodeWord] = useState(agent.codeWord || "")
     const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
-    const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
+
     const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
 
     // Dataset info for Headlines agent
     const [datasetName, setDatasetName] = useState<string | null>(null)
-    const datasetId = (agent as any).datasetId
+    const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>((agent as any).datasetId || null)
+    const [datasets, setDatasets] = useState<{ id: string, name: string }[]>([])
 
     React.useEffect(() => {
-        if (datasetId) {
-            getDataset(datasetId).then(ds => {
+        // Fetch all datasets
+        getDatasets().then(ds => setDatasets(ds))
+        // Fetch current dataset name
+        if (selectedDatasetId) {
+            getDataset(selectedDatasetId).then(ds => {
                 if (ds) setDatasetName(ds.name)
             })
         }
-    }, [datasetId])
+    }, [selectedDatasetId])
+
+    const handleDatasetChange = (value: string) => {
+        const newId = value === "none" ? null : value
+        setSelectedDatasetId(newId)
+        startTransition(async () => {
+            try {
+                await updateAgentDataset(agent.id, newId)
+                toast.success(newId ? "Датасет выбран" : "Датасет сброшен")
+                router.refresh()
+            } catch (error) {
+                toast.error("Ошибка сохранения")
+            }
+        })
+    }
 
     // Check agent types
     const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
@@ -259,19 +279,32 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
         <>
             <div className="w-[280px] shrink-0 bg-zinc-50 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800 p-5 flex flex-col gap-6 h-fit ml-6">
 
-                {/* Headlines Badge - Fixed per user request (No green bg, show dataset name) */}
-                {isHeadlinesAgent && datasetName && (
-                    <div className="text-xs font-medium text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
-                        <Icons.database className="h-3 w-3" />
-                        <span>Датасет: {datasetName}</span>
+                {/* "Invested" Badge (High Value) - Minimalist Style */}
+                {isDescriptionAgent && (
+                    <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2 justify-center">
+                        <span>💎</span>
+                        <span>В меня вложили уже много</span>
                     </div>
                 )}
 
-                {/* "Invested" Badge (High Value) - Minimalist Style */}
-                {isDescriptionAgent && (
-                    <div className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-2">
-                        <span>💎</span>
-                        <span>В меня вложили уже много</span>
+                {/* Dataset Selector - for both Headlines and Description agents */}
+                {(isHeadlinesAgent || isDescriptionAgent) && (
+                    <div className="space-y-2">
+                        <Label className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Датасет (контекст)</Label>
+                        <Select
+                            value={selectedDatasetId || "none"}
+                            onValueChange={handleDatasetChange}
+                        >
+                            <SelectTrigger className="w-full h-9 text-sm">
+                                <SelectValue placeholder="Без контекста" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">Без контекста</SelectItem>
+                                {datasets.map(ds => (
+                                    <SelectItem key={ds.id} value={ds.id}>{ds.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
                 )}
 

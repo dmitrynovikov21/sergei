@@ -69,7 +69,10 @@ export async function scrapeInstagram(
     const input = {
         directUrls: [`https://www.instagram.com/${username}/`],
         resultsType: "posts",
-        resultsLimit: limit,
+        // IMPORTANT: resultsLimit is applied BEFORE onlyPostsNewerThan filter
+        // So we need to fetch more posts to get enough after filtering
+        resultsLimit: Math.max(limit * 5, 100), // Fetch 5x requested or at least 100
+        searchLimit: 100, // Search more posts from profile
         addParentData: false,
         onlyPostsNewerThan, // Filter posts by date on Apify side
         // Use Apify proxy to avoid IP bans

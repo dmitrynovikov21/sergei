@@ -79,6 +79,16 @@ export function AgentGrid({ agents }: AgentGridProps) {
                             <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">
                                 {agent.description || "Нажмите, чтобы начать диалог с этим агентом. Он поможет вам в решении задач."}
                             </p>
+
+                            {/* Dataset Badge */}
+                            {(agent as any).dataset && (
+                                <div className="mt-3 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800/50 w-fit px-2 py-1 rounded-md">
+                                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                    </svg>
+                                    <span className="truncate max-w-[150px]">{(agent as any).dataset.name}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Footer arrow (optional visual cue) */}

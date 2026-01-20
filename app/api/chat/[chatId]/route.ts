@@ -52,8 +52,15 @@ export async function POST(
 
         // 4. Build system prompt with all context
         let datasetContext: string | null = null
-        if (chat.datasetId) {
-            datasetContext = await getDatasetContext(chat.datasetId)
+        // PRIORITY: agent.datasetId takes precedence (user can change it anytime)
+        // chat.datasetId is fallback (set at chat creation, may be outdated)
+        const effectiveDatasetId = chat.agent.datasetId || chat.datasetId
+        console.log("[Chat API] agent.datasetId:", chat.agent.datasetId, "chat.datasetId:", chat.datasetId, "=> using:", effectiveDatasetId)
+        if (effectiveDatasetId) {
+            datasetContext = await getDatasetContext(effectiveDatasetId)
+            console.log("[Chat API] Dataset context loaded, length:", datasetContext?.length || 0)
+        } else {
+            console.log("[Chat API] No dataset configured for chat or agent")
         }
         const systemPrompt = buildSystemPrompt(chat.agent, datasetContext)
 

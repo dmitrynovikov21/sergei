@@ -88,6 +88,8 @@ model Agent {
   audienceQuestion String?
   subscribeLink    String?
   userContext      String?
+  datasetId        String?
+  dataset          Dataset?    @relation(fields: [datasetId], references: [id])
   isFavorite       Boolean     @default(false)
   createdAt        DateTime    @default(now()) @map("created_at")
   updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
@@ -96,6 +98,7 @@ model Agent {
   chats            Chat[]
 
   @@index([userId])
+  @@index([datasetId])
   @@map("agents")
 }
 
@@ -187,6 +190,7 @@ model Dataset {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at")
   chats       Chat[]
+  agents      Agent[]
   items       ContentItem[]
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   sources     TrackingSource[]
@@ -249,6 +253,7 @@ model ContentItem {
   isProcessed     Boolean   @default(false)
   isApproved      Boolean   @default(false)
   processingError String?
+  viralityScore   Float?    // Ratio of views to batch average (e.g. 1.5 = 50% above average)
   datasetId       String
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")

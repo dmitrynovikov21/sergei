@@ -253,12 +253,19 @@ async function processPost(
     // If averageViews is passed, use it.
 
     if (views < minViews) {
+        console.log(`[Harvester] Skipped post ${instagramId}: ${views} < ${minViews} views`)
         return { status: "skipped", reason: `${views} < ${minViews} просмотров` }
     }
 
-    if (averageViews > 0 && views < (averageViews * 1.5)) {
-        return { status: "skipped", reason: `Ниже виральности (${views} < ${Math.round(averageViews * 1.5)})` }
-    }
+    // Virality filter DISABLED - was too restrictive (requiring 3M+ when avg is 2M)
+    // if (averageViews > 0 && views < (averageViews * 1.5)) {
+    //     return { status: "skipped", reason: `Ниже виральности (${views} < ${Math.round(averageViews * 1.5)})` }
+    // }
+
+    console.log(`[Harvester] Post ${instagramId} passed filters: ${views} views, published: ${publishedAt.toISOString()}`)
+
+    // Calculate virality score (ratio to batch average)
+    const viralityScore = averageViews > 0 ? views / averageViews : null
 
     // Create new content item
     const contentItem = await prisma.contentItem.create({
@@ -272,6 +279,7 @@ async function processPost(
             likes: post.likesCount,
             comments: post.commentsCount,
             publishedAt: new Date(post.timestamp),
+            viralityScore,
             datasetId,
             isProcessed: false,
             isApproved: false

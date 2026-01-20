@@ -103,7 +103,13 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
 
         try {
             setIsLoading(true)
-            const chatId = await createChat(agent.id)
+
+            // Read datasetId from localStorage (same key as ContextSelector)
+            const datasetId = localStorage.getItem("global_dataset_context") || undefined
+            console.log("[AgentChatStarter] localStorage datasetId:", datasetId)
+            console.log("[AgentChatStarter] Creating chat with agent:", agent.id, "datasetId:", datasetId)
+            const chatId = await createChat(agent.id, undefined, datasetId)
+            console.log("[AgentChatStarter] Chat created:", chatId)
 
             // Instructions are now added server-side in the chat API route
             // based on agent settings (useEmoji, useSubscribe, etc.)

@@ -14,8 +14,10 @@ interface AgentPageProps {
 }
 
 export default async function AgentPage({ params }: AgentPageProps) {
-    const agent = await getAgentById(params.agentId)
-    const chats = await getAgentChats(params.agentId)
+    const [agent, chats] = await Promise.all([
+        getAgentById(params.agentId),
+        getAgentChats(params.agentId)
+    ])
 
     if (!agent) {
         notFound()

@@ -57,6 +57,7 @@ export async function createChatStream(options: StreamingOptions) {
         system: options.systemPrompt,
         messages: options.messages,
         metadata: { user_id: options.userId },
+        // Note: temperature must be 1 when thinking is enabled (Claude API requirement)
         thinking: {
             type: "enabled",
             budget_tokens: options.thinkingBudget || THINKING_BUDGET

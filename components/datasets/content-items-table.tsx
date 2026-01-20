@@ -40,6 +40,7 @@ interface ContentItem {
     isApproved: boolean
     processingError: string | null
     publishedAt: Date | null
+    viralityScore: number | null
 }
 
 interface ContentItemsTableProps {
@@ -142,12 +143,18 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                     <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2">
                                         <span className="flex items-center gap-0.5">
                                             <Icons.eye className="h-3 w-3" />
-                                            {item.views > 0 ? item.views.toLocaleString() : "—"}
+                                            {item.views > 0 ? item.views.toLocaleString('ru-RU') : "—"}
                                         </span>
                                         <span className="flex items-center gap-0.5">
                                             <Icons.heart className="h-3 w-3" />
-                                            {item.likes.toLocaleString()}
+                                            {item.likes.toLocaleString('ru-RU')}
                                         </span>
+                                        {item.viralityScore != null && (
+                                            <span className={`flex items-center gap-0.5 font-medium ${item.viralityScore >= 1.5 ? 'text-orange-500' : item.viralityScore >= 1 ? 'text-green-600' : 'text-muted-foreground'}`}>
+                                                {item.viralityScore >= 1.5 ? '🔥' : item.viralityScore >= 1 ? '📈' : ''}
+                                                {item.viralityScore.toFixed(1)}x
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             </TableCell>

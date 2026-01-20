@@ -193,21 +193,53 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                 ))}
             </div>
 
-            {/* МОИ АГЕНТЫ - User's custom agents */}
-            {agents.filter(a => !a.isPublic).length > 0 && (
-              <div className="flex flex-col gap-1 mt-6">
-                {isSidebarExpanded && (
-                  <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
-                    Мои агенты
-                  </h4>
-                )}
-                {agents
-                  .filter(a => !a.isPublic)
-                  .map((agent) => (
-                    <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} />
-                  ))}
-              </div>
-            )}
+            {/* МОИ АГЕНТЫ - User's custom agents (excluding system Reels/Carousel agents) */}
+            {agents.filter(a => {
+              const n = a.name.toLowerCase()
+              // Exclude Reels agents
+              const isReels = n.includes("тренд") || n.includes("trend") ||
+                (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
+                (n.includes("reels") && (n.includes("описание") || n.includes("description")))
+              // Exclude Carousel agents
+              const isCarousel = (n.includes("карусел") || n.includes("carousel")) &&
+                (n.includes("заголовки") || n.includes("headlines") ||
+                  n.includes("описание") || n.includes("description") ||
+                  n.includes("создать") || n.includes("create") || n.includes("структура"))
+              // Only show user's custom agents that are not in system categories
+              return !a.isPublic && !isReels && !isCarousel
+            }).length > 0 && (
+                <div className="flex flex-col gap-1 mt-6">
+                  {isSidebarExpanded && (
+                    <div className="flex items-center justify-between px-3 mb-2">
+                      <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                        Мои агенты
+                      </h4>
+                      <CreateAgentDialog
+                        trigger={
+                          <button className="h-5 w-5 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors">
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        }
+                      />
+                    </div>
+                  )}
+                  {agents
+                    .filter(a => {
+                      const n = a.name.toLowerCase()
+                      const isReels = n.includes("тренд") || n.includes("trend") ||
+                        (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
+                        (n.includes("reels") && (n.includes("описание") || n.includes("description")))
+                      const isCarousel = (n.includes("карусел") || n.includes("carousel")) &&
+                        (n.includes("заголовки") || n.includes("headlines") ||
+                          n.includes("описание") || n.includes("description") ||
+                          n.includes("создать") || n.includes("create") || n.includes("структура"))
+                      return !a.isPublic && !isReels && !isCarousel
+                    })
+                    .map((agent) => (
+                      <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} canDelete={true} />
+                    ))}
+                </div>
+              )}
 
             {/* CREATE AGENT BUTTON */}
             <div className="mt-6 px-1">
