@@ -11,7 +11,11 @@ export const sidebarLinks: SidebarNavItem[] = [
         icon: "edit",
         title: "Новый чат",
       },
-      // Removed Search and Images as per request
+      {
+        href: "/dashboard/producer",
+        icon: "bot",
+        title: "Продюсер",
+      },
     ],
   },
   {

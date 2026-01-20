@@ -6,12 +6,15 @@
 
 "use client"
 
-import { useEffect, useState, useCallback, useRef } from "react"
+import { useEffect, useState, useCallback, useRef, useTransition } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Icons } from "@/components/shared/icons"
 import { ContentItemsTable } from "@/components/datasets/content-items-table"
 import { SourcesList } from "@/components/datasets/sources-list"
 import { AddSourceDialog } from "@/components/datasets/add-source-dialog"
+import { reprocessDatasetHeadlines } from "@/actions/datasets"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
 
 interface ContentItem {
     id: string
@@ -27,6 +30,7 @@ interface ContentItem {
     isApproved: boolean
     processingError: string | null
     publishedAt: Date | null
+    viralityScore: number | null
 }
 
 interface TrackingSource {
@@ -51,6 +55,24 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
     const [minViews, setMinViews] = useState<string>("")
     const [minLikes, setMinLikes] = useState<string>("")
     const intervalRef = useRef<NodeJS.Timeout | null>(null)
+    const [isPending, startTransition] = useTransition()
+
+    // Count items needing reprocessing
+    const needsReprocessCount = items.filter(item => !item.headline || item.processingError).length
+
+    const handleReprocess = () => {
+        startTransition(async () => {
+            try {
+                const result = await reprocessDatasetHeadlines(datasetId)
+                toast.success(`Обработано ${result.processed} из ${result.processed + result.errors.length} элементов`)
+                if (result.errors.length > 0) {
+                    toast.error(`Ошибки: ${result.errors.length}`)
+                }
+            } catch (error) {
+                toast.error("Ошибка обработки")
+            }
+        })
+    }
 
     // Fetch latest items with filter
     const fetchItems = useCallback(async () => {
@@ -190,6 +212,22 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                             <span>•</span>
                             <span>{filteredItems.length} шт.</span>
                         </div>
+
+                        {needsReprocessCount > 0 && (
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={handleReprocess}
+                                disabled={isPending}
+                                className="text-xs"
+                            >
+                                {isPending ? (
+                                    <><Icons.spinner className="h-3 w-3 animate-spin mr-1" /> Обработка...</>
+                                ) : (
+                                    <><Icons.refresh className="h-3 w-3 mr-1" /> Заголовки ({needsReprocessCount})</>
+                                )}
+                            </Button>
+                        )}
 
                         <button
                             onClick={() => {

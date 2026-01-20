@@ -321,6 +321,53 @@ export async function deleteContentItem(id: string) {
     revalidatePath("/dashboard/datasets")
 }
 
+/**
+ * Reprocess all content items in a dataset that have missing headlines
+ * Useful when AI processing failed due to API credits
+ */
+export async function reprocessDatasetHeadlines(datasetId: string): Promise<{
+    processed: number
+    errors: string[]
+}> {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Unauthorized")
+
+    // Find all items with missing headlines or processing errors
+    const items = await prisma.contentItem.findMany({
+        where: {
+            datasetId,
+            OR: [
+                { headline: null },
+                { processingError: { not: null } }
+            ]
+        }
+    })
+
+    console.log(`[Reprocess] Found ${items.length} items to reprocess in dataset ${datasetId}`)
+
+    const errors: string[] = []
+    let processed = 0
+
+    for (const item of items) {
+        try {
+            console.log(`[Reprocess] Processing item ${item.id}...`)
+            await processContentItemAI(item.id)
+            processed++
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : "Unknown error"
+            errors.push(`Item ${item.id}: ${errorMsg}`)
+            console.error(`[Reprocess] Error processing item ${item.id}:`, errorMsg)
+        }
+    }
+
+    console.log(`[Reprocess] Completed: ${processed}/${items.length} items, ${errors.length} errors`)
+
+    revalidatePath(`/dashboard/datasets/${datasetId}`)
+    revalidatePath("/dashboard/datasets")
+
+    return { processed, errors }
+}
+
 // ==========================================
 // Chat Dataset Integration
 // ==========================================

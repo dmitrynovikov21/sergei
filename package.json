@@ -17,6 +17,7 @@
     "email": "email dev --dir emails --port 3333"
   },
   "dependencies": {
+    "@ai-sdk/react": "^3.0.44",
     "@anthropic-ai/sdk": "^0.71.2",
     "@auth/prisma-adapter": "^2.4.1",
     "@hookform/resolvers": "^3.9.0",

@@ -1,128 +1,252 @@
-<a href="https://next-saas-stripe-starter.vercel.app">
-  <img alt="SaaS Starter" src="public/_static/og.jpg">
-  <h1 align="center">Next SaaS Stripe Starter</h1>
-</a>
+# Sergei - AI Content Platform
 
-<p align="center">
-  Start at full speed with SaaS Starter !
-</p>
+## 🎯 Описание проекта
 
-<p align="center">
-  <a href="https://twitter.com/miickasmt">
-    <img src="https://img.shields.io/twitter/follow/miickasmt?style=flat&label=miickasmt&logo=twitter&color=0bf&logoColor=fff" alt="Mickasmt Twitter follower count" />
-  </a>
-</p>
+Платформа для автоматизированного создания контента с AI агентами. Включает:
+- **AI Чаты** с контекстом из датасетов (RAG)
+- **Парсинг Instagram** через Apify для сбора трендов
+- **Master Agent** — AI продюсер для генерации заголовков и скриптов
+- **База знаний** для агентов (документы, заметки)
 
-<p align="center">
-  <a href="#introduction"><strong>Introduction</strong></a> ·
-  <a href="#installation"><strong>Installation</strong></a> ·
-  <a href="#tech-stack--features"><strong>Tech Stack + Features</strong></a> ·
-  <a href="#author"><strong>Author</strong></a> ·
-  <a href="#credits"><strong>Credits</strong></a>
-</p>
-<br/>
+---
 
-## Introduction
+## 🛠 Tech Stack
 
-Empower your next project with the stack of Next.js 14, Prisma, Neon, Auth.js v5, Resend, React Email, Shadcn/ui, and Stripe.
-<br/>
-All seamlessly integrated with the SaaS Starter to accelerate your development and saas journey.
+| Компонент | Технология |
+|-----------|------------|
+| Frontend | Next.js 14, React, TypeScript |
+| Styling | Tailwind CSS, Shadcn/ui |
+| Auth | NextAuth.js v5 (Auth.js) |
+| Database | SQLite (dev) / PostgreSQL (prod) via Prisma |
+| AI | Anthropic Claude (claude-sonnet-4-5) |
+| Parsing | Apify Instagram Scraper |
+| Payments | Stripe |
 
-## Installation
+---
 
-Clone & create this repo locally with the following command:
+## 📁 Структура проекта
+
+```
+sergei/
+├── app/                      # Next.js App Router
+│   ├── (protected)/          # Защищённые страницы
+│   │   └── dashboard/
+│   │       ├── chat/         # AI чаты
+│   │       ├── agents/       # Настройки агентов
+│   │       ├── datasets/     # Датасеты и контент
+│   │       └── producer/     # Master Agent UI
+│   └── api/
+│       ├── chat/             # Chat API с RAG
+│       └── producer/         # Producer API с function calling
+├── actions/                  # Server Actions
+│   ├── datasets.ts           # CRUD датасетов, парсинг
+│   └── chat.ts               # Управление чатами
+├── lib/
+│   ├── parser/
+│   │   ├── harvester.ts      # Логика парсинга Instagram
+│   │   └── apify-service.ts  # Интеграция с Apify
+│   └── services/
+│       ├── chat/             # ChatService, StreamingService
+│       └── agent/            # AgentService
+├── components/
+│   ├── dashboard/            # Компоненты дэшборда
+│   └── datasets/             # Компоненты датасетов
+├── prisma/
+│   ├── schema.prisma         # Схема БД
+│   └── dev.db                # SQLite для разработки
+├── master-agent/             # FastAPI микросервис (Python)
+└── config/
+    └── dashboard.ts          # Конфиг сайдбара
+```
+
+---
+
+## 🔑 Environment Variables
+
+### Локальная разработка (.env)
+
+```env
+# App
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Auth
+AUTH_SECRET=your_secret_here
+AUTH_URL=http://localhost:3000
+
+# Database
+DATABASE_URL=file:./prisma/dev.db
+
+# AI
+ANTHROPIC_API_KEY=sk-ant-...
+MODEL_NAME_ANTHROPIC=claude-sonnet-4-5
+
+# Parsing
+APIFY_TOKEN=apify_api_...
+
+# Optional
+OPENAI_API_KEY=sk-...
+RESEND_API_KEY=re_...
+STRIPE_API_KEY=sk_test_...
+```
+
+### Production (.env на сервере)
+
+```env
+NEXT_PUBLIC_APP_URL=https://contentzavod.biz
+AUTH_URL=https://contentzavod.biz
+DATABASE_URL=file:./prisma/dev.db
+# ... остальные ключи такие же
+```
+
+---
+
+## 🚀 Деплой на Production
+
+### Сервер
+- **IP:** `109.107.176.141`
+- **User:** `root`
+- **Password:** `ja=z795+16t7LC48BhiG`
+- **URL:** https://contentzavod.biz
+
+### Деплой скрипт
 
 ```bash
-npx create-next-app my-saas-project --example "https://github.com/mickasmt/next-saas-stripe-starter"
+# 1. Синхронизация файлов (исключая node_modules, .next, БД)
+rsync -avz --exclude 'node_modules' --exclude '.next' --exclude 'prisma/dev.db' \
+  -e "sshpass -p 'ja=z795+16t7LC48BhiG' ssh -o StrictHostKeyChecking=no" \
+  ./ root@109.107.176.141:/root/sergei/
+
+# 2. SSH на сервер и rebuild
+sshpass -p 'ja=z795+16t7LC48BhiG' ssh root@109.107.176.141
+
+# На сервере:
+cd /root/sergei
+npm install
+NODE_OPTIONS='--max-old-space-size=4096' npm run build
+pm2 restart content-agents
 ```
 
-Or, deploy with Vercel:
+### Nginx конфиг
+Файл: `/etc/nginx/sites-enabled/contentzavod.biz`
+- SSL через Let's Encrypt
+- Proxy на localhost:3000
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fmickasmt%2Fnext-saas-stripe-starter)
+---
 
-### Steps
+## 📊 Ключевые модели Prisma
 
-1. Install dependencies using pnpm:
+```prisma
+model Agent {
+  id          String    @id
+  name        String
+  systemPrompt String?
+  datasetId   String?   // Привязка к датасету для RAG
+  userId      String?
+  isPublic    Boolean   @default(false)
+}
 
-```sh
-pnpm install
+model Dataset {
+  id        String   @id
+  name      String
+  userId    String
+  isPublic  Boolean  @default(false)
+  items     ContentItem[]
+  sources   TrackingSource[]
+}
+
+model ContentItem {
+  id            String    @id
+  instagramId   String    @unique
+  originalUrl   String
+  coverUrl      String?
+  views         Int
+  likes         Int
+  headline      String?   // Извлечённый заголовок (Claude Vision)
+  transcript    String?   // Транскрипт видео
+  viralityScore Float?    // Коэффициент виральности
+  publishedAt   DateTime?
+  datasetId     String
+}
+
+model TrackingSource {
+  id             String   @id
+  url            String
+  username       String?
+  minViewsFilter Int      @default(0)
+  fetchLimit     Int      @default(50)
+  datasetId      String
+}
 ```
 
-2. Copy `.env.example` to `.env.local` and update the variables.
+---
 
-```sh
-cp .env.example .env.local
+## 🧠 Ключевые концепции
+
+### 1. Dataset Priority (RAG)
+В `app/api/chat/[chatId]/route.ts`:
+- `agent.datasetId` имеет приоритет над `chat.datasetId`
+- Контент фильтруется по последним 14 дням
+
+### 2. Парсинг Instagram
+`lib/parser/harvester.ts`:
+- Скрейпит через Apify
+- Извлекает headline через Claude Vision (анализ coverUrl)
+- Считает viralityScore = views / avgViews
+
+### 3. Master Agent (в разработке)
+`/dashboard/producer` — UI для:
+- Генерации заголовков через AI
+- Написания скриптов с reasoning
+- Function calling через Claude
+
+---
+
+## 🐛 Известные проблемы и решения
+
+### 1. JavaScript heap out of memory при build
+```bash
+NODE_OPTIONS='--max-old-space-size=4096' npm run build
 ```
 
-3. Start the development server:
+### 2. Instagram coverUrl истекают через 24-48ч
+Ссылки на изображения временные. При ошибке "fetch failed" нужно перепарсить источник.
 
-```sh
-pnpm run dev
+### 3. Auth redirect на /api/auth/error
+Проверить что `AUTH_URL` и `NEXT_PUBLIC_APP_URL` установлены на production URL.
+
+---
+
+## 🔧 Полезные команды
+
+```bash
+# Локальный запуск
+npm run dev
+
+# Миграции Prisma
+npx prisma migrate dev
+npx prisma generate
+
+# Проверка логов на сервере
+pm2 logs content-agents --lines 50
+
+# Перезапуск на сервере
+pm2 restart content-agents
+
+# Очистка кеша Next.js
+rm -rf .next && npm run build
 ```
 
-> [!NOTE]  
-> I use [npm-check-updates](https://www.npmjs.com/package/npm-check-updates) package for update this project.
->
-> Use this command for update your project: `ncu -i --format group`
+---
 
-## Roadmap
-- [ ] Upgrade eslint to v9
-- [ ] Add resend for success subscriptions
+## 📝 TODO / В разработке
 
-## Tech Stack + Features
+- [ ] Master Agent с реальным Gemini function calling
+- [ ] Интеграция Veo API для генерации видео
+- [ ] Celery workers для фоновых задач
+- [ ] Деплой master-agent микросервиса
 
-https://github.com/mickasmt/next-saas-stripe-starter/assets/62285783/828a4e0f-30e3-4cfe-96ff-4dfd9cd55124
+---
 
-### Frameworks
+## 👤 Контакты
 
-- [Next.js](https://nextjs.org/) – React framework for building performant apps with the best developer experience
-- [Auth.js](https://authjs.dev/) – Handle user authentication with ease with providers like Google, Twitter, GitHub, etc.
-- [Prisma](https://www.prisma.io/) – Typescript-first ORM for Node.js
-- [React Email](https://react.email/) – Versatile email framework for efficient and flexible email development
-
-### Platforms
-
-- [Vercel](https://vercel.com/) – Easily preview & deploy changes with git
-- [Resend](https://resend.com/) – A powerful email framework for streamlined email development
-- [Neon](https://neon.tech/) – Serverless Postgres with autoscaling, branching, bottomless storage and generous free tier.
-
-### UI
-
-- [Tailwind CSS](https://tailwindcss.com/) – Utility-first CSS framework for rapid UI development
-- [Shadcn/ui](https://ui.shadcn.com/) – Re-usable components built using Radix UI and Tailwind CSS
-- [Framer Motion](https://framer.com/motion) – Motion library for React to animate components with ease
-- [Lucide](https://lucide.dev/) – Beautifully simple, pixel-perfect icons
-- [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) – Optimize custom fonts and remove external network requests for improved performance
-- [`ImageResponse`](https://nextjs.org/docs/app/api-reference/functions/image-response) – Generate dynamic Open Graph images at the edge
-
-### Hooks and Utilities
-
-- `useIntersectionObserver` – React hook to observe when an element enters or leaves the viewport
-- `useLocalStorage` – Persist data in the browser's local storage
-- `useScroll` – React hook to observe scroll position ([example](https://github.com/mickasmt/precedent/blob/main/components/layout/navbar.tsx#L12))
-- `nFormatter` – Format numbers with suffixes like `1.2k` or `1.2M`
-- `capitalize` – Capitalize the first letter of a string
-- `truncate` – Truncate a string to a specified length
-- [`use-debounce`](https://www.npmjs.com/package/use-debounce) – Debounce a function call / state update
-
-### Code Quality
-
-- [TypeScript](https://www.typescriptlang.org/) – Static type checker for end-to-end typesafety
-- [Prettier](https://prettier.io/) – Opinionated code formatter for consistent code style
-- [ESLint](https://eslint.org/) – Pluggable linter for Next.js and TypeScript
-
-### Miscellaneous
-
-- [Vercel Analytics](https://vercel.com/analytics) – Track unique visitors, pageviews, and more in a privacy-friendly way
-
-## Author
-
-Created by [@miickasmt](https://twitter.com/miickasmt) in 2023, released under the [MIT license](https://github.com/shadcn/taxonomy/blob/main/LICENSE.md).
-
-## Credits
-
-This project was inspired by shadcn's [Taxonomy](https://github.com/shadcn-ui/taxonomy), Steven Tey’s [Precedent](https://github.com/steven-tey/precedent), and Antonio Erdeljac's [Next 13 AI SaaS](https://github.com/AntonioErdeljac/next13-ai-saas).
-
-- Shadcn ([@shadcn](https://twitter.com/shadcn))
-- Steven Tey ([@steventey](https://twitter.com/steventey))
-- Antonio Erdeljac ([@YTCodeAntonio](https://twitter.com/AntonioErdeljac))
+Проект разрабатывается для **Дмитрий Новиков**.
