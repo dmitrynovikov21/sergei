@@ -57,7 +57,7 @@ export function ContextSelector({ datasets }: ContextSelectorProps) {
     if (!mounted) {
         return (
             <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Контекст:</span>
+                <span className="text-sm font-medium text-muted-foreground">Контекст:</span>
                 <div className="w-[200px] h-9 bg-zinc-100 dark:bg-zinc-800 rounded-md animate-pulse" />
             </div>
         )
@@ -65,7 +65,7 @@ export function ContextSelector({ datasets }: ContextSelectorProps) {
 
     return (
         <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Контекст:</span>
+            <span className="text-sm font-medium text-muted-foreground">Контекст:</span>
             <Select
                 value={selectedId}
                 onValueChange={handleValueChange}

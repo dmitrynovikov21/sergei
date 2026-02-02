@@ -3,17 +3,16 @@
 import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
-// import { MessageRole } from "@prisma/client"
+import { requireAuth, getCurrentUser } from "@/lib/auth-helpers"
+
+// ==========================================
+// Chat CRUD Actions
+// ==========================================
 
 export async function createChat(agentId: string, projectId?: string, datasetId?: string) {
-    console.log("[createChat] Starting for agentId:", agentId, "projectId:", projectId, "datasetId:", datasetId)
-    const session = await auth()
-    console.log("[createChat] Session:", session?.user?.id)
+    const user = await requireAuth()
 
-    if (!session?.user?.id) {
-        console.error("[createChat] No session found")
-        throw new Error("Unauthorized")
-    }
+    console.log("[createChat] Creating chat for user:", user.id, "agent:", agentId, "dataset:", datasetId)
 
     try {
         // Get agent name for chat title
@@ -21,18 +20,17 @@ export async function createChat(agentId: string, projectId?: string, datasetId?
             where: { id: agentId },
             select: { name: true }
         })
-        console.log("[createChat] Agent found:", agent?.name)
 
         const chat = await prisma.chat.create({
             data: {
-                userId: session.user.id,
+                id: crypto.randomUUID(),
+                userId: user.id,
                 agentId,
                 projectId: projectId || null,
                 datasetId: datasetId || null,
                 title: agent?.name ? `Чат с ${agent.name}` : "Новый чат",
             },
         })
-        console.log("[createChat] Chat created:", chat.id, "with datasetId:", datasetId)
 
         revalidatePath("/dashboard", "layout")
         revalidatePath("/dashboard")
@@ -44,23 +42,23 @@ export async function createChat(agentId: string, projectId?: string, datasetId?
 }
 
 export async function getUserChats() {
-    const session = await auth()
-    if (!session?.user?.id) return []
+    const user = await getCurrentUser()
+    if (!user) return []
 
     return await prisma.chat.findMany({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
         include: { agent: true },
         orderBy: { updatedAt: "desc" },
     })
 }
 
 export async function getAgentChats(agentId: string) {
-    const session = await auth()
-    if (!session?.user?.id) return []
+    const user = await getCurrentUser()
+    if (!user) return []
 
     return await prisma.chat.findMany({
         where: {
-            userId: session.user.id,
+            userId: user.id,
             agentId
         },
         orderBy: { updatedAt: "desc" },
@@ -68,8 +66,8 @@ export async function getAgentChats(agentId: string) {
 }
 
 export async function getChat(chatId: string) {
-    const session = await auth()
-    if (!session?.user?.id) return null
+    const user = await getCurrentUser()
+    if (!user) return null
 
     const chat = await prisma.chat.findUnique({
         where: { id: chatId },
@@ -85,7 +83,7 @@ export async function getChat(chatId: string) {
     })
 
     // Security check
-    if (chat && chat.userId !== session.user.id) {
+    if (chat && chat.userId !== user.id) {
         return null
     }
 
@@ -93,8 +91,7 @@ export async function getChat(chatId: string) {
 }
 
 export async function saveMessage(chatId: string, role: string, content: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     const message = await prisma.message.create({
         data: {
@@ -111,19 +108,17 @@ export async function saveMessage(chatId: string, role: string, content: string)
     })
 
     revalidatePath(`/dashboard/chat/${chatId}`)
-    revalidatePath(`/dashboard/chat/${chatId}`)
     return message
 }
 
 export async function deleteChat(chatId: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     const chat = await prisma.chat.findUnique({
         where: { id: chatId },
     })
 
-    if (!chat || chat.userId !== session.user.id) {
+    if (!chat || chat.userId !== user.id) {
         throw new Error("Unauthorized")
     }
 
@@ -139,8 +134,7 @@ export async function deleteChat(chatId: string) {
 }
 
 export async function renameChat(chatId: string, newTitle: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     if (!newTitle.trim()) throw new Error("Title is required")
 
@@ -148,7 +142,7 @@ export async function renameChat(chatId: string, newTitle: string) {
         where: { id: chatId },
     })
 
-    if (!chat || chat.userId !== session.user.id) {
+    if (!chat || chat.userId !== user.id) {
         throw new Error("Unauthorized")
     }
 
@@ -162,14 +156,13 @@ export async function renameChat(chatId: string, newTitle: string) {
 }
 
 export async function moveChatToProject(chatId: string, projectId: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     const chat = await prisma.chat.findUnique({
         where: { id: chatId },
     })
 
-    if (!chat || chat.userId !== session.user.id) {
+    if (!chat || chat.userId !== user.id) {
         throw new Error("Unauthorized")
     }
 

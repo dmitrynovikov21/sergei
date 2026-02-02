@@ -12,6 +12,7 @@ import { Icons } from "@/components/shared/icons"
 import { ContentItemsTable } from "@/components/datasets/content-items-table"
 import { SourcesList } from "@/components/datasets/sources-list"
 import { AddSourceDialog } from "@/components/datasets/add-source-dialog"
+
 import { reprocessDatasetHeadlines } from "@/actions/datasets"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,7 @@ interface TrackingSource {
     isActive: boolean
     minViewsFilter: number
     fetchLimit: number
+    daysLimit: number
     lastScrapedAt: Date | null
 }
 
@@ -74,14 +76,10 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
         })
     }
 
-    // Fetch latest items with filter
+    // Fetch ALL items (no date filter)
     const fetchItems = useCallback(async () => {
         try {
-            const url = daysFilter
-                ? `/api/datasets/${datasetId}/items?days=${daysFilter}`
-                : `/api/datasets/${datasetId}/items`
-
-            const response = await fetch(url, {
+            const response = await fetch(`/api/datasets/${datasetId}/items`, {
                 cache: "no-store"
             })
             if (response.ok) {
@@ -91,7 +89,7 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
         } catch (error) {
             console.error("Failed to fetch items:", error)
         }
-    }, [datasetId, daysFilter])
+    }, [datasetId])
 
     // Start polling automatically
     useEffect(() => {
@@ -109,14 +107,13 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
         setItems(initialItems)
     }, [initialItems])
 
-    // Apply all filters on frontend
+    // Apply filters for DISPLAY (user can filter)
     const filteredItems = items.filter((item) => {
         // Date filter
         if (daysFilter && item.publishedAt) {
             const publishedDate = new Date(item.publishedAt)
             const daysAgo = new Date()
             daysAgo.setDate(daysAgo.getDate() - daysFilter)
-
             if (publishedDate < daysAgo) return false
         }
 
@@ -135,24 +132,37 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
 
     return (
         <Tabs defaultValue="content" className="space-y-4">
-            <TabsList>
-                <TabsTrigger value="content" className="gap-2">
-                    <Icons.fileText className="h-4 w-4" />
-                    Контент ({filteredItems.length})
-                </TabsTrigger>
-                <TabsTrigger value="sources" className="gap-2">
-                    <Icons.link className="h-4 w-4" />
-                    Источники ({sources.length})
-                </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center justify-between">
+                <TabsList>
+                    <TabsTrigger value="content" className="gap-2">
+                        <Icons.fileText className="h-4 w-4" />
+                        Контент ({items.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="sources" className="gap-2">
+                        <Icons.link className="h-4 w-4" />
+                        Источники ({sources.length})
+                    </TabsTrigger>
+                </TabsList>
+
+            </div>
 
             <TabsContent value="content" className="space-y-4">
-                {/* Compact Filter Panel */}
+                {/* Compact Filter Panel - Only Views/Likes */}
                 <div className="flex flex-wrap items-center gap-4 p-4 rounded-lg border bg-card">
+
                     {/* Time Period Filter */}
                     <div className="flex items-center gap-2">
                         <span className="text-sm font-medium whitespace-nowrap">Период:</span>
                         <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setDaysFilter(null)}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${daysFilter === null
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-secondary hover:bg-secondary/80"
+                                    }`}
+                            >
+                                Все
+                            </button>
                             <button
                                 onClick={() => setDaysFilter(7)}
                                 className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${daysFilter === 7
@@ -251,6 +261,6 @@ export function DatasetTabs({ datasetId, initialItems, sources }: DatasetTabsPro
                 </div>
                 <SourcesList sources={sources} />
             </TabsContent>
-        </Tabs>
+        </Tabs >
     )
 }

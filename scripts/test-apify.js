@@ -1,127 +1,146 @@
+#!/usr/bin/env node
 /**
- * Test script to verify Apify Instagram scraper returns full statistics
- * Run with: node scripts/test-apify.js <instagram_username>
+ * Тестовый скрипт для прямого вызова Apify Instagram Scraper
+ * Запуск: node scripts/test-apify.js
  */
 
-require('dotenv').config()
+require('dotenv').config();
 
-const APIFY_TOKEN = process.env.APIFY_TOKEN
-const APIFY_ACTOR = "apify/instagram-scraper"
+const { ApifyClient } = require('apify-client');
 
-async function testScrape(username) {
+async function main() {
+    const APIFY_TOKEN = process.env.APIFY_TOKEN;
+    const IG_USERNAME = process.env.IG_USERNAME;
+    const IG_PASSWORD = process.env.IG_PASSWORD;
+
     if (!APIFY_TOKEN) {
-        console.error("❌ APIFY_TOKEN not found in .env")
-        process.exit(1)
+        console.error('❌ APIFY_TOKEN не установлен');
+        process.exit(1);
     }
 
-    console.log(`\n🔍 Testing Apify Instagram scraper for @${username}`)
-    console.log(`📦 Actor: ${APIFY_ACTOR}`)
-    console.log(`🔑 Token: ${APIFY_TOKEN.slice(0, 10)}...`)
-    console.log("\n⏳ Starting scrape...")
+    console.log('🔧 Настройки:');
+    console.log(`   APIFY_TOKEN: ${APIFY_TOKEN.substring(0, 8)}...`);
+    console.log(`   IG_USERNAME: ${IG_USERNAME || 'не установлен'}`);
+    console.log(`   IG_PASSWORD: ${IG_PASSWORD ? '***' : 'не установлен'}`);
+    console.log('');
 
-    const actorId = APIFY_ACTOR.replace("/", "~")
-    const url = `https://api.apify.com/v2/acts/${actorId}/runs?token=${APIFY_TOKEN}`
+    const client = new ApifyClient({ token: APIFY_TOKEN });
+    const targetUsername = 'd_vycheslavovich';
 
-    const input = {
-        directUrls: [`https://www.instagram.com/${username}/`],
-        resultsType: "posts",
-        resultsLimit: 10,  // Small limit for testing
-        addParentData: false,
-        proxy: {
-            useApifyProxy: true,
-            apifyProxyGroups: ["RESIDENTIAL"]
+    console.log(`📱 Тестируем парсинг: @${targetUsername}`);
+    console.log('━'.repeat(50));
+
+    // Тест 1: apify/instagram-scraper с directUrls
+    console.log('\n🧪 Тест 1: apify/instagram-scraper (directUrls + RESIDENTIAL прокси)');
+
+    const input1 = {
+        "directUrls": [`https://www.instagram.com/${targetUsername}/`],
+        "resultsType": "posts",
+        "resultsLimit": 50,
+        "searchType": "user",
+        "proxy": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": ["RESIDENTIAL"]
         }
+    };
+
+    // Добавляем креды если есть
+    if (IG_USERNAME && IG_PASSWORD) {
+        input1.loginUsername = IG_USERNAME;
+        input1.loginPassword = IG_PASSWORD;
+        console.log('   → Используем авторизацию');
+    } else {
+        console.log('   → Анонимный режим');
     }
 
     try {
-        // Start the actor run
-        const startResponse = await fetch(url, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(input)
-        })
+        console.log('   → Запускаем актор...');
+        const run1 = await client.actor("apify/instagram-scraper").call(input1, {
+            waitSecs: 120
+        });
 
-        if (!startResponse.ok) {
-            throw new Error(`Apify start failed: ${await startResponse.text()}`)
-        }
+        console.log(`   → Статус: ${run1.status}`);
 
-        const runData = await startResponse.json()
-        const runId = runData.data.id
-        console.log(`✅ Run started: ${runId}`)
+        if (run1.status === 'SUCCEEDED') {
+            const { items } = await client.dataset(run1.defaultDatasetId).listItems();
+            const validItems = items.filter(i => !i.error);
+            console.log(`   ✅ Получено постов: ${validItems.length}`);
 
-        // Poll for completion
-        let attempts = 0
-        const maxAttempts = 60  // 5 minutes max
+            if (validItems.length > 0) {
+                console.log('\n   📊 Примеры постов:');
+                validItems.slice(0, 3).forEach((item, i) => {
+                    console.log(`   ${i + 1}. ID: ${item.id || item.shortCode}`);
+                    console.log(`      Тип: ${item.type || item.productType}`);
+                    console.log(`      Просмотры: ${item.videoViewCount || item.videoPlayCount || 'N/A'}`);
+                    console.log(`      Лайки: ${item.likesCount || item.likes || 'N/A'}`);
+                    console.log(`      Дата: ${item.timestamp || item.takenAt}`);
+                    console.log('');
+                });
 
-        while (attempts < maxAttempts) {
-            await new Promise(resolve => setTimeout(resolve, 5000))
-            process.stdout.write(`\r⏳ Polling... (${attempts + 1}/${maxAttempts})`)
-
-            const statusResponse = await fetch(
-                `https://api.apify.com/v2/actor-runs/${runId}?token=${APIFY_TOKEN}`
-            )
-            const statusData = await statusResponse.json()
-
-            if (statusData.data.status === "SUCCEEDED") {
-                console.log("\n✅ Run completed!")
-
-                // Fetch results
-                const resultsResponse = await fetch(
-                    `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}`
-                )
-                const results = await resultsResponse.json()
-
-                console.log(`\n📊 Got ${results.length} items:\n`)
-
-                // Analyze each item for stats
-                results.forEach((item, index) => {
-                    console.log(`\n--- Item ${index + 1} ---`)
-                    console.log(`Type: ${item.type}`)
-                    console.log(`URL: ${item.url}`)
-                    console.log(`Caption: ${(item.caption || "").slice(0, 50)}...`)
-                    console.log(`\n📈 STATISTICS:`)
-                    console.log(`  likesCount: ${item.likesCount}`)
-                    console.log(`  commentsCount: ${item.commentsCount}`)
-                    console.log(`  videoViewCount: ${item.videoViewCount}`)
-                    console.log(`  playCount: ${item.playCount}`)
-                    console.log(`  viewCount: ${item.viewCount}`)
-                    console.log(`  videoPlayCount: ${item.videoPlayCount}`)
-
-                    // Log all keys to find any other view-related fields
-                    const viewKeys = Object.keys(item).filter(k =>
-                        k.toLowerCase().includes('view') ||
-                        k.toLowerCase().includes('play') ||
-                        k.toLowerCase().includes('count')
-                    )
-                    console.log(`\n🔑 Count-related fields: ${viewKeys.join(', ')}`)
-                })
-
-                // Save full response for analysis
-                const fs = require('fs')
-                fs.writeFileSync(
-                    'scripts/apify-test-output.json',
-                    JSON.stringify(results, null, 2)
-                )
-                console.log("\n💾 Full output saved to scripts/apify-test-output.json")
-
-                return results
+                console.log('\n✅ УСПЕХ! Парсер работает.');
+                return;
+            } else {
+                // Проверяем ошибки
+                const { items: allItems } = await client.dataset(run1.defaultDatasetId).listItems({ clean: false });
+                if (allItems[0]?.error) {
+                    console.log(`   ❌ Ошибка: ${allItems[0].error} - ${allItems[0].errorDescription}`);
+                }
             }
-
-            if (statusData.data.status === "FAILED" || statusData.data.status === "ABORTED") {
-                throw new Error(`Apify run failed: ${statusData.data.status}`)
-            }
-
-            attempts++
+        } else {
+            const log = await client.log(run1.id).get();
+            console.log('   ❌ Лог ошибки:', log?.substring(log.length - 500));
         }
-
-        throw new Error("Apify run timed out")
-
-    } catch (error) {
-        console.error("\n❌ Error:", error.message)
-        process.exit(1)
+    } catch (e) {
+        console.error('   ❌ Ошибка:', e.message);
     }
+
+    console.log('\n━'.repeat(50));
+    console.log('⚠️ Тест 1 не дал результатов. Пробуем альтернативный актор...\n');
+
+    // Тест 2: Instagram Reel Scraper  
+    console.log('🧪 Тест 2: apify/instagram-reel-scraper');
+
+    const input2 = {
+        "urls": [`https://www.instagram.com/${targetUsername}/reels/`],
+        "maxPostsPerProfile": 30,
+        "proxy": {
+            "useApifyProxy": true,
+            "apifyProxyGroups": ["RESIDENTIAL"]
+        }
+    };
+
+    try {
+        console.log('   → Запускаем актор...');
+        const run2 = await client.actor("apify/instagram-reel-scraper").call(input2, {
+            waitSecs: 120
+        });
+
+        console.log(`   → Статус: ${run2.status}`);
+
+        if (run2.status === 'SUCCEEDED') {
+            const { items } = await client.dataset(run2.defaultDatasetId).listItems();
+            console.log(`   ✅ Получено Reels: ${items.length}`);
+
+            if (items.length > 0) {
+                console.log('\n   📊 Примеры Reels:');
+                items.slice(0, 3).forEach((item, i) => {
+                    console.log(`   ${i + 1}. ${JSON.stringify(item).substring(0, 200)}...`);
+                });
+                console.log('\n✅ УСПЕХ! Reel Scraper работает.');
+                return;
+            }
+        }
+    } catch (e) {
+        console.error('   ❌ Ошибка:', e.message);
+    }
+
+    console.log('\n━'.repeat(50));
+    console.log('❌ Все тесты провалились.');
+    console.log('   Возможные причины:');
+    console.log('   1. Instagram блокирует IP Apify для этого профиля');
+    console.log('   2. Профиль приватный или возрастные ограничения');
+    console.log('   3. Нужен валидный IG аккаунт для авторизации');
+    console.log('\n💡 Рекомендация: Попробуйте другой публичный профиль для теста.');
 }
 
-// Run the test
-const username = process.argv[2] || "instagram"
-testScrape(username)
+main().catch(console.error);

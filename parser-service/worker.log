@@ -1,0 +1,327 @@
+[Queue] Connecting to Redis: redis://localhost:6379
+[Worker] Initializing worker for queue: scrape-source...
+[Worker-Entry] Worker process initialized and listening for jobs.
+[Worker] Processing job 1 for source cmkqikrnp000hyl3wetp304fb (https://www.instagram.com/d_vycheslavovich/reels/)
+[Apify] Starting scrape for: https://www.instagram.com/d_vycheslavovich/reels/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/d_vycheslavovich/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Worker] Processing job 2 for source cmkqplv6s00035yrink1o6o2h (https://www.instagram.com/d_vycheslavovich/reels/)
+[Apify] Starting scrape for: https://www.instagram.com/d_vycheslavovich/reels/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/d_vycheslavovich/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmkqplv6s00035yrink1o6o2h: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmkqikrnp000hyl3wetp304fb: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Worker] Job 2 failed: Monthly usage hard limit exceeded
+[Worker] Job 1 failed: Monthly usage hard limit exceeded
+[Worker] Processing job 3 for source cmks7h4yc000b4z2h4qoae5t2 (https://www.instagram.com/neiro_gleb/)
+[Apify] Starting scrape for: https://www.instagram.com/neiro_gleb/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/neiro_gleb/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Worker] Processing job 4 for source cmks8i2xs00id4z2hsij21ohv (https://www.instagram.com/dianissimmo/reels/)
+[Apify] Starting scrape for: https://www.instagram.com/dianissimmo/reels/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/dianissimmo/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmks8i2xs00id4z2hsij21ohv: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Worker] Job 4 failed: Monthly usage hard limit exceeded
+[Worker] Processing job 5 for source cmksajhbz00nd4z2hvvkfrr3n (https://www.instagram.com/dianissimmo/reels/)
+[Apify] Starting scrape for: https://www.instagram.com/dianissimmo/reels/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/dianissimmo/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmks7h4yc000b4z2h4qoae5t2: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Worker] Job 3 failed: Monthly usage hard limit exceeded
+[Worker] Processing job 6 for source cmksbeppe00yr4z2hmhous24p (https://www.instagram.com/dianissimmo/reels/)
+[Apify] Starting scrape for: https://www.instagram.com/dianissimmo/reels/
+[Apify] Target Limit: 5000 (ignoring loose limit request)
+[Apify] Using credentials: olivialeek54405
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/dianissimmo/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 5000,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "olivialeek54405",
+  "loginPassword": "7nyhqvzx"
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmksbeppe00yr4z2hmhous24p: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Apify] CRITICAL ERROR: Monthly usage hard limit exceeded
+[Worker] Job failed for cmksajhbz00nd4z2hvvkfrr3n: ApifyApiError: Monthly usage hard limit exceeded
+  clientMethod: ActorClient.start
+  statusCode: 403
+  type: platform-feature-disabled
+  attempt: 1
+  httpMethod: post
+  path: /v2/acts/apify~instagram-scraper/runs
+  stack: 
+    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)
+    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)
+    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)
+    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32
+  data: undefined {
+  clientMethod: 'ActorClient.start',
+  statusCode: 403,
+  type: 'platform-feature-disabled',
+  attempt: 1,
+  httpMethod: 'post',
+  path: '/v2/acts/apify~instagram-scraper/runs',
+  originalStack: '\n' +
+    '    at makeRequest (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/http_client.js:216:30)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ActorClient.start (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:153:26)\n' +
+    '    at async ActorClient.call (/Users/dimanovikov/Desktop/sergei/parser-service/node_modules/apify-client/dist/resource_clients/actor.js:210:24)\n' +
+    '    at async scrapeInstagram (/Users/dimanovikov/Desktop/sergei/parser-service/lib/apify.js:62:21)\n' +
+    '    at async Worker.connection.connection [as processFn] (/Users/dimanovikov/Desktop/sergei/parser-service/lib/worker.js:17:23)\n' +
+    '    at async /Users/dimanovikov/Desktop/sergei/parser-service/node_modules/bullmq/dist/cjs/classes/worker.js:565:32',
+  data: undefined
+}
+[Worker] Job 6 failed: Monthly usage hard limit exceeded
+[Worker] Job 5 failed: Monthly usage hard limit exceeded

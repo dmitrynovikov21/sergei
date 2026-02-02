@@ -24,7 +24,7 @@ export default async function AgentPage({ params }: AgentPageProps) {
     }
 
     return (
-        <div className="flex justify-center min-h-screen py-8 px-4">
+        <div className="flex min-h-screen py-4 px-4">
             {/* Container for both columns */}
             <div className="flex w-full max-w-5xl">
                 {/* Center Column */}
@@ -32,7 +32,7 @@ export default async function AgentPage({ params }: AgentPageProps) {
                     {/* Breadcrumb */}
                     <Link
                         href="/dashboard/agents"
-                        className="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white flex items-center gap-1 mb-8 transition-colors"
+                        className="text-sm text-[#7C7B73] hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
                     >
                         ← Все агенты
                     </Link>
@@ -43,9 +43,8 @@ export default async function AgentPage({ params }: AgentPageProps) {
                     {/* Chat Input */}
                     <AgentChatStarter agent={agent} />
 
-                    {/* Chat History */}
-                    <div className="mt-10">
-                        <h3 className="text-sm font-medium text-zinc-500 mb-4 uppercase tracking-wider">История чатов</h3>
+                    {/* Chat History - no header */}
+                    <div className="mt-8">
                         <AgentChatHistory chats={chats} />
                     </div>
                 </div>

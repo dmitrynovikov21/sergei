@@ -46,7 +46,7 @@ export function HeaderDisplay() {
                 </div>
             )}
             <div className="flex flex-col justify-center">
-                <h1 className="text-base font-semibold leading-none truncate text-zinc-900 dark:text-white">{headerData.title}</h1>
+                <h1 className="text-base font-semibold leading-none truncate text-foreground">{headerData.title}</h1>
             </div>
         </div>
     )

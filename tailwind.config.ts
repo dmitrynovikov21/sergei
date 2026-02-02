@@ -54,16 +54,23 @@ const config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        sidebar: {
+          DEFAULT: "hsl(var(--sidebar))",
+          foreground: "hsl(var(--sidebar-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        "2xl": "1rem",
+        "3xl": "1.5rem",
       },
       fontFamily: {
-        sans: ["var(--font-geist)", ...fontFamily.sans],
+        sans: ["var(--font-geist)", "system-ui", "-apple-system", ...fontFamily.sans],
+        serif: ["Georgia", "'Times New Roman'", "serif"],
         urban: ["var(--font-urban)", ...fontFamily.sans],
-        heading: ["var(--font-heading)", ...fontFamily.sans],
+        heading: ["var(--font-geist)", "system-ui", ...fontFamily.sans],
       },
       keyframes: {
         "accordion-down": {

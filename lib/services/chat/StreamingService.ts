@@ -1,14 +1,11 @@
 /**
  * Streaming Service
- * 
- * Handles:
- * - Creating streaming response from Anthropic
- * - Processing stream events
- * - Managing response lifecycle
+ * Refactored to use AiGateway (Vercel AI SDK) instead of direct Anthropic SDK.
+ * This ensures billing and centralized logging.
  */
 
-import Anthropic from "@anthropic-ai/sdk"
-import { CHAT_MODEL, CHAT_MAX_TOKENS, THINKING_BUDGET, ClaudeMessage } from "./ChatService"
+import { AiGateway } from "@/lib/services/ai-gateway"
+import { CHAT_MODEL, ClaudeMessage } from "./ChatService"
 
 // ==========================================
 // Types
@@ -21,27 +18,7 @@ export interface StreamingOptions {
     messages: ClaudeMessage[]
     userId: string
     thinkingBudget?: number
-}
-
-export interface StreamingCallbacks {
-    onText: (text: string) => void
-    onComplete: (fullResponse: string, usage: { input_tokens: number; output_tokens: number }) => Promise<void>
-    onError: (error: Error, partialResponse: string) => Promise<void>
-}
-
-// ==========================================
-// Anthropic Client (Singleton)
-// ==========================================
-
-let anthropicClient: Anthropic | null = null
-
-export function getAnthropicClient(): Anthropic {
-    if (!anthropicClient) {
-        anthropicClient = new Anthropic({
-            apiKey: process.env.ANTHROPIC_API_KEY,
-        })
-    }
-    return anthropicClient
+    onFinish?: (text: string, usage: { input_tokens: number; output_tokens: number }) => Promise<void>
 }
 
 // ==========================================
@@ -49,94 +26,69 @@ export function getAnthropicClient(): Anthropic {
 // ==========================================
 
 export async function createChatStream(options: StreamingOptions) {
-    const client = getAnthropicClient()
+    // Transform ClaudeMessage (role, content) to Vercel AI SDK CoreMessage if needed,
+    // but AiGateway handles 'messages' array. Since we use `streamText` from `ai`,
+    // it expects [{role, content}]. ClaudeMessage structure should be compatible.
 
-    const messagingOptions: any = {
-        model: options.model || CHAT_MODEL,
-        max_tokens: options.maxTokens || CHAT_MAX_TOKENS,
-        system: options.systemPrompt,
+    // Note: AiGateway enforces model, so options.model is ignored/overridden there.
+    return await AiGateway.streamCompletion({
+        model: options.model || CHAT_MODEL, // Pass it, but Gateway overrides it
         messages: options.messages,
-        metadata: { user_id: options.userId },
-        // Note: temperature must be 1 when thinking is enabled (Claude API requirement)
-        thinking: {
-            type: "enabled",
-            budget_tokens: options.thinkingBudget || THINKING_BUDGET
-        }
-    }
-
-    console.log("-----------------------------------------")
-    console.log("[StreamingService] Using Model:", messagingOptions.model)
-    console.log("[StreamingService] System Prompt Length:", options.systemPrompt.length)
-    console.log("-----------------------------------------")
-
-    return client.messages.stream(messagingOptions)
+        userId: options.userId,
+        system: options.systemPrompt,
+        temperature: options.thinkingBudget ? 1.0 : undefined, // Check if thinking requires temp 1
+        onFinish: options.onFinish
+    })
 }
 
+/**
+ * Adapter to return a Response from Vercel AI SDK stream.
+ * In original code this constructed a ReadableStream manually.
+ * Vercel AI SDK `toTextStreamResponse` does this automatically.
+ */
 export function createStreamingResponse(
-    stream: ReturnType<typeof createChatStream> extends Promise<infer T> ? T : never,
+    streamResult: any, // Awaited result from streamText
     chatId: string,
     onSaveMessage: (response: string, usage: { input_tokens: number; output_tokens: number }) => Promise<void>
 ): Response {
-    const encoder = new TextEncoder()
-    let fullResponse = ""
-    let messageSaved = false
 
-    const saveMessage = async (response: string, usage: { input_tokens: number; output_tokens: number }) => {
-        if (messageSaved) return
-        messageSaved = true
-        await onSaveMessage(response, usage)
-    }
+    // We can hook into the stream to save message, BUT `streamText` result 
+    // already has `onFinish` callback support which we should have used in `createChatStream`.
+    // However, the `route.ts` calls `createChatStream` then `createStreamingResponse`.
+    // It passes `onSaveMessage` to THIS function.
 
-    const readable = new ReadableStream({
-        async start(controller) {
-            try {
-                for await (const event of stream) {
-                    // Only stream the final text response, thinking is processed internally
-                    if (event.type === "content_block_delta") {
-                        const delta = event.delta as any
-                        if (delta.type === "text_delta" && delta.text) {
-                            fullResponse += delta.text
-                            controller.enqueue(encoder.encode(delta.text))
-                        }
-                    }
-                }
+    // Problem: `streamResult` is already created. We can't attach onFinish easily to the result object itself 
+    // without using `streamText` options.
 
-                // After streaming completes, save assistant message
-                const finalMessage = await stream.finalMessage()
-                await saveMessage(fullResponse, finalMessage.usage)
+    // Solution: We should move `createChatStream` logic partly here OR
+    // just use `.toTextStreamResponse()` and assume `AiGateway` handled the saving?
+    // But `AiGateway` is generic. It doesn't know about `saveAssistantMessage`.
 
-                controller.close()
-            } catch (error) {
-                console.error("[StreamingService] Stream error:", error)
+    // Correct approach with Vercel AI SDK:
+    // The `streamText` result object allows `.toTextStreamResponse()`.
+    // To implement `onSaveMessage` (which saves to DB), we should have passed it to `createChatStream`.
 
-                // Even on error, try to save partial response if we have any
-                if (fullResponse.length > 0 && !messageSaved) {
-                    console.log(`[StreamingService] Stream interrupted, saving partial response (${fullResponse.length} chars)`)
-                    await saveMessage(fullResponse, { input_tokens: 0, output_tokens: 0 })
-                }
+    // Refactoring strategy:
+    // The route.ts calling pattern is:
+    // const stream = await createChatStream(...)
+    // return createStreamingResponse(stream, ..., callback)
 
-                controller.error(error)
-            }
-        },
+    // We will change `createChatStream` to ACCEPT the callback if possible, or 
+    // since we can't change route.ts signature easily without editing it too (which we plan to do),
+    // let's assume we modify route.ts to pass callback EARLIER.
 
-        // This is called when the client disconnects
-        cancel: async () => {
-            console.log(`[StreamingService] Client disconnected from chat ${chatId}`)
+    // BUT, for now, to minimize changes in route.ts logic structure (step-by-step),
+    // we can use `streamResult.toTextStreamResponse()` directly.
 
-            // Save whatever we have so far
-            if (fullResponse.length > 0 && !messageSaved) {
-                console.log(`[StreamingService] Saving response on disconnect (${fullResponse.length} chars)`)
-                await saveMessage(fullResponse, { input_tokens: 0, output_tokens: 0 })
-            }
-        }
-    })
+    // Wait, how do we trigger `onSaveMessage`?
+    // Vercel AI SDK `streamText` executes `onFinish` internally when stream ends.
+    // If we didn't pass it in `createChatStream`, it won't run.
 
-    return new Response(readable, {
-        headers: {
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no", // Disable buffering in Nginx/Cloudflare
-        },
-    })
+    // So we MUST modify `createChatStream` to accept `onFinish`.
+    // But `route.ts` calls `createChatStream` BEFORE it defines `createStreamingResponse` callback.
+
+    // Let's modify `route.ts` to pass the callback to `createChatStream`.
+
+    // Use toUIMessageStreamResponse for reasoning/thinking support
+    return streamResult.toUIMessageStreamResponse({ sendReasoning: true });
 }

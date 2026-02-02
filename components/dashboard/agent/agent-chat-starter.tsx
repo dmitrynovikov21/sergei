@@ -4,9 +4,17 @@ import * as React from "react"
 import { useRouter } from "next/navigation"
 import { Agent } from "@prisma/client"
 import { createChat } from "@/actions/chat"
-import { ArrowUp, Loader2 } from "lucide-react"
+import { getDatasets } from "@/actions/datasets"
+import { useStartChat } from "@/hooks/use-start-chat"
+import { ArrowUp, Loader2, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
+import { useFileUpload } from "@/hooks/use-file-upload"
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover"
 
 interface AgentChatStarterProps {
     agent: Agent
@@ -16,52 +24,19 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = React.useState(false)
     const [input, setInput] = React.useState("")
-    const [attachments, setAttachments] = React.useState<{ name: string; type: string; url: string; isUploading?: boolean }[]>([])
+    const { attachments, uploadFile, removeAttachment, clearAttachments } = useFileUpload()
     const [isDragging, setIsDragging] = React.useState(false)
     const fileInputRef = React.useRef<HTMLInputElement>(null)
 
-    // File handling
-    const uploadFile = async (file: File) => {
-        const tempId = Math.random().toString(36).substring(7)
-        const reader = new FileReader()
+    // Dataset state
+    const [datasets, setDatasets] = React.useState<{ id: string, name: string }[]>([])
+    const [selectedDatasetId, setSelectedDatasetId] = React.useState<string | null>(null)
 
-        return new Promise<void>((resolve) => {
-            reader.onload = async (e) => {
-                const previewUrl = e.target?.result as string
+    React.useEffect(() => {
+        getDatasets().then(ds => setDatasets(ds))
+    }, [])
 
-                setAttachments(prev => [...prev, {
-                    name: file.name,
-                    type: file.type,
-                    url: previewUrl,
-                    isUploading: true
-                }])
-
-                try {
-                    const formData = new FormData()
-                    formData.append('file', file)
-
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData
-                    })
-
-                    if (!res.ok) throw new Error('Upload failed')
-
-                    const data = await res.json()
-
-                    setAttachments(prev => prev.map(att =>
-                        att.url === previewUrl ? { ...att, url: data.url, isUploading: false } : att
-                    ))
-                } catch (error) {
-                    toast.error(`Ошибка загрузки: ${file.name}`)
-                    setAttachments(prev => prev.filter(att => att.url !== previewUrl))
-                } finally {
-                    resolve()
-                }
-            }
-            reader.readAsDataURL(file)
-        })
-    }
+    // File upload logic is now handled by useFileUpload hook
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -96,58 +71,54 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
     const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
     const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
 
+    const { startChat, isPending } = useStartChat()
+
+    // Sync local loading state with hook pending state
+    // We keep local isLoading for file uploads, so effective loading is either
+    const isBusy = isLoading || isPending
+
     const handleStartChat = async (messageOverride?: string) => {
         const messageToSend = messageOverride || input
         // Allow sending with attachments only (no text required)
         if (!messageToSend.trim() && attachments.length === 0) return
 
-        try {
-            setIsLoading(true)
-
-            // Read datasetId from localStorage (same key as ContextSelector)
-            const datasetId = localStorage.getItem("global_dataset_context") || undefined
-            console.log("[AgentChatStarter] localStorage datasetId:", datasetId)
-            console.log("[AgentChatStarter] Creating chat with agent:", agent.id, "datasetId:", datasetId)
-            const chatId = await createChat(agent.id, undefined, datasetId)
-            console.log("[AgentChatStarter] Chat created:", chatId)
-
-            // Instructions are now added server-side in the chat API route
-            // based on agent settings (useEmoji, useSubscribe, etc.)
-
-            // Store attachments in sessionStorage to avoid 414 URI Too Large error
-            if (attachments.length > 0) {
-                sessionStorage.setItem(`chat_attachments_${chatId}`, JSON.stringify(attachments))
-            }
-
-            router.push(`/dashboard/chat/${chatId}?init=${encodeURIComponent(messageToSend)}`)
-        } catch (error) {
-            console.error(error)
-            toast.error("Не удалось создать чат")
-            setIsLoading(false)
-        }
+        startChat(agent.id, {
+            initialMessage: messageToSend,
+            attachments: attachments,
+            datasetId: selectedDatasetId || undefined
+        })
     }
 
-    // Quick action buttons
-    const quickActions: { text: string; emoji: string }[] = []
+    // Quick action buttons - NO EMOJI
+    const quickActions: { text: string }[] = []
 
     if (isHeadlinesAgent) {
         quickActions.push(
-            { text: "Дай 10 заголовков", emoji: "🔥" },
-            { text: "Дай 10 на тему", emoji: "💡" }
+            { text: "Дай 10 заголовков" },
+            { text: "Дай 10 на тему" }
         )
     }
     // NOTE: quickActions removed for Description agent per task 4.1
 
+    const dropZoneRef = React.useRef<HTMLDivElement>(null)
+
     return (
         <div className="space-y-4">
-            {/* Chat Input Box - Textarea and button side by side */}
+            {/* Chat Input Box - Dark theme matching chat design */}
             <div
+                ref={dropZoneRef}
                 className={cn(
-                    "bg-zinc-100 dark:bg-zinc-800 rounded-xl border flex flex-col transition-colors",
-                    isDragging ? "border-blue-500 bg-blue-50/10" : "border-zinc-200 dark:border-zinc-700"
+                    "bg-card dark:bg-[#30302E] rounded-md border flex flex-col transition-colors",
+                    isDragging ? "border-accent bg-accent/5" : "border-border"
                 )}
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-                onDragLeave={(e) => { e.preventDefault(); setIsDragging(false) }}
+                onDragLeave={(e) => {
+                    e.preventDefault()
+                    // Only set isDragging to false if we're leaving the drop zone entirely
+                    if (dropZoneRef.current && !dropZoneRef.current.contains(e.relatedTarget as Node)) {
+                        setIsDragging(false)
+                    }
+                }}
                 onDrop={handleDrop}
             >
                 {/* Textarea */}
@@ -161,7 +132,7 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                             handleStartChat()
                         }
                     }}
-                    className="flex-1 bg-transparent text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 resize-none outline-none text-base p-4 min-h-[120px]"
+                    className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none outline-none text-[15px] p-4 min-h-[140px]"
                 />
 
                 {/* Attachments Preview */}
@@ -170,7 +141,7 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                         {attachments.map((att, idx) => (
                             <div key={idx} className="relative group">
                                 {att.type.startsWith("image/") ? (
-                                    <div className="relative h-16 w-16 rounded-md overflow-hidden border border-zinc-200 dark:border-zinc-700">
+                                    <div className="relative h-16 w-16 rounded-md overflow-hidden border border-border/50">
                                         <img src={att.url} alt={att.name} className="h-full w-full object-cover" />
                                         {att.isUploading && (
                                             <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -179,12 +150,12 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="h-16 w-16 flex items-center justify-center bg-zinc-200 dark:bg-zinc-700 rounded-md text-xs text-center p-1 overflow-hidden">
+                                    <div className="h-16 w-16 flex items-center justify-center bg-muted rounded-md text-xs text-center p-1 overflow-hidden text-muted-foreground">
                                         {att.name}
                                     </div>
                                 )}
                                 <button
-                                    onClick={() => setAttachments(prev => prev.filter((_, i) => i !== idx))}
+                                    onClick={() => removeAttachment(idx)}
                                     className="absolute -top-1.5 -right-1.5 h-5 w-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
                                 >
                                     ×
@@ -194,8 +165,8 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                     </div>
                 )}
 
-                {/* Footer: Attach Button + Send Button */}
-                <div className="flex items-center justify-between p-3 border-t border-zinc-200/50 dark:border-zinc-700/50">
+                {/* Footer: Attach Button + Dataset Selector + Send Button */}
+                <div className="flex items-center justify-between p-3 border-t border-border/30">
                     <div className="flex items-center gap-2">
                         <input
                             type="file"
@@ -207,7 +178,7 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                         />
                         <button
                             onClick={() => fileInputRef.current?.click()}
-                            className="p-2 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-300 hover:bg-zinc-200/50 dark:hover:bg-zinc-700/50 transition-colors"
+                            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                             title="Прикрепить файл"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,22 +187,57 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                         </button>
                     </div>
 
-                    <button
-                        onClick={() => handleStartChat()}
-                        disabled={isLoading || (!input.trim() && attachments.length === 0) || attachments.some(a => a.isUploading)}
-                        className={cn(
-                            "p-2.5 rounded-lg transition-all",
-                            (input.trim() || attachments.length > 0) && !attachments.some(a => a.isUploading)
-                                ? "bg-orange-500 hover:bg-orange-600 text-white"
-                                : "bg-zinc-200 dark:bg-zinc-700 text-zinc-400 dark:text-zinc-500 cursor-not-allowed"
-                        )}
-                    >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* Dataset Selector */}
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <button className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                    <span>{selectedDatasetId ? datasets.find(d => d.id === selectedDatasetId)?.name : "Без контекста"}</span>
+                                    <ChevronDown className="h-3 w-3" />
+                                </button>
+                            </PopoverTrigger>
+                            <PopoverContent side="top" align="start" className="w-64 p-1 bg-card border-border/50 max-h-64 overflow-y-auto scrollbar-none">
+                                <button
+                                    onClick={() => setSelectedDatasetId(null)}
+                                    className={cn(
+                                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors",
+                                        !selectedDatasetId ? "bg-muted" : "hover:bg-muted"
+                                    )}
+                                >
+                                    Без контекста
+                                </button>
+                                {datasets.map(ds => (
+                                    <button
+                                        key={ds.id}
+                                        onClick={() => setSelectedDatasetId(ds.id)}
+                                        className={cn(
+                                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors truncate",
+                                            selectedDatasetId === ds.id ? "bg-muted" : "hover:bg-muted"
+                                        )}
+                                    >
+                                        <span className="truncate">{ds.name}</span>
+                                    </button>
+                                ))}
+                            </PopoverContent>
+                        </Popover>
+
+                        <button
+                            onClick={() => handleStartChat()}
+                            disabled={isBusy || (!input.trim() && attachments.length === 0) || attachments.some(a => a.isUploading)}
+                            className={cn(
+                                "p-2.5 rounded-lg transition-all",
+                                (input.trim() || attachments.length > 0) && !attachments.some(a => a.isUploading)
+                                    ? "bg-accent hover:bg-accent/80 text-white"
+                                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                            )}
+                        >
+                            {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            {/* Quick Action Buttons - Centered, styled, only for Заголовки Каруселей */}
+            {/* Quick Action Buttons - NO EMOJI */}
             {quickActions.length > 0 && (
                 <div className="flex justify-center gap-3">
                     {quickActions.map((action, i) => (
@@ -244,11 +250,10 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                                     handleStartChat(action.text)
                                 }
                             }}
-                            disabled={isLoading}
-                            className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl hover:bg-zinc-50 dark:hover:bg-zinc-700/80 transition-colors shadow-sm"
+                            disabled={isBusy}
+                            className="px-4 py-2.5 text-sm font-medium text-muted-foreground border border-border rounded-xl hover:text-foreground hover:bg-muted/50 transition-colors"
                         >
-                            <span>{action.emoji}</span>
-                            <span>{action.text}</span>
+                            {action.text}
                         </button>
                     ))}
                 </div>

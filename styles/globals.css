@@ -2,62 +2,116 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 
+ * Dark Academia Tech Design System
+ * Inspired by Anthropic's dark theme
+ * 
+ * Core concept: Interface feels like "midnight library"
+ * Content (AI responses) = Book. Controls = Tool.
+ * 
+ * Primary font: Geist (Next.js local font)
+ * Serif accent: System Georgia for AI voice
+ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 98%;
-    --accent-foreground: 0 0% 9%;
-    --destructive: 0 84.2% 60.2%;
+    /* Light theme (kept for completeness, not primary focus) */
+    --background: 40 20% 97%;
+    --foreground: 35 10% 15%;
+    --card: 40 15% 95%;
+    --card-foreground: 35 10% 15%;
+    --popover: 40 15% 95%;
+    --popover-foreground: 35 10% 15%;
+    --primary: 35 10% 15%;
+    --primary-foreground: 40 20% 97%;
+    --secondary: 40 10% 90%;
+    --secondary-foreground: 35 10% 15%;
+    --muted: 40 10% 90%;
+    --muted-foreground: 35 8% 45%;
+    --accent: 18 67% 59%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 85%;
-    --radius: 0.5rem;
+    --border: 40 10% 85%;
+    --input: 40 10% 85%;
+    --ring: 18 67% 59%;
+    --radius: 0.75rem;
 
-    --chart-1: 271.5 81.3% 55.9%;
-    --chart-2: 270 95% 75%;
-    --chart-3: 270 91% 65%;
-    --chart-4: 269 97% 85%;
-    --chart-5: 269 100% 92%;
+    /* Chart colors - warm palette */
+    --chart-1: 18 67% 59%;
+    --chart-2: 25 80% 55%;
+    --chart-3: 35 70% 50%;
+    --chart-4: 15 90% 65%;
+    --chart-5: 30 85% 70%;
+
+    /* Sidebar (light) */
+    --sidebar: 40 15% 94%;
+    --sidebar-foreground: 35 10% 15%;
   }
 
   .dark {
-    --background: 0 0% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 8%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
+    /* 
+     * DARK THEME - Unified #262624 background
+     * All backgrounds: #262624
+     * Surface/Input: #3A3836 (lighter for contrast)
+     * Text: #E8E6E3
+     * Accent: #D97757
+     * Border: #3F3C39
+     */
 
-    --chart-1: 271.5 81.3% 55.9%;
-    --chart-2: 270 95% 75%;
-    --chart-3: 270 91% 65%;
-    --chart-4: 269 97% 85%;
-    --chart-5: 269 100% 92%;
+    /* Main background - #262624 */
+    --background: 40 4% 14%;
+
+    /* Primary text - warm white */
+    --foreground: 30 8% 90%;
+
+    /* Cards/Surfaces - #30302E */
+    --card: 60 2% 18%;
+    --card-foreground: 30 8% 90%;
+
+    /* Popovers */
+    --popover: 30 4% 16%;
+    --popover-foreground: 30 8% 90%;
+
+    /* Primary action */
+    --primary: 30 8% 90%;
+    --primary-foreground: 30 4% 14%;
+
+    /* Secondary */
+    --secondary: 25 3% 20%;
+    --secondary-foreground: 30 8% 90%;
+
+    /* Muted text */
+    --muted: 25 3% 18%;
+    --muted-foreground: 30 4% 64%;
+
+    /* Accent - Terracotta #D97757 */
+    --accent: 17 60% 59%;
+    --accent-foreground: 0 0% 100%;
+
+    /* Destructive */
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    /* Border - #3F3C39 */
+    --border: 25 3% 23%;
+
+    /* Input - same as card #30302E */
+    --input: 60 2% 18%;
+
+    /* Focus ring */
+    --ring: 17 60% 59%;
+
+    /* Chart colors */
+    --chart-1: 17 60% 59%;
+    --chart-2: 25 70% 55%;
+    --chart-3: 35 60% 50%;
+    --chart-4: 15 80% 65%;
+    --chart-5: 30 75% 70%;
+
+    /* Sidebar - same as background #262624 */
+    --sidebar: 40 4% 14%;
+    --sidebar-foreground: 40 5% 73%;
   }
 }
 
@@ -66,10 +120,42 @@
     @apply border-border;
   }
 
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    font-size: 17px;
+    font-family: var(--font-geist), system-ui, -apple-system, sans-serif;
+  }
+
+  /* Serif font for AI voice and large greetings */
+  .font-serif,
+  .ai-response {
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  /* Greeting text uses serif */
+  .greeting-text {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  /* All UI elements use Geist */
+  button,
+  input,
+  select,
+  textarea,
+  nav,
+  aside,
+  h1,
+  h2,
+  h3,
+  .sidebar {
+    font-family: var(--font-geist), system-ui, -apple-system, sans-serif;
   }
 }
 
@@ -83,11 +169,71 @@
     @apply ml-[-50px] mt-[-4px];
     content: counter(step);
   }
+
+  /* Academia-style gradient for accent text */
+  .text-gradient_academia {
+    background: linear-gradient(90deg, #D97757 0%, #E8A87C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Legacy gradient (keeping for compatibility) */
+  .text-gradient_indigo-purple {
+    background: linear-gradient(90deg, #D97757 0%, #E8A87C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Input field style for "book-like" feel */
+  .input-academia {
+    @apply rounded-2xl px-5 py-4 bg-card border border-border;
+    @apply focus:ring-2 focus:ring-accent focus:border-transparent;
+  }
+
+  /* Pill button style */
+  .btn-pill {
+    @apply rounded-full px-6 py-2;
+  }
+
+  /* Sidebar item spacing */
+  .sidebar-item {
+    @apply text-sm py-2 px-3;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  /* No shadows - use borders only */
+  .surface-elevated {
+    @apply bg-card border border-border;
+  }
+
+  /* Hide scrollbar completely */
+  .scrollbar-none {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.text-gradient_indigo-purple {
-  background: linear-gradient(90deg, #6366f1 0%, rgb(168 85 247 / 0.8) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Scrollbar styling for dark theme */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: hsl(40 8% 12%);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: hsl(40 4% 25%);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: hsl(40 4% 32%);
 }

@@ -30,6 +30,20 @@ class ItemStatus(str, Enum):
 
 
 # ==========================================
+# Chat Models
+# ==========================================
+
+class ChatRequest(BaseModel):
+    message: str
+    batch_id: Optional[str] = None
+    
+class ChatResponse(BaseModel):
+    reply: str
+    action: Optional[str] = None
+    data: Optional[dict] = None
+
+
+# ==========================================
 # Request Models
 # ==========================================
 
@@ -38,6 +52,7 @@ class StartBatchRequest(BaseModel):
     count: int = Field(default=30, ge=1, le=100, description="Number of videos to generate")
     days: int = Field(default=7, ge=1, le=30, description="Look back period for trends")
     min_views: int = Field(default=100000, ge=0, description="Minimum views filter")
+    topic: Optional[str] = Field(default=None, description="Specific topic to generate content for")
 
 
 class ApproveHeadlinesRequest(BaseModel):
@@ -87,6 +102,8 @@ class VisualBlueprint(BaseModel):
     highlight_indices: List[int] = []  # Word indices to highlight
     duration_seconds: float = 8.0
     font_size: int = 48
+    raw_video_url: Optional[str] = None  # Veo output (16:9)
+    final_video_url: Optional[str] = None  # Composed output (9:16)
     status: ItemStatus = ItemStatus.PENDING
 
 

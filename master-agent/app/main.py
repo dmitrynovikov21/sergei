@@ -38,7 +38,7 @@ async def startup_event():
     """Initialize connections on startup"""
     print("🚀 Master Agent starting...")
     print(f"📊 Database: {settings.database_url[:50]}...")
-    print(f"🤖 Gemini API configured: {bool(settings.gemini_api_key)}")
+    print(f"🤖 Anthropic API configured: {bool(settings.anthropic_api_key)} ({settings.anthropic_model})")
 
 
 @app.on_event("shutdown")

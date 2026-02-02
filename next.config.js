@@ -41,7 +41,7 @@ const nextConfig = {
     ],
   },
   experimental: {
-    serverComponentsExternalPackages: ["@prisma/client"],
+    serverComponentsExternalPackages: ["@prisma/client", "apify-client"],
     serverActions: {
       bodySizeLimit: "10mb",
     },

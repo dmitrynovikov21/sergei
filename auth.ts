@@ -1,32 +1,61 @@
 import authConfig from "@/auth.config";
 import { UserRole } from "@/lib/types";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-// import { UserRole } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import NextAuth, { type DefaultSession } from "next-auth";
 
-import { prisma } from "@/lib/db";
 import { getUserById } from "@/lib/user";
 
+// Inline Prisma initialization to avoid module resolution issues in production
+const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
+const prisma = globalForPrisma.prisma ?? new PrismaClient()
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma
+
 // More info: https://authjs.dev/getting-started/typescript#module-augmentation
-declare module "next-auth" {
-  interface Session {
-    user: {
-      role: string;
-    } & DefaultSession["user"];
-  }
-}
+// Module augmentation is handled in types/next-auth.d.ts
 
 export const {
   handlers: { GET, POST },
   auth,
 } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  cookies: {
+    sessionToken: {
+      name: `__Secure-cz2.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    callbackUrl: {
+      name: `__Secure-cz2.callback-url`,
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+    csrfToken: {
+      name: `__Host-cz2.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: true
+      }
+    },
+  },
   pages: {
     signIn: "/login",
-    // error: "/auth/error",
+    error: "/auth/error",
   },
   callbacks: {
+    // @ts-ignore // Inherit authorized callback from auth.config
+    ...authConfig.callbacks,
     async session({ token, session }) {
       if (session.user) {
         if (token.sub) {
@@ -40,6 +69,12 @@ export const {
         if (token.role) {
           session.user.role = token.role;
         }
+
+        // Pass credits to session
+        session.user.credits = (token.credits as number) || 0;
+
+        // Pass email verification status
+        session.user.emailVerified = token.emailVerified as Date | null;
 
         session.user.name = token.name;
         session.user.image = token.picture;
@@ -59,10 +94,72 @@ export const {
       token.email = dbUser.email;
       token.picture = dbUser.image;
       token.role = dbUser.role as UserRole;
+      token.credits = dbUser.credits;
+      token.emailVerified = dbUser.emailVerified;
 
       return token;
     },
+    async signIn({ user, account }) {
+      console.log('[Auth] signIn callback triggered', { userId: user.id, provider: account?.provider })
+      // System agents are global (isPublic=true), no need to seed per-user copies
+      return true
+    },
+    // Redirect to dashboard after successful Google OAuth
+    async redirect({ url, baseUrl }) {
+      // After successful OAuth, redirect to dashboard
+      if (url.startsWith(baseUrl) && url.includes("/api/auth/callback")) {
+        return `${baseUrl}/dashboard`
+      }
+      // Allow callback URLs
+      if (url.startsWith(baseUrl)) return url
+      // Fallback to dashboard
+      return `${baseUrl}/dashboard`
+    }
   },
-  ...authConfig,
+
   // debug: process.env.NODE_ENV !== "production"
+  events: {
+    async createUser({ user }) {
+      if (user.id) {
+        try {
+          // 1. Generate Referral Code
+          const { nanoid } = await import("nanoid");
+          const referralCode = nanoid(6);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { referralCode }
+          });
+          console.log(`[Auth] Generated referral code for ${user.id}: ${referralCode}`);
+
+          // 2. Check for Referrer Cookie
+          const { cookies } = await import("next/headers");
+          const cookieStore = cookies();
+          const refCode = cookieStore.get("referral_code")?.value;
+
+          if (refCode) {
+            const referrer = await prisma.user.findUnique({
+              where: { referralCode: refCode }
+            });
+
+            if (referrer && referrer.id !== user.id) {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: { referrerId: referrer.id }
+              });
+              console.log(`[Auth] User ${user.id} referred by ${referrer.id} (${refCode})`);
+
+              // Optional: Notify referrer via email (TODO)
+            }
+          }
+
+          // Welcome Bonus: 100 Credits ($0.10)
+          const { CreditManager } = await import("@/lib/services/credit-manager");
+          await CreditManager.addCredits(user.id, 100, "welcome-bonus", { note: "Registration gift" });
+          console.log(`[Auth] Welcomed user ${user.id} with 100 credits.`);
+        } catch (error) {
+          console.error("[Auth] Failed to setup user/bonus:", error);
+        }
+      }
+    },
+  },
 });

@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db"
 import { getDatasetContext } from "@/actions/datasets"
 import { generateChatTitle } from "@/lib/chat-titles"
 import { Agent, Chat, Message, Attachment } from "@prisma/client"
+import { DEFAULT_MODEL } from "@/lib/anthropic"
 
 // ==========================================
 // Types
@@ -29,11 +30,7 @@ export type ChatWithAgent = Chat & {
 export interface MessageContent {
     type: "text" | "image"
     text?: string
-    source?: {
-        type: "base64"
-        media_type: string
-        data: string
-    }
+    image?: string // Vercel AI SDK format: data URL string
 }
 
 export interface ClaudeMessage {
@@ -45,10 +42,10 @@ export interface ClaudeMessage {
 // Configuration
 // ==========================================
 
-// Hardcoded model - all requests use Claude 4.5 Sonnet with Thinking
-export const CHAT_MODEL = "claude-sonnet-4-5-20250929"
+// Use model from environment variables (defaults to 4.5 Sonnet if not set)
+export const CHAT_MODEL = DEFAULT_MODEL
 export const CHAT_MAX_TOKENS = 32000
-export const THINKING_BUDGET = 16000
+export const THINKING_BUDGET = 4000 // Lowered from 16000 for speed
 export const MAX_HISTORY_MESSAGES = 20
 
 // ==========================================
@@ -212,13 +209,13 @@ export function prepareClaudeMessages(
                     else if (ext === 'webp') mimeType = 'image/webp'
                 }
 
+                // Build data URL for OpenAI format
+                const dataUrl = file.content.startsWith('data:image')
+                    ? file.content
+                    : `data:${mimeType};base64,${base64Data}`
                 contextContent.push({
                     type: "image",
-                    source: {
-                        type: "base64",
-                        media_type: mimeType,
-                        data: base64Data
-                    }
+                    image: dataUrl
                 })
             })
 
@@ -248,11 +245,7 @@ export function prepareClaudeMessages(
                     if (match) {
                         content.push({
                             type: "image",
-                            source: {
-                                type: "base64",
-                                media_type: match[1],
-                                data: match[2]
-                            }
+                            image: att.url
                         })
                     }
                 }
@@ -288,11 +281,7 @@ export function prepareClaudeMessages(
                     console.log('[ChatService] Processing image:', match[1], 'size:', match[2].length)
                     newMsgContent.push({
                         type: "image",
-                        source: {
-                            type: "base64",
-                            media_type: match[1],
-                            data: match[2]
-                        }
+                        image: att.url
                     })
                 }
             }

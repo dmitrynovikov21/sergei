@@ -13,7 +13,7 @@ import {
     extractHeadlineFromCover,
     extractUsername,
     type ApifyInstagramPost
-} from "./apify-service"
+} from "./parser-client"
 import OpenAI from "openai"
 import fs from "fs"
 import path from "path"
@@ -82,11 +82,13 @@ export async function processTrackingSource(sourceId: string): Promise<{
 
         // 2. Scrape Instagram with date filter
         const daysLimit = source.daysLimit || DEFAULT_DAYS_LIMIT
-        console.log(`[Harvester] Scraping @${username} (limit: ${source.fetchLimit}, days: ${daysLimit})`)
+        // FIXED: Pass full URL (preserves /reels/) instead of just username
+        const urlToScrape = source.url
+        console.log(`[Harvester] Scraping ${urlToScrape} (limit: ${source.fetchLimit}, days: ${daysLimit})`)
 
         let posts: ApifyInstagramPost[]
         try {
-            posts = await scrapeInstagram(username, source.fetchLimit, daysLimit)
+            posts = await scrapeInstagram(urlToScrape, source.fetchLimit, daysLimit, source.contentTypes)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Scrape error"
             throw new Error(errorMsg)
@@ -215,15 +217,18 @@ async function processPost(
 
     // Content Type Filter
     const allowedTypes = contentTypes.split(",").map(t => t.trim())
-    if (!allowedTypes.includes(post.type)) {
-        return { status: "skipped", reason: `Тип ${post.type} не выбран` }
-    }
+    // DISABLED strict check: Save everything, let UI filter
+    // if (!allowedTypes.includes(post.type)) {
+    //    return { status: "skipped", reason: `Тип ${post.type} не выбран` }
+    // }
 
     // Date Filter: Skip if older than limit
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - daysLimit)
 
+    // STRICT check: Skip if older than limit
     if (publishedAt < cutoffDate) {
+        // console.log(`[Harvester] Post ${instagramId} is older than ${daysLimit} days. Skipping.`)
         return { status: "skipped", reason: `Старше ${daysLimit} дней` }
     }
 
@@ -249,12 +254,12 @@ async function processPost(
     }
 
     // Virality Check: 
+    // DISABLED: We now save EVERYTHING and filter in UI.
     // Must be > minViews AND (> 1.5 * average OR average is 0)
-    // If averageViews is passed, use it.
 
     if (views < minViews) {
-        console.log(`[Harvester] Skipped post ${instagramId}: ${views} < ${minViews} views`)
-        return { status: "skipped", reason: `${views} < ${minViews} просмотров` }
+        console.log(`[Harvester] Info: Post ${instagramId} has low views (${views} < ${minViews}) but saving anyway.`)
+        // return { status: "skipped", reason: `${views} < ${minViews} просмотров` }
     }
 
     // Virality filter DISABLED - was too restrictive (requiring 3M+ when avg is 2M)
@@ -279,6 +284,7 @@ async function processPost(
             likes: post.likesCount,
             comments: post.commentsCount,
             publishedAt: new Date(post.timestamp),
+            description: post.caption, // Save original caption
             viralityScore,
             datasetId,
             isProcessed: false,
@@ -325,7 +331,8 @@ export async function processContentItemAI(contentItemId: string): Promise<void>
         }
     }
 
-    // 2. Transcribe video audio
+    // 2. Transcribe video audio (DISABLED per user request)
+    /*
     if (item.videoUrl) {
         try {
             console.log(`[AI] Transcribing video audio...`)
@@ -339,6 +346,7 @@ export async function processContentItemAI(contentItemId: string): Promise<void>
             console.error(`[AI] Transcription failed: ${errorMsg}`)
         }
     }
+    */
 
     // 3. Update content item
     await prisma.contentItem.update({

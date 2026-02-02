@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
@@ -36,29 +37,140 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
   async function onSubmit(data: FormData) {
     setIsLoading(true);
 
-    const signInResult = await signIn("resend", {
-      email: data.email.toLowerCase(),
-      redirect: false,
-      callbackUrl: searchParams?.get("from") || "/dashboard",
-    });
+    try {
+      if (type === "register") {
+        if (!data.name) {
+          toast.error("Не заполнено поле", {
+            description: "Пожалуйста, введите ваше имя."
+          });
+          return;
+        }
 
-    setIsLoading(false);
+        const { registerUser } = await import("@/actions/register");
+        const res = await registerUser({
+          email: data.email,
+          name: data.name,
+          password: data.password
+        });
 
-    if (!signInResult?.ok) {
-      return toast.error("Something went wrong.", {
-        description: "Your sign in request failed. Please try again."
+        if ((res as any).exists) {
+          toast.error("Аккаунт уже существует", {
+            description: "Пользователь с этим email уже зарегистрирован. Используйте страницу входа.",
+            action: {
+              label: "Войти",
+              onClick: () => window.location.href = "/login"
+            }
+          });
+          return;
+        }
+
+        if ((res as any).verificationRequired) {
+          toast.success("Подтвердите ваш email", {
+            description: "Мы отправили вам письмо. Перейдите по ссылке в письме для завершения регистрации."
+          });
+          // Fall through to auto-login
+        }
+
+        if (res.error) {
+          toast.error("Ошибка регистрации", {
+            description: res.error
+          });
+          return;
+        }
+
+        toast.success("Аккаунт создан!", {
+          description: "Мы отправили письмо для подтверждения почты, но вы уже можете войти."
+        });
+
+        // Fall through to auto-login
+      } else {
+        // Login flow
+        const { checkUserExists } = await import("@/actions/register");
+        const userExists = await checkUserExists(data.email);
+
+        if (!userExists) {
+          toast.error("Аккаунт не найден", {
+            description: "Пользователя с этим email не существует. Зарегистрируйтесь.",
+            action: {
+              label: "Регистрация",
+              onClick: () => window.location.href = "/register"
+            }
+          });
+          return;
+        }
+      }
+
+      const signInResult = await signIn("credentials", {
+        email: data.email.toLowerCase(),
+        password: data.password,
+        redirect: false,
+        callbackUrl: searchParams?.get("from") || "/dashboard",
       });
-    }
 
-    return toast.success("Check your email", {
-      description: "We sent you a login link. Be sure to check your spam too.",
-    });
+      if (signInResult?.error) {
+        if (signInResult.error === "EMAIL_NOT_VERIFIED") {
+          toast.error("Email не подтвержден", {
+            description: "Пожалуйста, проверьте вашу почту и перейдите по ссылке подтверждения."
+          })
+          return
+        }
+
+        // Generic error
+        toast.error("Ошибка входа", {
+          description: "Неверный email или пароль."
+        })
+        return
+      }
+
+      if (!signInResult?.ok) {
+        toast.error("Что-то пошло не так.", {
+          description: "Пожалуйста, попробуйте снова."
+        });
+        return;
+      }
+
+      // Success - NextAuth will redirect automatically if redirect: true, 
+      // but we used redirect: false to handle errors. 
+      // So we might need to manually redirect or refresh. 
+      // Actually for credentials provider with redirect: false, we just get result.
+      // We should redirect manually.
+      window.location.href = searchParams?.get("from") || "/dashboard";
+    } catch (error) {
+      console.error("Auth error:", error);
+      toast.error("Произошла ошибка", {
+        description: "Пожалуйста, попробуйте позже."
+      });
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
       <form onSubmit={handleSubmit(onSubmit)}>
         <div className="grid gap-2">
+          {type === "register" && (
+            <div className="grid gap-1">
+              <Label className="sr-only" htmlFor="name">
+                Имя
+              </Label>
+              <Input
+                id="name"
+                placeholder="Иван Иванов"
+                type="text"
+                autoCapitalize="words"
+                autoComplete="name"
+                autoCorrect="off"
+                disabled={isLoading || isGoogleLoading}
+                {...register("name")}
+              />
+              {errors?.name && (
+                <p className="px-1 text-xs text-red-600">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+          )}
           <div className="grid gap-1">
             <Label className="sr-only" htmlFor="email">
               Email
@@ -79,11 +191,35 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
               </p>
             )}
           </div>
+          <div className="grid gap-1">
+            <Label className="sr-only" htmlFor="password">
+              Пароль
+            </Label>
+            <Input
+              id="password"
+              placeholder="Пароль (минимум 8 символов)"
+              type="password"
+              autoCapitalize="none"
+              autoComplete="current-password"
+              disabled={isLoading || isGoogleLoading}
+              {...register("password")}
+            />
+            {errors?.password && (
+              <p className="px-1 text-xs text-red-600">
+                {errors.password.message}
+              </p>
+            )}
+            <div className="flex items-center justify-end">
+              <Link href="/forgot-password" tabIndex={-1} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                Забыли пароль?
+              </Link>
+            </div>
+          </div>
           <button className={cn(buttonVariants())} disabled={isLoading}>
             {isLoading && (
               <Icons.spinner className="mr-2 size-4 animate-spin" />
             )}
-            {type === "register" ? "Sign Up with Email" : "Sign In with Email"}
+            {type === "register" ? "Зарегистрироваться" : "Войти"}
           </button>
         </div>
       </form>
@@ -93,46 +229,50 @@ export function UserAuthForm({ className, type, ...props }: UserAuthFormProps) {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background px-2 text-muted-foreground">
-            Or continue with
+            Или войдите через
           </span>
         </div>
       </div>
-      <button
-        type="button"
-        className={cn(buttonVariants({ variant: "outline" }))}
-        onClick={() => {
-          setIsGoogleLoading(true);
-          signIn("google");
-        }}
-        disabled={isLoading || isGoogleLoading}
-      >
-        {isGoogleLoading ? (
-          <Icons.spinner className="mr-2 size-4 animate-spin" />
-        ) : (
-          <Icons.google className="mr-2 size-4" />
-        )}{" "}
-        Google
-      </button>
+      <div className="grid gap-2">
+        <button
+          type="button"
+          className={cn(buttonVariants({ variant: "outline" }))}
+          onClick={() => {
+            setIsGoogleLoading(true);
+            signIn("google");
+          }}
+          disabled={isLoading || isGoogleLoading}
+        >
+          {isGoogleLoading ? (
+            <Icons.spinner className="mr-2 size-4 animate-spin" />
+          ) : (
+            <Icons.google className="mr-2 size-4" />
+          )}{" "}
+          Google
+        </button>
 
-      <button
-        type="button"
-        className={cn(buttonVariants({ variant: "outline" }), "bg-green-500/10 hover:bg-green-500/20 text-green-700 hover:text-green-800 border-green-200")}
-        onClick={() => {
-          setIsGoogleLoading(true);
-          signIn("credentials", {
-            email: "dev@example.com",
-            callbackUrl: "/dashboard/agents"
-          });
-        }}
-        disabled={isLoading || isGoogleLoading}
-      >
-        {isGoogleLoading ? (
-          <Icons.spinner className="mr-2 size-4 animate-spin" />
-        ) : (
-          <Icons.laptop className="mr-2 size-4" />
-        )}
-        Dev Login (Bypass)
-      </button>
+        <button
+          type="button"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "dark:bg-zinc-900 dark:text-white border-border/50 opacity-60 cursor-not-allowed relative"
+          )}
+          onClick={() => {
+            toast.info("Скоро", {
+              description: "Авторизация через Яндекс временно недоступна. Используйте Google или email."
+            });
+          }}
+          disabled={false}
+        >
+          <span className="mr-2 font-bold font-serif text-[#fc3f1d]">Ya</span>
+          Yandex ID
+          <span className="ml-2 text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-medium">
+            Скоро
+          </span>
+        </button>
+      </div>
+
+
     </div>
   );
 }

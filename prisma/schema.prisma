@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Account {
-  id                String   @id @default(cuid())
+  id                String   @id
   userId            String
   type              String
   provider          String
@@ -20,8 +20,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @default(now()) @map("updated_at")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @default(now())
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -29,216 +29,86 @@ model Account {
   @@map("accounts")
 }
 
-model Session {
-  id           String   @id @default(cuid())
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model agent_files {
+  id         String   @id
+  agentId    String
+  name       String
+  content    String
+  type       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  agent      Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
-  @@map("sessions")
-}
-
-model User {
-  id                     String    @id @default(cuid())
-  name                   String?
-  email                  String?   @unique
-  emailVerified          DateTime?
-  image                  String?
-  createdAt              DateTime  @default(now()) @map("created_at")
-  updatedAt              DateTime  @default(now()) @map("updated_at")
-  role                   String    @default("USER")
-  stripeCustomerId       String?   @unique @map("stripe_customer_id")
-  stripeSubscriptionId   String?   @unique @map("stripe_subscription_id")
-  stripePriceId          String?   @map("stripe_price_id")
-  stripeCurrentPeriodEnd DateTime? @map("stripe_current_period_end")
-  accounts               Account[]
-  agents                 Agent[]
-  chats                  Chat[]
-  datasets               Dataset[]
-  projects               Project[]
-  sessions               Session[]
-
-  @@map("users")
-}
-
-model VerificationToken {
-  identifier String
-  token      String   @unique
-  expires    DateTime
-
-  @@unique([identifier, token])
-  @@map("verification_tokens")
+  @@index([agentId])
 }
 
 model Agent {
-  id               String      @id @default(cuid())
+  id               String        @id
   userId           String?
   name             String
   description      String?
   systemPrompt     String
   emoji            String?
-  isPublic         Boolean     @default(false)
-  model            String      @default("claude-4-5-sonnet")
-  useEmoji         Boolean     @default(false)
-  useSubscribe     Boolean     @default(false)
-  useLinkInBio     Boolean     @default(false)
+  isPublic         Boolean       @default(false)
+  model            String        @default("claude-4-5-sonnet")
+  useEmoji         Boolean       @default(false)
+  useSubscribe     Boolean       @default(false)
+  useLinkInBio     Boolean       @default(false)
   codeWord         String?
   audienceQuestion String?
   subscribeLink    String?
   userContext      String?
   datasetId        String?
-  dataset          Dataset?    @relation(fields: [datasetId], references: [id])
-  isFavorite       Boolean     @default(false)
-  createdAt        DateTime    @default(now()) @map("created_at")
-  updatedAt        DateTime    @default(now()) @updatedAt @map("updated_at")
-  files            AgentFile[]
-  user             User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isFavorite       Boolean       @default(false)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @default(now()) @map("updated_at")
+  user             User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  dataset          Dataset?      @relation(fields: [datasetId], references: [id])
   chats            Chat[]
+  files            agent_files[]
 
-  @@index([userId])
   @@index([datasetId])
+  @@index([userId])
   @@map("agents")
 }
 
-model AgentFile {
-  id        String   @id @default(cuid())
-  agentId   String
-  name      String
-  content   String
-  type      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  agent     Agent    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+model attachments {
+  id         String   @id
+  url        String
+  name       String?
+  type       String?
+  messageId  String
+  created_at DateTime @default(now())
+  message    Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
-  @@index([agentId])
-  @@map("agent_files")
+  @@index([messageId])
 }
 
-model Project {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String
-  icon      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-  chats     Chat[]
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@map("projects")
-}
 
 model Chat {
-  id        String    @id @default(cuid())
-  agentId   String
-  userId    String
-  projectId String?
-  datasetId String?
-  title     String?   @default("New Chat")
-  icon      String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
-  dataset   Dataset?  @relation(fields: [datasetId], references: [id])
-  project   Project?  @relation(fields: [projectId], references: [id])
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agent     Agent     @relation(fields: [agentId], references: [id], onDelete: Cascade)
-  messages  Message[]
+  id         String     @id
+  agentId    String
+  userId     String
+  projectId  String?
+  datasetId  String?
+  title      String?    @default("New Chat")
+  icon       String?
+  createdAt  DateTime   @default(now()) @map("created_at")
+  updatedAt  DateTime   @default(now()) @map("updated_at")
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project    Project?   @relation(fields: [projectId], references: [id])
+  dataset    Dataset?   @relation(fields: [datasetId], references: [id])
+  messages   Message[]
+  agent      Agent      @relation(fields: [agentId], references: [id])
 
-  @@index([userId])
-  @@index([agentId])
-  @@index([projectId])
   @@index([datasetId])
+  @@index([projectId])
+  @@index([agentId])
+  @@index([userId])
   @@map("chats")
 }
 
-model Message {
-  id               String       @id @default(cuid())
-  chatId           String
-  role             String
-  content          String
-  promptTokens     Int          @default(0)
-  completionTokens Int          @default(0)
-  cost             Float        @default(0.0)
-  createdAt        DateTime     @default(now()) @map("created_at")
-  attachments      Attachment[]
-  chat             Chat         @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  @@index([chatId])
-  @@map("messages")
-}
-
-model Attachment {
-  id        String   @id @default(cuid())
-  url       String
-  name      String?
-  type      String?
-  messageId String
-  createdAt DateTime @default(now()) @map("created_at")
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@index([messageId])
-  @@map("attachments")
-}
-
-model Dataset {
-  id          String           @id @default(cuid())
-  name        String
-  description String?
-  userId      String
-  isPublic    Boolean          @default(false)
-  createdAt   DateTime         @default(now()) @map("created_at")
-  updatedAt   DateTime         @default(now()) @updatedAt @map("updated_at")
-  chats       Chat[]
-  agents      Agent[]
-  items       ContentItem[]
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  sources     TrackingSource[]
-
-  @@index([userId])
-  @@map("datasets")
-}
-
-model TrackingSource {
-  id             String         @id @default(cuid())
-  url            String
-  username       String?
-  datasetId      String
-  isActive       Boolean        @default(true)
-  minViewsFilter Int            @default(0)
-  fetchLimit     Int            @default(20)
-  lastScrapedAt  DateTime?
-  createdAt      DateTime       @default(now()) @map("created_at")
-  updatedAt      DateTime       @default(now()) @updatedAt @map("updated_at")
-  daysLimit      Int            @default(30)
-  contentTypes   String         @default("Video,Sidecar,Image")
-  dataset        Dataset        @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  parseHistory   ParseHistory[]
-
-  @@index([datasetId])
-  @@map("tracking_sources")
-}
-
-model ParseHistory {
-  id           String          @id @default(cuid())
-  sourceId     String
-  source       TrackingSource  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
-  startedAt    DateTime        @default(now()) @map("started_at")
-  completedAt  DateTime?       @map("completed_at")
-  status       String          @default("running") // "running", "completed", "failed"
-  daysRange    Int             @default(7) // 7 or 14
-  postsFound   Int             @default(0) @map("posts_found")
-  postsAdded   Int             @default(0) @map("posts_added")
-  postsSkipped Int             @default(0) @map("posts_skipped")
-  error        String?
-
-  @@index([sourceId])
-  @@index([startedAt])
-  @@map("parse_history")
-}
-
 model ContentItem {
-  id              String    @id @default(cuid())
+  id              String    @id
   instagramId     String
   originalUrl     String
   sourceUrl       String?
@@ -253,14 +123,244 @@ model ContentItem {
   isProcessed     Boolean   @default(false)
   isApproved      Boolean   @default(false)
   processingError String?
-  viralityScore   Float?    // Ratio of views to batch average (e.g. 1.5 = 50% above average)
+  viralityScore   Float?
   datasetId       String
   createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at")
+  updatedAt       DateTime  @default(now()) @map("updated_at")
+  description     String?
   dataset         Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   @@unique([instagramId, datasetId])
-  @@index([datasetId])
   @@index([isApproved])
+  @@index([datasetId])
   @@map("content_items")
 }
+
+model CreditTransaction {
+  id        String   @id
+  userId    String   @map("user_id")
+  amount    Int
+  reason    String
+  metadata  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("credit_transactions")
+}
+
+model Dataset {
+  id               String             @id
+  name             String
+  description      String?
+  userId           String
+  isPublic         Boolean            @default(false)
+  createdAt        DateTime           @default(now()) @map("created_at")
+  updatedAt        DateTime           @default(now()) @map("updated_at")
+  agents           Agent[]
+  chats            Chat[]
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sources          TrackingSource[]
+  items            ContentItem[]
+
+  @@index([userId])
+  @@map("datasets")
+}
+
+model Message {
+  id               String        @id
+  chatId           String
+  role             String
+  content          String
+  promptTokens     Int           @default(0)
+  completionTokens Int           @default(0)
+  cost             Float         @default(0.0)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  attachments      attachments[]
+  chat             Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([chatId])
+  @@map("messages")
+}
+
+model parse_history {
+  id               String           @id
+  sourceId         String
+  started_at       DateTime         @default(now())
+  completed_at     DateTime?
+  status           String           @default("running")
+  daysRange        Int              @default(7)
+  posts_found      Int              @default(0)
+  posts_added      Int              @default(0)
+  posts_skipped    Int              @default(0)
+  error            String?
+  source           TrackingSource   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([started_at])
+  @@index([sourceId])
+}
+
+model password_reset_tokens {
+  id      String   @id
+  email   String
+  token   String   @unique
+  expires DateTime
+
+  @@unique([email, token])
+}
+
+model payout_requests {
+  id         String   @id
+  user_id    String
+  amount     Float
+  status     String   @default("PENDING")
+  details    String?
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Project {
+  id         String   @id
+  userId     String
+  name       String
+  icon       String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @map("updated_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chats      Chat[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model referral_transactions {
+  id             String  @id
+  user_id        String
+  amount         Float
+  type           String
+  status         String  @default("COMPLETED")
+  source_user_id String?
+  user           User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+model Session {
+  id           String   @id
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model TokenTransaction {
+  id           String   @id
+  userId       String
+  provider     String
+  model        String
+  inputTokens  Int
+  outputTokens Int
+  totalCost    Float
+  context      String?
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("token_transactions")
+}
+
+model TrackingSource {
+  id             String         @id
+  url            String
+  username       String?
+  datasetId      String
+  isActive       Boolean        @default(true)
+  minViewsFilter Int            @default(0)
+  fetchLimit     Int            @default(500)
+  lastScrapedAt  DateTime?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @default(now()) @map("updated_at")
+  daysLimit      Int            @default(30)
+  contentTypes   String         @default("Video,Sidecar,Image")
+  parseHistory   parse_history[]
+  dataset        Dataset        @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+
+  @@index([datasetId])
+  @@map("tracking_sources")
+}
+
+model User {
+  id                        String                  @id
+  name                      String?
+  email                     String?                 @unique
+  emailVerified             DateTime?
+  password                  String?
+  image                     String?
+  createdAt                 DateTime                @default(now()) @map("created_at")
+  updatedAt                 DateTime                @default(now()) @map("updated_at")
+  role                      String                  @default("USER")
+  stripeCustomerId          String?                 @unique @map("stripe_customer_id")
+  stripeSubscriptionId      String?                 @unique @map("stripe_subscription_id")
+  stripePriceId             String?                 @map("stripe_price_id")
+  stripeCurrentPeriodEnd    DateTime?               @map("stripe_current_period_end")
+  credits                   Int                     @default(0)
+  referralCode              String?                 @unique @map("referral_code")
+  referrerId                String?                 @map("referrer_id")
+  referralBalance           Float                   @default(0.0) @map("referral_balance")
+  accounts                  Account[]
+  agents                    Agent[]
+  chats                     Chat[]
+  creditTransactions       CreditTransaction[]
+  datasets                  Dataset[]
+  payout_requests           payout_requests[]
+  projects                  Project[]
+  referral_transactions     referral_transactions[]
+  sessions                  Session[]
+  subscriptions             Subscription[]
+  tokenTransactions        TokenTransaction[]
+  referrer                  User?                   @relation("UserToUser", fields: [referrerId], references: [id])
+  referrals                 User[]                  @relation("UserToUser")
+
+  @@map("users")
+}
+
+model Subscription {
+  id            String    @id @default(uuid())
+  userId        String
+  plan          String    // "reels" | "carousels"
+  credits       Int       // Remaining credits this period
+  maxCredits    Int       // Plan limit (12500 or 6250)
+  priceRub      Int       // Price paid (2000 or 1000)
+  startsAt      DateTime  @default(now())
+  expiresAt     DateTime  // +1 month from startsAt
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model SystemSettings {
+  id        String   @id @default("default")
+  key       String   @unique
+  value     String
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  
+  @@map("system_settings")
+}
+

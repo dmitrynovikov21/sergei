@@ -130,6 +130,7 @@ export async function getFeaturedAgents(userId?: string): Promise<AgentWithFiles
             ],
             name: { not: "Claude Assistant" }
         },
+        distinct: ['name'], // Prevent same-name duplicates (public + user copies)
         include: {
             files: { orderBy: { createdAt: "desc" } },
             dataset: { select: { name: true, id: true } }

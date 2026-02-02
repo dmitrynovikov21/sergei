@@ -21,7 +21,7 @@ export default function RegisterPage() {
           "absolute right-4 top-4 md:right-8 md:top-8"
         )}
       >
-        Login
+        Войти
       </Link>
       <div className="hidden h-full bg-muted lg:block" />
       <div className="lg:p-8">
@@ -29,29 +29,29 @@ export default function RegisterPage() {
           <div className="flex flex-col space-y-2 text-center">
             <Icons.logo className="mx-auto size-6" />
             <h1 className="text-2xl font-semibold tracking-tight">
-              Create an account
+              Создать аккаунт
             </h1>
             <p className="text-sm text-muted-foreground">
-              Enter your email below to create your account
+              Введите email для регистрации
             </p>
           </div>
           <Suspense>
             <UserAuthForm type="register" />
           </Suspense>
           <p className="px-8 text-center text-sm text-muted-foreground">
-            By clicking continue, you agree to our{" "}
+            Нажимая продолжить, вы соглашаетесь с нашими{" "}
             <Link
               href="/terms"
               className="hover:text-brand underline underline-offset-4"
             >
-              Terms of Service
+              Условиями
             </Link>{" "}
-            and{" "}
+            и{" "}
             <Link
               href="/privacy"
               className="hover:text-brand underline underline-offset-4"
             >
-              Privacy Policy
+              Политикой конфиденциальности
             </Link>
             .
           </p>

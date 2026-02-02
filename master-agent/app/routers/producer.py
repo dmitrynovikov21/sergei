@@ -15,11 +15,29 @@ from app.models.batch import (
     BatchResponse,
     BatchSummary,
     BatchState,
+    ChatRequest,
+    ChatResponse
 )
 from app.services.master_agent import MasterAgentService
 
 router = APIRouter()
 agent = MasterAgentService()
+
+
+@router.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
+    """
+    Agentic Chat Endpoint.
+    """
+    try:
+        response = await agent.chat(request.message, request.batch_id)
+        return ChatResponse(
+            reply=response.get("reply", ""),
+            action=response.get("action"),
+            data=response.get("data")
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/start", response_model=BatchResponse)
@@ -36,7 +54,8 @@ async def start_batch(request: StartBatchRequest):
         batch = await agent.start_batch(
             count=request.count,
             days=request.days,
-            min_views=request.min_views
+            min_views=request.min_views,
+            topic=request.topic
         )
         return batch
     except Exception as e:

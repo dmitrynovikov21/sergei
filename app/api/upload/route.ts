@@ -1,4 +1,4 @@
-    
+
 import { NextRequest, NextResponse } from "next/server"
 import { join } from "path"
 import { writeFile, mkdir } from "fs/promises"
@@ -20,18 +20,7 @@ export async function POST(req: NextRequest) {
             )
         }
 
-        // Validate file type
-        const validTypes = ['image/', 'application/pdf', 'text/', 'application/json']
-        // Also allow common CSV type if not caught by text/
-        const isCsv = file.type === 'text/csv' || file.type === 'application/vnd.ms-excel'
-
-        if (!validTypes.some(type => file.type.startsWith(type)) && !isCsv) {
-            return NextResponse.json(
-                { error: "Invalid file type. Allowed: Images, PDF, Text, JSON, CSV" },
-                { status: 400 }
-            )
-        }
-
+        // Accept all file types
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 

@@ -25,6 +25,7 @@ class GeminiClient:
     
     def __init__(self):
         genai.configure(api_key=settings.gemini_api_key)
+        # Using the experimental 2.0 model as requested/configured originally
         self.model = genai.GenerativeModel('gemini-2.0-flash-thinking-exp-01-21')
     
     async def generate(
@@ -56,7 +57,7 @@ class GeminiClient:
             prompt = f"{prompt}\n\nIMPORTANT: Respond ONLY with valid JSON, no markdown code blocks."
         
         try:
-            response = self.model.generate_content(
+            response = await self.model.generate_content_async(
                 prompt,
                 generation_config=generation_config
             )
@@ -68,7 +69,13 @@ class GeminiClient:
                 # Clean up markdown if present
                 if text.startswith("```"):
                     lines = text.split("\n")
-                    text = "\n".join(lines[1:-1])
+                    # Handle case where first line is ```json and last is ```
+                    if lines[0].strip().startswith("```"):
+                        lines = lines[1:]
+                    if lines[-1].strip() == "```":
+                        lines = lines[:-1]
+                    text = "\n".join(lines)
+                
                 return json.loads(text)
             
             return text

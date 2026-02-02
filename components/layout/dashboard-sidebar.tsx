@@ -9,7 +9,12 @@ import {
   PanelRightClose,
   Plus,
   Compass,
-  Database
+  Database,
+  LayoutDashboard,
+  CreditCard,
+  Users,
+  Gift,
+  TrendingUp
 } from "lucide-react";
 import { Agent } from "@prisma/client";
 
@@ -27,6 +32,41 @@ import { Icons } from "@/components/shared/icons";
 import { SidebarUser } from "./sidebar-user";
 import { SidebarAgentLink } from "./SidebarAgentLink"; // Note: Filename case sensitivity
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog";
+import { FreeCreditsButton } from "./free-credits-button";
+
+interface DashboardAgentLinkProps {
+  href: string;
+  active: boolean;
+  icon: any;
+  children: React.ReactNode;
+  isExpanded: boolean;
+}
+
+function DashboardAgentLink({ href, active, icon: Icon, children, isExpanded }: DashboardAgentLinkProps) {
+  return (
+    <div>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Link
+            href={href}
+            className={cn(
+              "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
+              active
+                ? "text-foreground font-medium bg-muted"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+            )}
+          >
+            <span className={cn("flex items-center justify-center shrink-0", !isExpanded ? "mx-auto" : "")}>
+              <Icon className="h-4 w-4" strokeWidth={1.5} />
+            </span>
+            {isExpanded && <span>{children}</span>}
+          </Link>
+        </TooltipTrigger>
+        {!isExpanded && <TooltipContent side="right">{children}</TooltipContent>}
+      </Tooltip>
+    </div>
+  );
+}
 
 interface DashboardSidebarProps {
   agents: Agent[];
@@ -35,6 +75,7 @@ interface DashboardSidebarProps {
     email?: string | null;
     image?: string | null;
     role?: string;
+    credits?: number;
   } | null;
 }
 
@@ -49,6 +90,25 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
     setIsSidebarExpanded(!isSidebarExpanded);
   };
 
+  // Helper to get display name for dedup
+  const getDisplayName = (name: string) => {
+    const n = name.toLowerCase()
+    if (n.includes("заголовки reels")) return "reels_заголовки"
+    if (n.includes("описание reels")) return "reels_описания"
+    if (n.includes("заголовки каруселей")) return "carousel_заголовки"
+    if (n.includes("структура карусел")) return "carousel_структура"
+    return name // Keep original for other agents
+  }
+
+  // Deduplicate agents by display name to prevent visual duplicates
+  const seenDisplayNames = new Set<string>()
+  const uniqueAgents = agents.filter((a) => {
+    const displayName = getDisplayName(a.name)
+    if (seenDisplayNames.has(displayName)) return false
+    seenDisplayNames.add(displayName)
+    return true
+  });
+
   React.useEffect(() => {
     setIsSidebarExpanded(!isTablet);
   }, [isTablet]);
@@ -59,23 +119,22 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
         {/* Sidebar with dark mode support */}
         <aside
           className={cn(
-            isSidebarExpanded ? "w-[260px]" : "w-[60px]",
-            "hidden h-screen md:flex flex-col transition-all duration-300 ease-in-out border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/50",
+            isSidebarExpanded ? "w-[280px]" : "w-[52px]",
+            "hidden h-screen md:flex flex-col transition-all duration-300 ease-in-out border-r border-border/50 bg-background overflow-hidden",
           )}
         >
           {/* Toggle & Header Area */}
-          <div className="flex h-14 items-center justify-between px-3 pt-2 mb-6">
+          <div className="flex h-12 items-center justify-between px-3 pt-1 mb-4">
             {isSidebarExpanded && (
-              <Link href="/dashboard/agents" className="font-extrabold text-xl tracking-tight text-zinc-900 dark:text-white uppercase px-2 hover:opacity-80 transition-opacity flex items-center gap-2">
-                <Icons.logo className="h-6 w-6" />
-                <span>AI PLATFORM</span>
+              <Link href="/dashboard/agents" className="text-2xl font-black text-foreground tracking-tight hover:opacity-70 transition-opacity mx-auto">
+                ai content
               </Link>
             )}
 
             <Button
               variant="ghost"
               size="icon"
-              className={cn("size-8 text-zinc-500 hover:text-black dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800", isSidebarExpanded ? "ml-auto" : "mx-auto")}
+              className={cn("size-7 text-muted-foreground hover:text-foreground hover:bg-muted/50", isSidebarExpanded ? "ml-auto" : "mx-auto")}
               onClick={toggleSidebar}
               title={isSidebarExpanded ? "Close sidebar" : "Open sidebar"}
             >
@@ -87,24 +146,33 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             </Button>
           </div>
 
-          <nav className="flex flex-1 flex-col gap-2 px-3 pb-4 overflow-y-auto">
+          <nav className="flex flex-1 flex-col gap-0.5 px-2 pb-4 overflow-y-auto scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
 
-            {/* CREATE CLAUDE CHAT BUTTON */}
-            <div className="mb-6">
+            {/* MAIN LINKS */}
+            <div className="space-y-1">
+              <DashboardAgentLink
+                href="/dashboard/trends"
+                active={path === "/dashboard/trends"}
+                icon={TrendingUp}
+                isExpanded={isSidebarExpanded}
+              >
+                Тренды
+              </DashboardAgentLink>
+            </div>
+            <div>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
                     href="/dashboard/chat/new"
                     className={cn(
-                      "flex items-center gap-2 rounded-xl px-3 py-3 text-sm transition-all group shadow-sm hover:shadow-md",
-                      "bg-gradient-to-br from-zinc-900 to-zinc-800 text-white hover:from-black hover:to-zinc-900",
-                      "dark:from-white dark:to-zinc-200 dark:text-black dark:hover:from-zinc-100 dark:hover:to-zinc-300"
+                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
+                      "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
-                      <Plus className="h-5 w-5" />
+                      <Plus className="h-4 w-4" strokeWidth={1.5} />
                     </span>
-                    {isSidebarExpanded && <span className="font-semibold">Новый чат</span>}
+                    {isSidebarExpanded && <span>Новый чат</span>}
                   </Link>
                 </TooltipTrigger>
                 {!isSidebarExpanded && <TooltipContent side="right">Создать чат</TooltipContent>}
@@ -112,39 +180,65 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             </div>
 
             {/* KNOWLEDGE BASE */}
-            <div className="mb-6 px-1">
+            <div>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Link
                     href="/dashboard/datasets"
                     className={cn(
-                      "flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-all text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                      path.startsWith("/dashboard/datasets") && "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-white"
+                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-colors rounded-sm",
+                      path.startsWith("/dashboard/datasets")
+                        ? "text-foreground font-medium bg-muted"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
-                      <Database className="h-5 w-5" />
+                      <Database className="h-4 w-4" strokeWidth={1.5} />
                     </span>
-                    {isSidebarExpanded && <span className="font-medium">База знаний</span>}
+                    {isSidebarExpanded && <span>База знаний</span>}
                   </Link>
                 </TooltipTrigger>
                 {!isSidebarExpanded && <TooltipContent side="right">База знаний</TooltipContent>}
               </Tooltip>
             </div>
 
-            {/* REELS GROUP */}
-            <div className="flex flex-col gap-1 mb-6">
+            {/* ADMIN GROUP */}
+            <div className="flex flex-col gap-0 mt-6">
               {isSidebarExpanded && (
-                <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
+                <h4 className="px-2 text-[11px] font-medium text-muted-foreground/70 mb-1 uppercase tracking-wider">
+                  Admin
+                </h4>
+              )}
+              <DashboardAgentLink
+                href="/dashboard/admin/users"
+                active={path === "/dashboard/admin/users"}
+                icon={Users}
+                isExpanded={isSidebarExpanded}
+              >
+                Клиенты
+              </DashboardAgentLink>
+              <DashboardAgentLink
+                href="/dashboard/admin/payouts"
+                active={path === "/dashboard/admin/payouts"}
+                icon={CreditCard}
+                isExpanded={isSidebarExpanded}
+              >
+                Выплаты
+              </DashboardAgentLink>
+            </div>
+
+            {/* REELS GROUP */}
+            <div className="flex flex-col gap-0 mt-6">
+              {isSidebarExpanded && (
+                <h4 className="px-2 text-[11px] font-medium text-muted-foreground/70 mb-1 uppercase tracking-wider">
                   Reels
                 </h4>
               )}
-              {agents
+              {uniqueAgents
                 .filter(a => {
                   const n = a.name.toLowerCase()
-                  return n.includes("тренд") || n.includes("trend") ||
-                    (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
-                    (n.includes("reels") && (n.includes("описание") || n.includes("description")))
+                  return n.includes("заголовки reels") || n.includes("описание reels") ||
+                    n.includes("тренд") || n.includes("trend")
                 })
                 .sort((a, b) => {
                   // Order: Trends, Headlines, Description
@@ -163,19 +257,17 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             </div>
 
             {/* CAROUSEL GROUP */}
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-0 mt-6">
               {isSidebarExpanded && (
-                <h4 className="px-3 text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-2 uppercase tracking-wider">
+                <h4 className="px-2 text-[11px] font-medium text-muted-foreground/70 mb-1 uppercase tracking-wider">
                   Carousels
                 </h4>
               )}
-              {agents
+              {uniqueAgents
                 .filter(a => {
                   const n = a.name.toLowerCase()
-                  return (n.includes("карусел") || n.includes("carousel")) &&
-                    (n.includes("заголовки") || n.includes("headlines") ||
-                      n.includes("описание") || n.includes("description") ||
-                      n.includes("создать") || n.includes("create") || n.includes("структура"))
+                  return n.includes("заголовки каруселей") || n.includes("структура карусели") ||
+                    n.includes("карусел headline") || n.includes("карусел structure")
                 })
                 .sort((a, b) => {
                   // Order: Headlines, Description, Create
@@ -194,84 +286,48 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             </div>
 
             {/* МОИ АГЕНТЫ - User's custom agents (excluding system Reels/Carousel agents) */}
-            {agents.filter(a => {
-              const n = a.name.toLowerCase()
-              // Exclude Reels agents
-              const isReels = n.includes("тренд") || n.includes("trend") ||
-                (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
-                (n.includes("reels") && (n.includes("описание") || n.includes("description")))
-              // Exclude Carousel agents
-              const isCarousel = (n.includes("карусел") || n.includes("carousel")) &&
-                (n.includes("заголовки") || n.includes("headlines") ||
-                  n.includes("описание") || n.includes("description") ||
-                  n.includes("создать") || n.includes("create") || n.includes("структура"))
-              // Only show user's custom agents that are not in system categories
-              return !a.isPublic && !isReels && !isCarousel
-            }).length > 0 && (
-                <div className="flex flex-col gap-1 mt-6">
-                  {isSidebarExpanded && (
-                    <div className="flex items-center justify-between px-3 mb-2">
-                      <h4 className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                        Мои агенты
-                      </h4>
-                      <CreateAgentDialog
-                        trigger={
-                          <button className="h-5 w-5 flex items-center justify-center text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors">
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        }
-                      />
-                    </div>
-                  )}
-                  {agents
-                    .filter(a => {
-                      const n = a.name.toLowerCase()
-                      const isReels = n.includes("тренд") || n.includes("trend") ||
-                        (n.includes("reels") && (n.includes("заголовки") || n.includes("headlines"))) ||
-                        (n.includes("reels") && (n.includes("описание") || n.includes("description")))
-                      const isCarousel = (n.includes("карусел") || n.includes("carousel")) &&
-                        (n.includes("заголовки") || n.includes("headlines") ||
-                          n.includes("описание") || n.includes("description") ||
-                          n.includes("создать") || n.includes("create") || n.includes("структура"))
-                      return !a.isPublic && !isReels && !isCarousel
-                    })
-                    .map((agent) => (
-                      <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} canDelete={true} />
-                    ))}
+            <div className="flex flex-col gap-0 mt-6">
+              {isSidebarExpanded && (
+                <div className="flex items-center justify-between px-2 mb-1">
+                  <h4 className="text-[11px] font-medium text-muted-foreground/70 uppercase tracking-wider">
+                    Мои агенты
+                  </h4>
+                  <CreateAgentDialog
+                    trigger={
+                      <button className="h-4 w-4 flex items-center justify-center text-muted-foreground/70 hover:text-foreground transition-colors">
+                        <Plus className="h-3 w-3" strokeWidth={1.5} />
+                      </button>
+                    }
+                  />
                 </div>
               )}
-
-            {/* CREATE AGENT BUTTON */}
-            <div className="mt-6 px-1">
-              {isSidebarExpanded ? (
-                <CreateAgentDialog
-                  trigger={
-                    <button className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors border border-dashed border-zinc-200 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-500">
-                      <Plus className="h-4 w-4" />
-                      <span>Создать агента</span>
-                    </button>
-                  }
-                />
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <CreateAgentDialog
-                      trigger={
-                        <button className="mx-auto flex items-center justify-center h-9 w-9 rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
-                          <Plus className="h-5 w-5" />
-                        </button>
-                      }
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent side="right">Создать агента</TooltipContent>
-                </Tooltip>
-              )}
+              {uniqueAgents
+                .filter(a => {
+                  const n = a.name.toLowerCase()
+                  // Exclude system Reels agents
+                  const isReels = n.includes("заголовки reels") || n.includes("описание reels") ||
+                    n.includes("тренд") || n.includes("trend")
+                  // Exclude system Carousel agents  
+                  const isCarousel = n.includes("заголовки каруселей") || n.includes("структура карусели")
+                  // Only show user's custom agents that are not in system categories
+                  return !a.isPublic && !isReels && !isCarousel
+                })
+                .map((agent) => (
+                  <SidebarAgentLink key={agent.id} agent={agent} path={path} isExpanded={isSidebarExpanded} canDelete={true} />
+                ))}
             </div>
+
+
           </nav>
+
+          {/* Free Credits Button */}
+          <div className="mt-auto px-3 pb-2">
+            <FreeCreditsButton isExpanded={isSidebarExpanded} />
+          </div>
 
           {/* User Profile at Bottom */}
           {user && (
-            <div className="mt-auto border-t border-zinc-200 dark:border-zinc-800 p-3">
+            <div className="border-t border-border p-3">
               <SidebarUser user={user} isExpanded={isSidebarExpanded} />
             </div>
           )}
@@ -309,7 +365,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
           <Link
             href="/dashboard/chat/new"
             onClick={() => setOpen(false)}
-            className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-zinc-900 text-white"
+            className="flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-semibold bg-foreground text-background"
           >
             <Plus className="h-5 w-5" />
             <span>Новый чат</span>
@@ -322,7 +378,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
             <Link
               href="/dashboard/agents"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-100 rounded-md text-sm"
+              className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground"
             >
               <Compass className="h-5 w-5 text-zinc-500" />
               <span>Все агенты</span>
@@ -331,7 +387,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
             <Link
               href="/dashboard/datasets"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-100 rounded-md text-sm"
+              className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground"
             >
               <Database className="h-5 w-5 text-zinc-500" />
               <span>База знаний</span>
@@ -342,9 +398,8 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
                 key={agent.id}
                 href={`/dashboard/agents/${agent.id}`}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-100 rounded-md text-sm"
+                className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                <span className="text-xl">{agent.emoji || "🤖"}</span>
                 <span>{agent.name}</span>
               </Link>
             ))}

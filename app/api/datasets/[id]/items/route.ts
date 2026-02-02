@@ -35,7 +35,7 @@ export async function GET(
         const items = await prisma.contentItem.findMany({
             where: { datasetId: params.id },
             orderBy: { views: "desc" },
-            take: 100,
+            take: 1000,
             select: {
                 id: true,
                 instagramId: true,

@@ -15,10 +15,10 @@ export default async function AgentsPage() {
             <div className="w-full max-w-5xl space-y-12">
                 {/* Header */}
                 <div className="text-center space-y-3">
-                    <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                    <h1 className="text-3xl font-bold tracking-tight text-foreground">
                         Агенты
                     </h1>
-                    <p className="text-lg text-zinc-500 dark:text-zinc-400">
+                    <p className="text-lg text-muted-foreground">
                         Выберите агента для начала работы
                     </p>
                 </div>

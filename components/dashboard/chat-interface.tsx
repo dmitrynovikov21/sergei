@@ -2,8 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
+import Link from "next/link"
 import ReactMarkdown from "react-markdown"
-import { saveMessage, createChat } from "@/actions/chat"
+import { saveMessage } from "@/actions/chat"
+import { getDatasets } from "@/actions/datasets"
 import type { Agent } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -33,13 +35,15 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 
-interface Message {
-    id: string
-    role: "user" | "assistant" | "system"
-    content: string
-    createdAt: Date
-    attachments?: Attachment[]
-}
+import { ChatInput } from "./chat/chat-input"
+import { ChatMessage } from "./chat/chat-message"
+import type { Attachment, Message } from "./chat/types"
+import { useFileUpload } from "@/hooks/use-file-upload"
+import { CreditBlockModal } from "@/components/chat/credit-block-modal"
+import { SubscriptionRequiredModal } from "@/components/chat/subscription-required-modal"
+import type { TariffPlan } from "@/lib/billing-config"
+
+
 
 interface ChatInterfaceProps {
     chatId?: string // Optional for new chats
@@ -48,215 +52,10 @@ interface ChatInterfaceProps {
     agentIcon?: string | null
     agent: Agent
     initialInput?: string // New prop
+    userName?: string // User name for greeting
 }
 
-// Define Attachment interface
-interface Attachment {
-    name: string
-    type: string
-    url: string
-    isUploading?: boolean
-}
-
-interface ChatInputProps {
-    input: string
-    setInput: (value: string) => void
-    onSubmit: (e: React.FormEvent) => void
-    isPending: boolean
-    centered?: boolean
-    onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
-    onFileDrop: (files: FileList) => void
-    attachments: Attachment[]
-    removeAttachment: (index: number) => void
-    onStop?: () => void
-}
-
-function ChatInput({ input, setInput, onSubmit, isPending, centered = false, onFileSelect, onFileDrop, attachments, removeAttachment, onStop }: ChatInputProps) {
-    // Separate refs for different file types if needed, or share one
-    const imageInputRef = useRef<HTMLInputElement>(null)
-    const fileInputRef = useRef<HTMLInputElement>(null)
-    const [isDragging, setIsDragging] = useState(false)
-
-    // Stop handler passed from parent? We need it here or handle in parent.
-    // For now, let's assume parent handles stop via a new prop or we just show the visual state here.
-    // User asked for "Stop request". We need a callback `onStop`.
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault()
-        setIsDragging(true)
-    }
-
-    const handleDragLeave = (e: React.DragEvent) => {
-        e.preventDefault()
-        setIsDragging(false)
-    }
-
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault()
-        e.stopPropagation()
-        setIsDragging(false)
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            onFileDrop(e.dataTransfer.files)
-        }
-    }
-
-    return (
-        <form
-            onSubmit={onSubmit}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={cn(
-                "relative flex flex-col gap-3 rounded-3xl border border-zinc-200/50 dark:border-zinc-700/40 p-4 focus-within:ring-1 focus-within:ring-zinc-300 dark:focus-within:ring-zinc-600 transition-all bg-[#F4F4F5] dark:bg-[#1a1a1a]",
-                centered ? "w-full shadow-sm" : "",
-                isDragging && "ring-2 ring-blue-500 border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-            )}
-        >
-            {/* Drag indicator */}
-            {isDragging && (
-                <div className="absolute inset-0 flex items-center justify-center bg-blue-50/80 dark:bg-blue-900/50 rounded-3xl z-10 pointer-events-none">
-                    <p className="text-blue-600 dark:text-blue-400 font-medium">Отпустите для загрузки</p>
-                </div>
-            )}
-
-            {/* Attachment Previews */}
-            {attachments.length > 0 && (
-                <div className="flex gap-2 mb-2 flex-wrap">
-                    {attachments.map((att, i) => (
-                        <div key={i} className="relative group rounded-md border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                            {att.type.startsWith('image/') ? (
-                                <div className="relative">
-                                    <img src={att.url} alt={att.name} className={cn("h-16 w-16 object-cover", att.isUploading && "opacity-50")} />
-                                    {att.isUploading && (
-                                        <div className="absolute inset-0 flex items-center justify-center">
-                                            <Icons.spinner className="h-4 w-4 animate-spin text-zinc-900" />
-                                        </div>
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="h-16 w-16 flex items-center justify-center text-zinc-500 relative">
-                                    {att.isUploading ? (
-                                        <Icons.spinner className="h-5 w-5 animate-spin" />
-                                    ) : (
-                                        <Icons.paperclip className="h-6 w-6" />
-                                    )}
-                                </div>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => removeAttachment(i)}
-                                disabled={att.isUploading}
-                                className="absolute top-0.5 right-0.5 bg-black/50 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
-                            >
-                                <Icons.close className="h-3 w-3" />
-                            </button>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        if (!isPending) {
-                            onSubmit(e)
-                        }
-                    }
-                }}
-                placeholder="Введите ваш запрос..."
-                className="w-full min-h-[48px] max-h-[200px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 px-1 py-1 text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
-                rows={1}
-                onDrop={handleDrop}
-            />
-
-            {/* Hidden Inputs */}
-            <input
-                type="file"
-                ref={imageInputRef}
-                className="hidden"
-                multiple
-                accept="image/*"
-                onChange={onFileSelect}
-            />
-            <input
-                type="file"
-                ref={fileInputRef}
-                className="hidden"
-                multiple
-                accept=".pdf,.txt,.md,.json,.csv"
-                onChange={onFileSelect}
-            />
-
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 rounded-lg text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 transition-all"
-                            >
-                                <Icons.add className="h-5 w-5" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="w-48 p-1">
-                            <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                                onClick={() => imageInputRef.current?.click()}
-                            >
-                                <Icons.image className="h-4 w-4" />
-                                <span>Фото</span>
-                            </button>
-                            <button
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                <Icons.paperclip className="h-4 w-4" />
-                                <span>Документ</span>
-                            </button>
-                        </PopoverContent>
-                    </Popover>
-                </div>
-
-                <div className="flex items-center gap-2">
-                    {/* Send / Stop Button */}
-                    <Button
-                        type={isPending ? "button" : "submit"}
-                        size="icon"
-                        onClick={(e) => {
-                            if (isPending && onStop) {
-                                e.preventDefault()
-                                onStop()
-                            }
-                        }}
-                        className={cn(
-                            "h-8 w-8 rounded-lg shrink-0 transition-opacity",
-                            isPending
-                                ? "bg-zinc-200 text-zinc-900 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200"
-                                : "bg-[#D97757] text-white hover:bg-[#c56a4c] disabled:opacity-40 disabled:bg-zinc-200 disabled:text-zinc-400"
-                        )}
-                        disabled={!isPending && (!input.trim() && attachments.length === 0)}
-                    >
-                        {isPending ? (
-                            <div className="h-3 w-3 bg-current rounded-sm" />
-                        ) : (
-                            <Icons.arrowUp className="h-4 w-4" />
-                        )}
-                        <span className="sr-only">{isPending ? "Остановить" : "Отправить"}</span>
-                    </Button>
-                </div>
-            </div>
-        </form>
-    )
-}
-
-export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput, userName = "there" }: ChatInterfaceProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [chatId, setChatId] = useState(initialChatId)
@@ -264,6 +63,19 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const [messages, setMessages] = useState<any[]>(initialMessages)
     const [input, setInput] = useState(initialInput || "")
     const [isLoading, setIsLoading] = useState(false)
+
+    // Dataset selector state
+    const [datasets, setDatasets] = useState<{ id: string, name: string }[]>([])
+    const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null)
+
+    // Get greeting based on time of day
+    const getGreeting = useCallback(() => {
+        const hour = new Date().getHours()
+
+        if (hour < 12) return `Доброе утро`
+        if (hour < 17) return `Добрый день`
+        return `Добрый вечер`
+    }, [])
 
     // Parse initial attachments from sessionStorage (moved from URL to avoid 414)
     const initialAttachments = useMemo(() => {
@@ -285,7 +97,21 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         return []
     }, [initialChatId])
 
-    const [attachments, setAttachments] = useState<Attachment[]>(initialAttachments)
+    const { attachments, uploadFile, removeAttachment, clearAttachments, setAttachments } = useFileUpload()
+
+    // Set initial attachments from sessionStorage
+    useEffect(() => {
+        if (initialAttachments.length > 0) {
+            setAttachments(initialAttachments)
+        }
+    }, [initialAttachments, setAttachments])
+
+    // Load datasets on mount
+    useEffect(() => {
+        getDatasets().then(data => {
+            setDatasets(data.map(d => ({ id: d.id, name: d.name })))
+        }).catch(console.error)
+    }, [])
 
     const isPending = isLoading
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -298,6 +124,14 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const [feedbackOpen, setFeedbackOpen] = useState(false)
     const [feedbackText, setFeedbackText] = useState("")
     const [feedbackMessageId, setFeedbackMessageId] = useState<string | null>(null)
+
+    // Credit block modal state
+    const [creditBlockOpen, setCreditBlockOpen] = useState(false)
+
+    // Subscription modal state
+    const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false)
+    const [subscriptionModalPlan, setSubscriptionModalPlan] = useState<TariffPlan | null>(null)
+    const [subscriptionModalType, setSubscriptionModalType] = useState<'SUBSCRIPTION_REQUIRED' | 'CREDITS_EXHAUSTED'>('SUBSCRIPTION_REQUIRED')
 
     // Check if user is near bottom (within 100px)
     const isNearBottom = useCallback(() => {
@@ -337,55 +171,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         setShouldAutoScroll(false)
     }, [messages, shouldAutoScroll, initialMessages])
 
-    // File handlers
-    // Unified upload handler
-    const uploadFile = async (file: File) => {
-        // Create optimistic attachment
-        const tempId = Math.random().toString(36).substring(7)
-        const reader = new FileReader()
-
-        return new Promise<void>((resolve) => {
-            reader.onload = async (e) => {
-                const previewUrl = e.target?.result as string
-
-                // Add to state immediately with uploading flag
-                setAttachments(prev => [...prev, {
-                    name: file.name,
-                    type: file.type,
-                    url: previewUrl,
-                    isUploading: true
-                }])
-
-                try {
-                    // Upload to API
-                    const formData = new FormData()
-                    formData.append('file', file)
-
-                    const res = await fetch('/api/upload', {
-                        method: 'POST',
-                        body: formData
-                    })
-
-                    if (!res.ok) throw new Error('Upload failed')
-
-                    const data = await res.json()
-
-                    // Update URL with server URL and clear uploading flag
-                    setAttachments(prev => prev.map(att =>
-                        att.url === previewUrl ? { ...att, url: data.url, isUploading: false } : att
-                    ))
-                } catch (error) {
-                    console.error('Upload failed:', error)
-                    toast.error(`Ошибка загрузки: ${file.name}`)
-                    // Remove failed attachment
-                    setAttachments(prev => prev.filter(att => att.url !== previewUrl))
-                } finally {
-                    resolve()
-                }
-            }
-            reader.readAsDataURL(file)
-        })
-    }
+    // File handlers (using useFileUpload hook)
 
     const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files) {
@@ -395,15 +181,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         e.target.value = ''
     }
 
-    const removeAttachment = (index: number) => {
-        setAttachments(prev => prev.filter((_, i) => i !== index))
-    }
+    // removeAttachment is now provided by useFileUpload hook
 
     const handleFileDrop = (files: FileList) => {
         Array.from(files).forEach(file => {
-            if (file.type.startsWith('image/') || file.type === 'application/pdf') {
-                uploadFile(file)
-            }
+            uploadFile(file)
         })
     }
 
@@ -411,20 +193,38 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
     const abortControllerRef = useRef<AbortController | null>(null)
 
-    // Handle Stop
+    // Track last user message for restore on stop
+    const lastUserMessageRef = useRef<{ content: string, attachments: Attachment[] } | null>(null)
+
+    // Handle Stop - keep user message, only remove empty AI response
     const handleStop = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort()
             abortControllerRef.current = null
             setIsLoading(false)
+
+            // Only remove the empty AI message, keep user's message visible
+            setMessages(prev => {
+                // Find and remove only the last empty assistant message
+                const lastMsg = prev[prev.length - 1]
+                if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.content) {
+                    return prev.slice(0, -1) // Remove only empty AI msg
+                }
+                return prev
+            })
+            lastUserMessageRef.current = null
         }
     }
 
-    const handleSendMessage = async (content: string) => {
-        if ((!content.trim() && attachments.length === 0) || isPending) return
+    const handleSendMessage = async (content: string, specificAttachments?: Attachment[]) => {
+        // If specificAttachments provided, allow sending even if input is empty (re-send case) -> actually logic below handles it: `attachments` might be empty.
+        // We need to check prioritized attachments.
+
+        const currentAttachments = specificAttachments ? [...specificAttachments] : [...attachments]
+
+        if ((!content.trim() && currentAttachments.length === 0) || isPending) return
 
         const userMessage = content.trim()
-        const currentAttachments = [...attachments]
 
         const userMsg: Message = {
             id: Date.now().toString(),
@@ -435,8 +235,16 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         }
 
         setMessages((prev) => [...prev, userMsg])
-        setInput("")
-        setAttachments([])
+
+        // Store user message for potential restore on stop
+        lastUserMessageRef.current = { content: userMessage, attachments: currentAttachments }
+
+        // Only clear input/attachments if it was a NEW message (not a resend)
+        if (!specificAttachments) {
+            setInput("")
+            clearAttachments()
+        }
+
         isUserScrollingRef.current = false
         setShouldAutoScroll(true)
 
@@ -459,7 +267,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         const aiMsg: Message = {
             id: aiMsgId,
             role: "assistant",
-            content: "",
+            content: `<thinking>{"status":"Думаю...","full":""}</thinking>`,
             createdAt: new Date(),
         }
         setMessages((prev) => [...prev, aiMsg])
@@ -477,10 +285,43 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             message: userMessage,
-                            attachments: currentAttachments
+                            attachments: currentAttachments, // Use the local variable, not state
+                            datasetId: selectedDatasetId // Pass selected dataset to AI
                         }),
                         signal: controller.signal // Pass signal
                     })
+
+                    // Handle 403 Subscription Required
+                    if (response.status === 403) {
+                        const errorData = await response.json()
+                        if (errorData.error === 'SUBSCRIPTION_REQUIRED') {
+                            setSubscriptionModalPlan(errorData.requiredPlan)
+                            setSubscriptionModalType('SUBSCRIPTION_REQUIRED')
+                            setSubscriptionModalOpen(true)
+                            setMessages((prev) => prev.filter(msg => msg.id !== aiMsgId))
+                            setIsLoading(false)
+                            return
+                        }
+                    }
+
+                    // Handle 402 Payment Required - user is blocked or credits exhausted
+                    if (response.status === 402) {
+                        const errorData = await response.json()
+                        if (errorData.error === 'CREDITS_BLOCKED') {
+                            setCreditBlockOpen(true)
+                            setMessages((prev) => prev.filter(msg => msg.id !== aiMsgId))
+                            setIsLoading(false)
+                            return
+                        }
+                        if (errorData.error === 'CREDITS_EXHAUSTED') {
+                            setSubscriptionModalPlan(errorData.requiredPlan)
+                            setSubscriptionModalType('CREDITS_EXHAUSTED')
+                            setSubscriptionModalOpen(true)
+                            setMessages((prev) => prev.filter(msg => msg.id !== aiMsgId))
+                            setIsLoading(false)
+                            return
+                        }
+                    }
 
                     if (!response.ok) throw new Error(await response.text())
 
@@ -489,15 +330,89 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                     let fullContent = ""
 
                     if (reader) {
+                        let fullText = ""
+                        let fullReasoning = ""
+                        let buffer = ""
+                        let lastStatus = ""
+                        let lastStatusUpdate = 0
+
                         while (true) {
                             const { done, value } = await reader.read()
                             if (done) break
 
-                            const chunk = decoder.decode(value, { stream: true })
-                            fullContent += chunk
+                            buffer += decoder.decode(value, { stream: true })
 
-                            // Fix for "Incorrect line at end" -> remove trailing horizontal rules if they appear alone
-                            const cleanedContent = fullContent.replace(/\n---\s*$/, '').replace(/\n_+\s*$/, '')
+                            // Parse UI message stream format (newline-delimited JSON)
+                            const lines = buffer.split('\n')
+                            buffer = lines.pop() || "" // Keep incomplete line in buffer
+
+                            for (const line of lines) {
+                                if (!line.trim()) continue
+
+                                // Handle SSE format: "data: {...json...}"
+                                let jsonStr = line
+                                if (line.startsWith('data:')) {
+                                    jsonStr = line.slice(5).trim()
+                                }
+
+                                if (!jsonStr || jsonStr === '[DONE]') continue
+
+                                try {
+                                    const data = JSON.parse(jsonStr)
+                                    if (data.type === 'text-delta') {
+                                        fullText += data.textDelta || data.delta || ""
+                                    } else if (data.type === 'reasoning-delta') {
+                                        fullReasoning += data.textDelta || data.delta || ""
+                                    }
+                                } catch {
+                                    // Skip unparseable lines
+                                }
+                            }
+
+                            // Extract last complete sentence for status (throttled to 1s)
+                            const now = Date.now()
+                            if (fullReasoning && (now - lastStatusUpdate > 1000)) {
+                                // Find last complete sentence
+                                const sentences = fullReasoning.split(/(?<=[.!?。])\s+/)
+                                const lastSentence = sentences.filter(s => s.trim().length > 15).pop()
+                                if (lastSentence) {
+                                    // Take first 8-10 words for clean display
+                                    const words = lastSentence.trim().split(/\s+/).slice(0, 10)
+                                    lastStatus = words.join(' ')
+                                    if (lastSentence.split(/\s+/).length > 10) lastStatus += '...'
+                                    lastStatusUpdate = now
+                                }
+                            }
+
+                            // Build display content - ALWAYS show thinking block until text arrives
+                            let displayContent = fullText
+
+                            // Always show thinking block - use "Думаю..." if no status yet
+                            // If no lastStatus, extract the last complete sentence from reasoning
+                            let statusToShow = lastStatus
+                            if (!statusToShow && fullReasoning.length > 0) {
+                                const sentences = fullReasoning.split(/(?<=[.!?。])\s+/)
+                                const lastSentence = sentences.filter(s => s.trim().length > 10).pop()
+                                if (lastSentence) {
+                                    const words = lastSentence.trim().split(/\s+/).slice(0, 12)
+                                    statusToShow = words.join(' ')
+                                    if (lastSentence.split(/\s+/).length > 12) statusToShow += '...'
+                                } else {
+                                    statusToShow = "Думаю..."
+                                }
+                            }
+                            const thinkingData = JSON.stringify({
+                                status: statusToShow || "Думаю...",
+                                full: fullReasoning
+                            })
+                            if (fullText) {
+                                displayContent = `<thinking>${thinkingData}</thinking>\n\n${fullText}`
+                            } else {
+                                displayContent = `<thinking>${thinkingData}</thinking>`
+                            }
+
+                            // Fix for "Incorrect line at end"
+                            const cleanedContent = displayContent.replace(/\n---\s*$/, '').replace(/\n_+\s*$/, '')
 
                             setMessages((prev) =>
                                 prev.map((msg) =>
@@ -515,7 +430,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         setMessages((prev) =>
                             prev.map((msg) =>
                                 msg.id === aiMsgId
-                                    ? { ...msg, content: msg.content + " [Остановлено]" }
+                                    ? { ...msg, content: msg.content + "\n\n[Остановлено]" }
                                     : msg
                             )
                         )
@@ -543,12 +458,16 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     }
 
     useEffect(() => {
-        if ((initialInput || attachments.length > 0) && !hasAutoSubmittedRef.current && messages.length === 0) {
+        // Wait for initialAttachments to be loaded into attachments state
+        const hasInitialAttachments = initialAttachments.length > 0
+        const attachmentsReady = !hasInitialAttachments || attachments.length === initialAttachments.length
+
+        if (initialInput && !hasAutoSubmittedRef.current && messages.length === 0 && attachmentsReady) {
             hasAutoSubmittedRef.current = true
             handleSendMessage(initialInput || "")
             window.history.replaceState(null, '', window.location.pathname)
         }
-    }, [initialInput, messages.length, attachments.length])
+    }, [initialInput, messages.length, attachments.length, initialAttachments.length])
 
     const getLastUserMessage = () => {
         for (let i = messages.length - 1; i >= 0; i--) {
@@ -584,12 +503,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         setFeedbackOpen(true)
     }
 
-    const getDisplayContent = (content: string) => {
-        if (content.startsWith('[ИНСТРУКЦИИ:')) {
-            return content.replace(/^\[ИНСТРУКЦИИ:[\s\S]*?\]\n\n/, '')
-        }
-        return content
-    }
+
 
     const isEmpty = messages.length === 0
 
@@ -601,23 +515,12 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                 <div className="flex flex-col items-center gap-6 max-w-2xl w-full -mt-20">
                     {/* Greeting / Logo */}
                     <div className="flex flex-col items-center gap-2 text-center">
-                        <div className="p-3 mb-2 text-6xl">
-                            {agentIcon ? (
-                                <span>{agentIcon}</span>
-                            ) : (
-                                <Icons.bot className="h-16 w-16 text-muted-foreground/50" />
-                            )}
-                        </div>
-                        <button
-                            onClick={() => router.push(`/dashboard/agents/${agent.id}`)}
-                            className="group relative z-10 transition-all hover:opacity-80"
-                        >
-                            <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white group-hover:underline decoration-zinc-400 underline-offset-4">
-                                {agentName}
-                            </h2>
-                        </button>
-                        <p className="text-zinc-500 dark:text-zinc-200 text-sm">
-                            Я готов помочь вам создать контент.
+                        <h1 className="greeting-text text-3xl text-foreground flex items-center gap-3">
+                            <span className="text-accent">❋</span>
+                            {getGreeting()}, {userName}
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                            Чем могу помочь?
                         </p>
                     </div>
 
@@ -632,6 +535,9 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             onFileDrop={handleFileDrop}
                             attachments={attachments}
                             removeAttachment={removeAttachment}
+                            datasets={datasets}
+                            selectedDatasetId={selectedDatasetId}
+                            onDatasetChange={setSelectedDatasetId}
                         />
                     </div>
                     {/* Action Chips */}
@@ -639,19 +545,19 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         {(
                             (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
                                 [
-                                    { emoji: "🔥", text: "Дай 10 заголовков" },
-                                    { emoji: "💡", text: "Дай 10 на тему" },
+                                    { text: "Дай 10 заголовков" },
+                                    { text: "Дай 10 на тему" },
                                 ] :
                                 (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
                                     [
-                                        { emoji: "📝", text: "Дай 10" },
-                                        { emoji: "🎯", text: "Дай 10 на тему" },
+                                        { text: "Дай 10" },
+                                        { text: "Дай 10 на тему" },
                                     ] :
                                     [
-                                        { emoji: "📝", text: "Дай 10 вариантов описания" },
-                                        { emoji: "🎯", text: "Дай 10 описаний на тему" },
-                                        { emoji: "🎬", text: "Написать сценарий" },
-                                        { emoji: "📊", text: "Анализ трендов" },
+                                        { text: "Дай 10 вариантов описания" },
+                                        { text: "Дай 10 описаний на тему" },
+                                        { text: "Написать сценарий" },
+                                        { text: "Анализ трендов" },
                                     ]
                         ).map((item) => (
                             <button
@@ -663,10 +569,9 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                         handleSendMessage(item.text)
                                     }
                                 }}
-                                className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-100 bg-transparent border border-zinc-200 dark:border-zinc-700/60 rounded-xl px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-white transition-colors text-left"
+                                className="text-sm text-muted-foreground bg-transparent border border-border rounded-xl px-4 py-3 hover:bg-muted hover:text-foreground transition-colors text-left"
                             >
-                                <span>{item.emoji}</span>
-                                <span>{item.text}</span>
+                                {item.text}
                             </button>
                         ))}
                     </div>
@@ -676,193 +581,62 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     }
 
     return (
-        <>
-
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
 
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-                <div className="mx-auto max-w-3xl px-4">
-                    <div className="flex flex-col gap-6 py-6">
+                {/* Sticky header - transparent, text flows under */}
+                <div className="sticky top-0 z-10 px-4 py-2 bg-transparent">
+                    <div className="flex flex-col">
+                        <Link
+                            href={`/dashboard/agents/${agent.id}`}
+                            className="text-sm font-medium text-foreground hover:bg-muted hover:rounded px-2 py-0.5 transition-colors w-fit"
+                        >
+                            {agentName}
+                        </Link>
+
+                    </div>
+                </div>
+                <div className="mx-auto max-w-3xl px-4 pb-32">
+                    <div className="flex flex-col gap-6">
                         {messages.map((msg) => (
-                            <div
+                            <ChatMessage
                                 key={msg.id}
-                                className={cn(
-                                    "flex gap-3 items-start",
-                                    msg.role === "user" && "justify-end"
-                                )}
-                            >
-                                {msg.role === "assistant" && (
-                                    agentIcon ? (
-                                        <div className="h-6 w-6 shrink-0 flex items-center justify-center text-base">
-                                            {agentIcon}
-                                        </div>
-                                    ) : (
-                                        <div className="h-6 w-6 shrink-0 flex items-center justify-center text-base">
-                                            🧠
-                                        </div>
-                                    )
-                                )}
-
-                                <div className={cn("flex flex-col gap-1.5 min-w-0", msg.role === "user" ? "max-w-[85%]" : "flex-1")}>
-                                    {/* Attachments */}
-                                    {msg.attachments && msg.attachments.length > 0 && (
-                                        <div className={cn("flex flex-wrap gap-2 mb-1", msg.role === "user" ? "justify-end" : "justify-start")}>
-                                            {msg.attachments.map((att: any, i: number) => (
-                                                att.type?.startsWith('image/') ? (
-                                                    <img key={i} src={att.url} alt={att.name} className="max-w-[200px] rounded-lg border border-zinc-200 dark:border-zinc-700" />
-                                                ) : (
-                                                    <div key={i} className="flex items-center gap-2 p-2 bg-zinc-100 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
-                                                        <Icons.paperclip className="h-4 w-4 text-zinc-500" />
-                                                        <span className="text-xs text-zinc-500 max-w-[150px] truncate">{att.name}</span>
-                                                    </div>
-                                                )
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    <div
-                                        className={cn(
-                                            "text-[13px] leading-relaxed",
-                                            msg.role === "user"
-                                                ? "bg-[#F4F4F5] dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 rounded-2xl px-4 py-2.5 whitespace-pre-wrap"
-                                                : "bg-transparent text-zinc-700 dark:text-zinc-300 prose prose-zinc dark:prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 prose-p:my-1.5 prose-p:leading-relaxed prose-headings:my-2 prose-headings:mt-3 prose-headings:font-medium prose-headings:text-zinc-700 dark:prose-headings:text-zinc-300 prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-ul:my-1.5 prose-li:my-0.5 prose-strong:font-medium prose-strong:text-zinc-700 dark:prose-strong:text-zinc-300"
-                                        )}
-                                    >
-                                        {msg.role === "user" ? (
-                                            getDisplayContent(msg.content)
-                                        ) : msg.content ? (() => {
-                                            // Check if this is description agent
-                                            const isDescAgent = agent && (agent.name.toLowerCase().includes("reels") && (agent.name.toLowerCase().includes("description") || agent.name.toLowerCase().includes("описание")))
-
-                                            if (isDescAgent) {
-                                                // Strip incomplete markers during streaming for cleaner display
-                                                let cleanContent = msg.content
-                                                    .replace(/【DESC】/g, '')  // Remove opening markers
-                                                    .replace(/【\/DESC】/g, '') // Remove closing markers
-
-                                                // Parse and render with inline counters (only for complete markers)
-                                                const parts = msg.content.split(/(【DESC】[\s\S]*?【\/DESC】)/g)
-                                                const hasCompleteMarkers = parts.some(p => /【DESC】[\s\S]*?【\/DESC】/.test(p))
-
-                                                if (hasCompleteMarkers) {
-                                                    return (
-                                                        <>
-                                                            {parts.map((part, idx) => {
-                                                                const descMatch = part.match(/【DESC】([\s\S]*?)【\/DESC】/)
-                                                                if (descMatch) {
-                                                                    const descText = descMatch[1]
-                                                                    // Count ALL characters including spaces, emojis, punctuation
-                                                                    const charCount = [...descText].length
-                                                                    return (
-                                                                        <div key={idx} className="mb-4">
-                                                                            <ReactMarkdown>{descText}</ReactMarkdown>
-                                                                            <div className={cn(
-                                                                                "text-[11px] font-medium mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full",
-                                                                                charCount > 2200
-                                                                                    ? "text-red-600 bg-red-50 dark:bg-red-900/30"
-                                                                                    : charCount > 1800
-                                                                                        ? "text-amber-600 bg-amber-50 dark:bg-amber-900/30"
-                                                                                        : "text-green-600 bg-green-50 dark:bg-green-900/30"
-                                                                            )}>
-                                                                                📝 {charCount} / 2200
-                                                                            </div>
-                                                                        </div>
-                                                                    )
-                                                                }
-                                                                // Regular text without markers - also strip any incomplete markers
-                                                                const cleanPart = part.replace(/【DESC】/g, '').replace(/【\/DESC】/g, '')
-                                                                return cleanPart ? <ReactMarkdown key={idx}>{cleanPart}</ReactMarkdown> : null
-                                                            })}
-                                                        </>
-                                                    )
-                                                }
-
-                                                // No complete markers yet (still streaming) - show clean content
-                                                return <ReactMarkdown>{cleanContent}</ReactMarkdown>
-                                            }
-
-                                            // Default rendering for non-description agents
-                                            return <ReactMarkdown>{msg.content}</ReactMarkdown>
-                                        })() : (
-                                            <span className="flex items-center gap-1.5 text-zinc-400 h-6">
-                                                <span className="inline-block w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                                                <span className="inline-block w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                                                <span className="inline-block w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                                            </span>
-                                        )}
-                                    </div>
-
-
-                                    {/* Action Bar */}
-                                    <div className={cn("flex items-center gap-1", msg.role === "user" ? "justify-end -mr-2" : "-ml-2")}>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                            onClick={() => {
-                                                navigator.clipboard.writeText(msg.content)
-                                                toast.success("Скопировано")
-                                            }}
-                                        >
-                                            <Icons.copy className="h-3.5 w-3.5" />
-                                        </Button>
-
-                                        {msg.role === "assistant" && msg.content && (
-                                            <>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                    onClick={() => toast.success("👍 Спасибо за оценку!")}
-                                                >
-                                                    <Icons.thumbsUp className="h-3.5 w-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                    onClick={() => handleDislike(msg.id)}
-                                                >
-                                                    <Icons.thumbsDown className="h-3.5 w-3.5" />
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground"
-                                                    onClick={handleRegenerate}
-                                                    disabled={isPending}
-                                                >
-                                                    <Icons.refresh className="h-3.5 w-3.5" />
-                                                </Button>
-                                            </>
-                                        )}
-                                    </div>
-
-                                </div>
-                            </div>
+                                msg={msg}
+                                agent={agent}
+                                agentIcon={agentIcon}
+                                isPending={isPending}
+                                onResend={handleSendMessage}
+                                onRegenerate={handleRegenerate}
+                                onDislike={handleDislike}
+                                onCopy={(content) => {
+                                    navigator.clipboard.writeText(content)
+                                }}
+                            />
                         ))}
                         <div ref={scrollRef} />
                     </div >
                 </div >
             </div >
 
-            <div className="flex-none bg-transparent p-4">
+            {/* Fixed bottom - absolute so content scrolls under */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background via-background/95 to-transparent pt-8">
                 <div className="mx-auto max-w-3xl px-4">
-                    {/* Quick Actions - Ещё / Дай другие (Task 5.1) */}
+                    {/* Quick Actions - Ещё / Дай другие */}
                     {messages.length > 0 && !isLoading && (
-                        <div className="flex justify-center gap-2 mb-3">
+                        <div className="flex justify-center gap-3 mb-2">
                             <button
                                 type="button"
-                                onClick={() => handleSendMessage("Ещё")}
-                                className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                                onClick={() => handleSendMessage("Дай другой вариант")}
+                                className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
                             >
-                                🔄 Ещё
+                                Дай другой вариант
                             </button>
                             <button
                                 type="button"
-                                onClick={() => handleSendMessage("Дай другие варианты")}
-                                className="px-4 py-2 text-sm font-medium text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-full hover:bg-zinc-50 dark:hover:bg-zinc-700 transition-colors"
+                                onClick={() => handleSendMessage("Сократи на 200 символов")}
+                                className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
                             >
-                                ✨ Дай другие
+                                Сократи на 200 символов
                             </button>
                         </div>
                     )}
@@ -883,21 +657,24 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         onFileDrop={handleFileDrop}
                         attachments={attachments}
                         removeAttachment={removeAttachment}
+                        datasets={datasets}
+                        selectedDatasetId={selectedDatasetId}
+                        onDatasetChange={setSelectedDatasetId}
                     />
                 </div>
             </div>
 
             <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-                <DialogContent className="sm:max-w-md dark:bg-[#1a1a1a] dark:border-zinc-800">
+                <DialogContent className="sm:max-w-md bg-card border-border">
                     <DialogHeader>
-                        <DialogTitle className="dark:text-white">Что можно улучшить?</DialogTitle>
-                        <DialogDescription className="dark:text-zinc-400">
+                        <DialogTitle className="text-foreground">Что можно улучшить?</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
                             Опишите, что было не так с ответом. Мы учтём ваш отзыв для улучшения.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
-                            <Label htmlFor="feedback" className="dark:text-zinc-300">
+                            <Label htmlFor="feedback" className="text-foreground">
                                 Ваш отзыв
                             </Label>
                             <Textarea
@@ -905,7 +682,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                 value={feedbackText}
                                 onChange={(e) => setFeedbackText(e.target.value)}
                                 placeholder="Например: ответ был неточным, слишком длинным, не по теме..."
-                                className="min-h-[100px] dark:bg-[#0f0f0f] dark:border-zinc-700 dark:text-white dark:placeholder:text-zinc-500"
+                                className="min-h-[100px] bg-background border-border text-foreground placeholder:text-muted-foreground"
                             />
                         </div>
                     </div>
@@ -913,20 +690,32 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         <Button
                             variant="outline"
                             onClick={() => setFeedbackOpen(false)}
-                            className="dark:bg-transparent dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                            className="bg-transparent border-border text-foreground hover:bg-muted"
                         >
                             Отмена
                         </Button>
                         <Button
                             onClick={handleSubmitFeedback}
                             disabled={!feedbackText.trim()}
-                            className="dark:bg-white dark:text-black dark:hover:bg-zinc-200"
+                            className="bg-accent text-accent-foreground hover:bg-accent/90"
                         >
                             Отправить
                         </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </>
+
+            <CreditBlockModal
+                isOpen={creditBlockOpen}
+                onClose={() => setCreditBlockOpen(false)}
+            />
+
+            <SubscriptionRequiredModal
+                isOpen={subscriptionModalOpen}
+                onClose={() => setSubscriptionModalOpen(false)}
+                requiredPlan={subscriptionModalPlan}
+                errorType={subscriptionModalType}
+            />
+        </div>
     )
 }

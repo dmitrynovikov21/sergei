@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     
     # Google Gemini
     gemini_api_key: str = ""
+
+    # Anthropic
+    anthropic_api_key: str = ""
+    anthropic_model: str = "claude-sonnet-4-5-20250929"
     
     # Redis
     redis_url: str = "redis://localhost:6379/0"

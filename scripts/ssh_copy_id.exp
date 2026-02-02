@@ -1,0 +1,21 @@
+#!/usr/bin/expect -f
+
+set timeout 30
+set ip [lindex $argv 0]
+set password [lindex $argv 1]
+
+spawn ssh-copy-id -o StrictHostKeyChecking=no root@$ip
+
+expect {
+    "password:" {
+        send "$password\r"
+        exp_continue
+    }
+    "Number of key(s) added:" {
+        puts "SSH key successfully added!"
+    }
+    "already exist" {
+        puts "SSH key already exists on server"
+    }
+    eof
+}

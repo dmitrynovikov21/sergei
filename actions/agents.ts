@@ -8,6 +8,7 @@
 "use server"
 
 import { auth } from "@/auth"
+import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import * as AgentService from "@/lib/services/agent"
@@ -201,40 +202,61 @@ export async function deleteAgentFile(fileId: string) {
 }
 
 export async function deleteAgent(agentId: string) {
-    const userId = await requireAuth()
+    try {
+        const userId = await requireAuth()
 
-    // Find agent and verify ownership
-    const agent = await prisma.agent.findUnique({
-        where: { id: agentId }
-    })
+        // Find agent and verify ownership
+        const agent = await prisma.agent.findUnique({
+            where: { id: agentId }
+        })
 
-    if (!agent) {
-        throw new Error("Agent not found")
+        if (!agent) {
+            return { success: false, error: "Agent not found" }
+        }
+
+        // Only allow deleting user's own agents (non-public)
+        if (agent.userId !== userId || agent.isPublic) {
+            return { success: false, error: "Cannot delete this agent (permission denied)" }
+        }
+
+        console.log(`[deleteAgent] Starting deletion for agent ${agentId}`)
+
+        // Use transaction to ensure complete cleanup
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete all files
+            await tx.agentFile.deleteMany({ where: { agentId } })
+
+            // 2. Delete chats and messages
+            const chats = await tx.chat.findMany({
+                where: { agentId },
+                select: { id: true }
+            })
+            const chatIds = chats.map(c => c.id)
+
+            if (chatIds.length > 0) {
+                await tx.message.deleteMany({
+                    where: { chatId: { in: chatIds } }
+                })
+                await tx.chat.deleteMany({
+                    where: { id: { in: chatIds } }
+                })
+            }
+
+            // 3. Delete agent
+            await tx.agent.delete({
+                where: { id: agentId }
+            })
+        })
+
+        revalidatePath("/dashboard")
+        revalidatePath("/dashboard/agents")
+        return { success: true }
+
+    } catch (error) {
+        console.error("[deleteAgent] Error:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Database error"
+        }
     }
-
-    // Only allow deleting user's own agents (non-public)
-    if (agent.userId !== userId || agent.isPublic) {
-        throw new Error("Cannot delete this agent")
-    }
-
-    // Delete associated chats, files, messages first
-    await prisma.agentFile.deleteMany({
-        where: { agentId }
-    })
-
-    await prisma.message.deleteMany({
-        where: { chat: { agentId } }
-    })
-
-    await prisma.chat.deleteMany({
-        where: { agentId }
-    })
-
-    // Delete the agent
-    await prisma.agent.delete({
-        where: { id: agentId }
-    })
-
-    revalidatePath("/dashboard")
-    revalidatePath("/dashboard/agents")
 }

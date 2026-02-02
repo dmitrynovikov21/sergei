@@ -38,15 +38,34 @@ export function SidebarAgentLink({ agent, path, isExpanded, canDelete = false }:
     const [isHovered, setIsHovered] = useState(false)
     const isAgentPage = path === `/dashboard/agents/${agent.id}`;
 
+    // Map agent names to display names
+    const getDisplayName = (name: string) => {
+        const n = name.toLowerCase()
+        if (n.includes("заголовки reels")) return "Сделать Заголовки"
+        if (n.includes("описание reels")) return "Придумать Описания"
+        if (n.includes("заголовки каруселей")) return "Сделать Заголовки"
+        if (n.includes("структура карусел")) return "Придумать Структуру"
+        return name
+    }
+    const displayName = getDisplayName(agent.name)
+
     const handleDelete = () => {
         startTransition(async () => {
             try {
-                await deleteAgent(agent.id)
-                toast.success("Агент удалён")
-                router.push("/dashboard/agents")
-                router.refresh()
+                const result = await deleteAgent(agent.id)
+
+                if (result.success) {
+                    toast.success("Агент удалён")
+                    if (isAgentPage) {
+                        router.push("/dashboard/agents")
+                    }
+                    router.refresh()
+                } else {
+                    toast.error(result.error || "Ошибка удаления")
+                }
             } catch (error) {
-                toast.error("Ошибка удаления агента")
+                console.error("Delete error:", error)
+                toast.error("Непредвиденная ошибка")
             }
         })
     }
@@ -62,22 +81,17 @@ export function SidebarAgentLink({ agent, path, isExpanded, canDelete = false }:
                     <Link
                         href={`/dashboard/agents/${agent.id}`}
                         className={cn(
-                            "flex items-center gap-3 rounded-lg px-2.5 py-2 text-sm transition-colors",
+                            "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded mb-1",
                             isAgentPage
-                                ? "bg-zinc-200/50 dark:bg-zinc-800 text-zinc-900 dark:text-white font-medium shadow-sm"
-                                : "text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 hover:text-zinc-900 dark:hover:text-zinc-200",
-                            canDelete && isExpanded && "pr-8"
+                                ? "text-foreground font-medium bg-muted"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                            canDelete && isExpanded && "pr-7"
                         )}
                     >
-                        <span className={cn("flex items-center justify-center w-5 h-5 shrink-0 text-base leading-none", !isExpanded && "mx-auto")}>
-                            {agent.emoji || "🤖"}
-                        </span>
-                        {isExpanded && (
-                            <span className="truncate">{agent.name}</span>
-                        )}
+                        <span className="truncate">{displayName}</span>
                     </Link>
                 </TooltipTrigger>
-                {!isExpanded && <TooltipContent side="right" className="bg-zinc-900 text-white border-zinc-800">{agent.name}</TooltipContent>}
+                {!isExpanded && <TooltipContent side="right" className="bg-card text-foreground border-border text-xs">{agent.name}</TooltipContent>}
             </Tooltip>
 
             {/* Delete button - only for user agents */}

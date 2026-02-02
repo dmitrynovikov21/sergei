@@ -2,26 +2,27 @@
  * Dataset Server Actions
  * 
  * CRUD operations for Datasets, TrackingSources, and ContentItems
+ * 
+ * REFACTORED: Uses requireAuth() helper for DRY auth checks
  */
 
 "use server"
 
-import { auth } from "@/auth"
 import { prisma } from "@/lib/db"
 import { revalidatePath } from "next/cache"
+import { requireAuth, getCurrentUser } from "@/lib/auth-helpers"
 import { processTrackingSource, processContentItemAI } from "@/lib/parser/harvester"
-import { extractUsername } from "@/lib/parser/apify-service"
+import { extractUsername } from "@/lib/parser/parser-client"
 
 // ==========================================
 // Dataset CRUD
 // ==========================================
 
 export async function getDatasets() {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth() // Still require login, but show ALL datasets
 
+    // Return ALL datasets (shared across users)
     return prisma.dataset.findMany({
-        where: { userId: session.user.id },
         include: {
             _count: {
                 select: {
@@ -35,20 +36,17 @@ export async function getDatasets() {
 }
 
 export async function getDataset(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth() // Still require login
 
+    // Return dataset by ID (shared - no userId filter)
     return prisma.dataset.findFirst({
-        where: {
-            id,
-            userId: session.user.id
-        },
+        where: { id },
         include: {
             sources: {
                 orderBy: { createdAt: "desc" },
                 include: {
                     parseHistory: {
-                        orderBy: { startedAt: 'desc' },
+                        orderBy: { started_at: 'desc' },
                         take: 1
                     }
                 }
@@ -62,14 +60,13 @@ export async function getDataset(id: string) {
 }
 
 export async function createDataset(name: string, description?: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     const dataset = await prisma.dataset.create({
         data: {
             name,
             description,
-            userId: session.user.id
+            userId: user.id
         }
     })
 
@@ -78,8 +75,7 @@ export async function createDataset(name: string, description?: string) {
 }
 
 export async function updateDataset(id: string, data: { name?: string; description?: string }) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     const dataset = await prisma.dataset.update({
         where: { id },
@@ -91,8 +87,7 @@ export async function updateDataset(id: string, data: { name?: string; descripti
 }
 
 export async function deleteDataset(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     await prisma.dataset.delete({
         where: { id }
@@ -110,18 +105,32 @@ export async function addTrackingSource(
     url: string,
     minViewsFilter: number = 10000
 ) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     // Verify dataset ownership
     const dataset = await prisma.dataset.findFirst({
-        where: { id: datasetId, userId: session.user.id }
+        where: { id: datasetId, userId: user.id }
     })
     if (!dataset) throw new Error("Dataset not found")
 
     // Extract username from URL
     const username = extractUsername(url)
     if (!username) throw new Error("Invalid Instagram URL")
+
+    // Check if already exists in this dataset
+    const existing = await prisma.trackingSource.findFirst({
+        where: { datasetId, username }
+    })
+    if (existing) {
+        // Reactivate if it was inactive?
+        if (!existing.isActive) {
+            await prisma.trackingSource.update({
+                where: { id: existing.id },
+                data: { isActive: true }
+            })
+        }
+        return existing
+    }
 
     const source = await prisma.trackingSource.create({
         data: {
@@ -151,12 +160,11 @@ export async function addBulkTrackingSources(
         contentTypes?: string
     }
 ) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     // Verify dataset ownership
     const dataset = await prisma.dataset.findFirst({
-        where: { id: datasetId, userId: session.user.id }
+        where: { id: datasetId, userId: user.id }
     })
     if (!dataset) throw new Error("Dataset not found")
 
@@ -190,14 +198,7 @@ export async function addBulkTrackingSources(
                 }
             })
 
-            // Auto-start parsing in background (fire and forget pattern within action scope)
-            // Note: In Vercel serverless, this might be cut off if not awaited, 
-            // but for immediate feedback we don't want to block.
-            // Using logic: if single source -> await. If bulk -> maybe await or accept risk?
-            // User requested "automatically".
-            // Let's await it to be safe for now, as scraping one source is usually fast (metadata).
-            // Actually, processTrackingSource might take time.
-            // Let's NOT await for bulk to avoid timeout.
+            // Auto-start parsing in background (fire and forget)
             processTrackingSource(source.id).catch(console.error)
 
             results.added++
@@ -218,8 +219,7 @@ export async function updateTrackingSource(
         fetchLimit?: number
     }
 ) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     const source = await prisma.trackingSource.update({
         where: { id },
@@ -231,8 +231,7 @@ export async function updateTrackingSource(
 }
 
 export async function deleteTrackingSource(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     await prisma.trackingSource.delete({
         where: { id }
@@ -242,15 +241,14 @@ export async function deleteTrackingSource(id: string) {
 }
 
 export async function forceScrapeSource(sourceId: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    const user = await requireAuth()
 
     // Verify ownership
     const source = await prisma.trackingSource.findUnique({
         where: { id: sourceId },
         include: { dataset: true }
     })
-    if (!source || source.dataset.userId !== session.user.id) {
+    if (!source || source.dataset.userId !== user.id) {
         throw new Error("Source not found")
     }
 
@@ -268,8 +266,7 @@ export async function getContentItems(datasetId: string, options?: {
     approved?: boolean
     limit?: number
 }) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     return prisma.contentItem.findMany({
         where: {
@@ -289,8 +286,7 @@ export async function updateContentItem(
         isApproved?: boolean
     }
 ) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     const item = await prisma.contentItem.update({
         where: { id },
@@ -302,8 +298,7 @@ export async function updateContentItem(
 }
 
 export async function reprocessContentItem(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     await processContentItemAI(id)
 
@@ -311,8 +306,7 @@ export async function reprocessContentItem(id: string) {
 }
 
 export async function deleteContentItem(id: string) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     await prisma.contentItem.delete({
         where: { id }
@@ -323,14 +317,12 @@ export async function deleteContentItem(id: string) {
 
 /**
  * Reprocess all content items in a dataset that have missing headlines
- * Useful when AI processing failed due to API credits
  */
 export async function reprocessDatasetHeadlines(datasetId: string): Promise<{
     processed: number
     errors: string[]
 }> {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     // Find all items with missing headlines or processing errors
     const items = await prisma.contentItem.findMany({
@@ -384,11 +376,10 @@ export async function getPublicDatasets() {
 }
 
 export async function getUserDatasets() {
-    const session = await auth()
-    if (!session?.user?.id) return []
+    await requireAuth() // Still require login
 
+    // Return ALL datasets (shared across users)
     return prisma.dataset.findMany({
-        where: { userId: session.user.id },
         select: {
             id: true,
             name: true,
@@ -398,8 +389,7 @@ export async function getUserDatasets() {
 }
 
 export async function updateChatDataset(chatId: string, datasetId: string | null) {
-    const session = await auth()
-    if (!session?.user?.id) throw new Error("Unauthorized")
+    await requireAuth()
 
     await prisma.chat.update({
         where: { id: chatId },
@@ -411,17 +401,13 @@ export async function updateChatDataset(chatId: string, datasetId: string | null
 
 /**
  * Get RAG context from dataset for chat injection
- * Formats data like agent context files:
- * - Numbered list of headlines
- * - Optional scenarios section with transcripts
- * Only includes content from the last 14 days
  */
 export async function getDatasetContext(
     datasetId: string,
     limit: number = 50,
     daysBack: number = 14
 ): Promise<string> {
-    // Calculate date threshold (14 days ago)
+    // Calculate date threshold
     const dateThreshold = new Date()
     dateThreshold.setDate(dateThreshold.getDate() - daysBack)
 
@@ -430,7 +416,7 @@ export async function getDatasetContext(
             datasetId,
             isProcessed: true,
             headline: { not: null },
-            createdAt: { gte: dateThreshold } // Only last 14 days
+            createdAt: { gte: dateThreshold }
         },
         orderBy: { views: "desc" },
         take: limit
@@ -472,7 +458,6 @@ export async function getDatasetContext(
 
 /**
  * Get aggregated context from ALL user's datasets
- * Used for auto-injection into all agent prompts
  */
 export async function getAllDatasetsContext(userId: string): Promise<string> {
     const datasets = await prisma.dataset.findMany({
@@ -484,7 +469,7 @@ export async function getAllDatasetsContext(userId: string): Promise<string> {
                     headline: { not: null }
                 },
                 orderBy: { views: "desc" },
-                take: 25 // Take top 25 from each dataset
+                take: 25
             }
         }
     })

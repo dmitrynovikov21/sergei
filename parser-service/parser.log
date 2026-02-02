@@ -1,0 +1,544 @@
+🚀 Parser Service running on http://localhost:3001
+Health check: http://localhost:3001/health
+[Apify] Starting scrape for: https://www.instagram.com/dianissimmo/reels/
+[Apify] Target Limit: 210 (based on 14 days)
+[Apify] Using credentials: miawalkers0293
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/dianissimmo/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 210,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "miawalkers0293",
+  "loginPassword": "9ChoEBvE"
+}
+[Apify] Starting scrape for: https://www.instagram.com/dianissimmo/reels/
+[Apify] Target Limit: 210 (based on 14 days)
+[Apify] Using credentials: miawalkers0293
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/dianissimmo/reels/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 210,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "miawalkers0293",
+  "loginPassword": "9ChoEBvE"
+}
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:09.510Z ACTOR: Pulling container image of build swcRI00jLqcRQMeZf from registry.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:09.512Z ACTOR: Creating container.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:09.566Z ACTOR: Starting container.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:09.567Z ACTOR: Running under "LIMITED_PERMISSIONS" permission level.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:10.695Z [32mINFO[39m  System info[90m {"apifyVersion":"3.5.1","apifyClientVersion":"2.19.0","crawleeVersion":"3.15.3","osType":"Linux","nodeVersion":"v22.21.1"}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:10.816Z [32mINFO[39m  Results Limit [object Object], ACTOR_MAX_PAID_DATASET_ITEMS
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:10.931Z [32mINFO[39m  Starting Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:11.029Z [32mINFO[39m  [Status message]: Starting the scraper with 1 direct URL(s)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:11.261Z [32mINFO[39m [33m CheerioCrawler:[39m Starting the crawler.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:11.544Z ACTOR: Pulling container image of build swcRI00jLqcRQMeZf from registry.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:11.545Z ACTOR: Creating container.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:11.624Z ACTOR: Starting container.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:11.626Z ACTOR: Running under "LIMITED_PERMISSIONS" permission level.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:12.411Z [32mINFO[39m  System info[90m {"apifyVersion":"3.5.1","apifyClientVersion":"2.19.0","crawleeVersion":"3.15.3","osType":"Linux","nodeVersion":"v22.21.1"}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:12.547Z [32mINFO[39m  Results Limit [object Object], ACTOR_MAX_PAID_DATASET_ITEMS
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:12.696Z [32mINFO[39m  Starting Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:12.816Z [32mINFO[39m  [Status message]: Starting the scraper with 1 direct URL(s)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:13.134Z [32mINFO[39m [33m CheerioCrawler:[39m Starting the crawler.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.130Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"23aEHavO999VMSe","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.134Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"76P4DFSUFGT3TXr","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.135Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"g3YuUi6EXArGX21","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.135Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"P9felG0iscEiGY6","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.136Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"tAqn6gImj9wWxFp","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.136Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"DDFdQEsobGVFq9q","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.137Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"Mi1DxktGGYDp96P","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.137Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"DWCQ2Q2FEDxVrMJ","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:26.137Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"59zLD2008TOQwXE","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:28.687Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:28.688Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"0Bl3Xo3YLBHp22w","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:30.530Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. The HTTP/2 stream has been early terminated
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:30.533Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"tAqn6gImj9wWxFp","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:31.113Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:31.114Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"Bo931eXspjiRKf5","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:34.833Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:34.833Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"Z3oEHxM7Dv4TEop","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:35.195Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:35.196Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:35.196Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:35.197Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"61e2bneQfWagTlD","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:40.651Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:40.652Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"61e2bneQfWagTlD","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:41.207Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:41.207Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"wCSsPy7rmh8u1FB","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:42.730Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:42.731Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"dT3TmiDFhLXww5p","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:02:48.508Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"AUyTxfJJyIQ5TB4","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%7D","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:56.237Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"g3YuUi6EXArGX21","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:02:59.937Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"NAmerDYYr8sot7U","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:00.033Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"UOwV3LhfUt6BDBy","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:01.747Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:01.749Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"CsUMMEJtzYbi3RH","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:02.841Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"J1tXiUdmdKgm0np","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:02.930Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Gv7rJNtDo64TbKn","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:05.139Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:05.140Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"iPHFqN3qCe7c7VU","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:07.480Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:07.481Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"J1tXiUdmdKgm0np","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:07.540Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"aQmuKhzcmoV6nFP","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFCT29LM3pDZ3lxbzcyMlRQRkNmejVyNTFfSFl4VEhQa3ZxQmxhM2dvVHJ2RVk4aUUyY0hXakFySlJ5UEhXcHBXQUdoZzNUQjA0T1NCVkNuTVl6V2pLcA%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:10.357Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:10.358Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"KQddc4v1mE0fbjB","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:11.262Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3715,"requestsFinishedPerMinute":50,"requestsFailedPerMinute":0,"requestTotalDurationMillis":185734,"requestsTotal":50,"crawlerRuntimeMillis":60128,"retryHistogram":[39,10,1]}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:11.286Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":3,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.019},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:12.394Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:12.395Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"J1tXiUdmdKgm0np","url":"https://www.instagram.com/api/graphql","retryCount":3}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:12.826Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:12.828Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:12.829Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:12.831Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"tAqn6gImj9wWxFp","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:13.134Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3566,"requestsFinishedPerMinute":24,"requestsFailedPerMinute":0,"requestTotalDurationMillis":85573,"requestsTotal":24,"crawlerRuntimeMillis":60204,"retryHistogram":[22,2]}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:13.165Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":3,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0.075},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:20.738Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:20.738Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"2vHk8QSRkh8Asti","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:24.095Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:24.097Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:24.099Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:24.101Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"0Bl3Xo3YLBHp22w","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:28.665Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"adYhcFJzJagCcE5","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:03:29.466Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"zWfxlYoDj9KdLSK","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFENm1QQlRiQjBoaXFtYktsaG5hM2dHVExkRUpGWXQ5d2g4LWprNTNTb3U0YWpza0xhUVdzVE41SER6aXdpSGs2MnBVamRpT3hyUnNfdmptLW9KTHZmSg%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:29.832Z [33mWARN[39m [33m RequestQueue(Fc1MIrp5qOZ0iI4Ti, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"99yE71obtu7ghXF","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:31.830Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:31.831Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"HOquau7ZQUJjUlW","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:32.032Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:32.033Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"M4viM7g1r4U8Unc","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:32.371Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request got blocked. Will retry with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:32.372Z     at handlePostsFeed (file:///usr/src/app/dist/index.js:44:755363)[90m {"id":"QHPMCP6JCZIsPAY","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFDZkF1MUgxejIxU3E0SG1acFFCbzFMN0ZLaHVSVVJkbFBDQmpmV2M5bVI3MVVpMnRydTRQRnlDbTlwbkwyaF94TGNXblpKWTZvdzJHbGF5M2tsR2ItYw%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:38.927Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"iPHFqN3qCe7c7VU","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:43.826Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"lxpEwYvGEnSzHyo","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:43.831Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Qt3PsUKNAy6yeoq","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:44.895Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:44.896Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"X5eiFZPOVQrbOWx","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:45.762Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"J1tXiUdmdKgm0np","url":"https://www.instagram.com/api/graphql","retryCount":4}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:47.529Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Knl8kUVZSe1kjvk","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:51.122Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:51.123Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"aeX2zH1Z5EQYLhr","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:51.535Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"kiSmwl5lITQLt25","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:52.630Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timed out request
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:52.630Z     at Timeout._onTimeout (file:///usr/src/app/dist/index.js:44:258717)[90m {"id":"45mhumClAhfxHsa","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:56.185Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:56.190Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"6DIUX3F0k6m6RL6","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:56.335Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. The proxy server rejected the request with status code 590 (UPSTREAM502)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:03:56.336Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"X5eiFZPOVQrbOWx","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:01.914Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"adYhcFJzJagCcE5","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:05.408Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Client network socket disconnected before secure TLS connection was established
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:05.409Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"gNSgifFQRNaS3fo","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:08.679Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:08.680Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"6e1LyB0vV1OqAWy","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:10.965Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:10.966Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:10.967Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:10.968Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"oDQoTLX85BeQaB0","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:11.262Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3557,"requestsFinishedPerMinute":85,"requestsFailedPerMinute":0,"requestTotalDurationMillis":608324,"requestsTotal":171,"crawlerRuntimeMillis":120128,"retryHistogram":[146,21,3,null,1]}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:11.429Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":11,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.08},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0.079},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:13.134Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3488,"requestsFinishedPerMinute":13,"requestsFailedPerMinute":0,"requestTotalDurationMillis":94186,"requestsTotal":27,"crawlerRuntimeMillis":120204,"retryHistogram":[22,4,1]}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:13.169Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":1,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:15.253Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:15.254Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"veerismv7VJfVn5","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:15.938Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:15.939Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"J1tXiUdmdKgm0np","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:17.329Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:17.330Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:17.331Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:17.332Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"mEhPr4NWOOB5ZGI","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:20.729Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Knl8kUVZSe1kjvk","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:21.731Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:21.733Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:21.734Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:21.736Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"YFHUBai1MUdkU0L","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:24.397Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"aeX2zH1Z5EQYLhr","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.463Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"ODhuLtC1bNTt5DF","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.465Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"R3gaNW5CMKE2xol","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.466Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"1nvLcZ6ioDwoQyj","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.565Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"bU81Q56V4vq4mJ8","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.568Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"CCnswCNbt48K4Nd","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.570Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"JuiTbS04rqGibgX","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.571Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"r9zGqHACA0h7l9d","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.875Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"lxpEwYvGEnSzHyo","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.877Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"KU1W3NLGdywrJfX","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.878Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"ElpIIOCSQxNk7XA","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.880Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"zMvY8cM1d2D94No","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:25.882Z [33mWARN[39m [33m RequestQueue(2Olfa9NGBarRU3EvN, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"Qt3PsUKNAy6yeoq","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:28.370Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:28.372Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"CCnswCNbt48K4Nd","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:29.174Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:29.176Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"lxpEwYvGEnSzHyo","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:30.437Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"j7qhgBy2Llm1Gr0","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:30.725Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"VHMcxGepugWAXdm","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:32.970Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:32.972Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:32.974Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:32.976Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"3CVj6S8IV15WtbE","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:33.647Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:33.648Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"DAVcSpKDAWumxm3","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:33.783Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:33.784Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"5fhmFkHDjnKV2Dh","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:34.331Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"znWSIe9p3qIt8yK","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:34.635Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"BKBQFYmf2BSvZa9","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFEUEU2RWd6NXJxLWVraTd6VTZFOFo5RFh0dW1nd3ZEWFNPX1VjdmNzS0F5ekNGV2tvWDBFQ0VPSXRGZmRwZU5CZVVIcGRMbFpYeDR1X1o4WnJCN0Ezeg%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.486Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.490Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"xqQ1RXdI3HeKOuW","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.882Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.884Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.885Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:39.887Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"4M3KTSIduAuXa7Y","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:43.237Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"6e1LyB0vV1OqAWy","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:43.970Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"UVu6Bw1vDT6UhA2","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:45.087Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:45.088Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"5fhmFkHDjnKV2Dh","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:47.849Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:47.851Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:47.853Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:47.856Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"xQiGe9a4n5TBU8r","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:49.577Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:49.578Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"FW8aPXd8m4VbhaQ","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:54.599Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:54.599Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"1iHlyoqqKOhKFL7","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:54.935Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:54.936Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"u1g7NOK4hXLtg3Y","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.212Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.213Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.214Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.214Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"8lLFuhgTSyfYZzJ","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%22447384494%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFCeUNsWVRTcTlOenR3ZTVPRzVNU3dtUnREOGo1MjNmYkUzaDEtN3pzMWFaZF92UFBaSzZfVEM2ZjdhZTZESWpDaW8wejVZQWVGbnZBZUtGbGp5VFh3Wg%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.470Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.471Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.472Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.472Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"e3DvLd2XylAuR2G","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:57.521Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:57.522Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"WZGpTjf6yGAeN2d","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:57.673Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"aeX2zH1Z5EQYLhr","url":"https://www.instagram.com/api/graphql","retryCount":3}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:59.147Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:59.148Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"LQwUz1agpoRmxyr","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:59.173Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"XgUJWbqYI3NNiBB","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:59.304Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:04:59.307Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"eWVUChXDglnXWom","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:59.268Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"WjoW2TxZF8BOWJO","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:04:59.270Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"2vHk8QSRkh8Asti","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:03.117Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. The proxy server rejected the request with status code 590 (UPSTREAM502)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:03.119Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"c5O10Zfd4JIHkBQ","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:03.261Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:03.263Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"IIjgcvzJeuMp64L","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:06.365Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"bhxMTSnjayCAGnW","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:06.374Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"a4GphlC4h2Z95R5","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:06.726Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:06.728Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"gNSgifFQRNaS3fo","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:11.263Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3715,"requestsFinishedPerMinute":75,"requestsFailedPerMinute":0,"requestTotalDurationMillis":839527,"requestsTotal":226,"crawlerRuntimeMillis":180129,"retryHistogram":[182,36,6,1,1]}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:11.439Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":3,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.04},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:12.566Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"lO4umK7EfemAO11","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:13.265Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3705,"requestsFinishedPerMinute":60,"requestsFailedPerMinute":0,"requestTotalDurationMillis":670624,"requestsTotal":181,"crawlerRuntimeMillis":180335,"retryHistogram":[159,21,1]}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:13.267Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":15,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.149},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0.068},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.326Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.327Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.329Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.331Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"1W7VIzpp77sgOh3","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.449Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:18.451Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"u1g7NOK4hXLtg3Y","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:23.028Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"FW8aPXd8m4VbhaQ","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:25.769Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"J8nhuqesyEQxomY","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:26.639Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"0Erad9dYj2pY6ax","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:26.643Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:26.646Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:26.647Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:26.649Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"GHpltwZ5XQqmoJP","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:30.092Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:30.094Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:30.096Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:30.098Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"55cv8oFgWd3pwpQ","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:31.066Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"oDQoTLX85BeQaB0","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:31.969Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:31.971Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"GHpltwZ5XQqmoJP","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:34.130Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"iRrPHgp3RquNpcw","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:34.110Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:34.112Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"5fhmFkHDjnKV2Dh","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:35.472Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"c8oSxYeZX3mVdzH","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:39.603Z [32mINFO[39m [33m CheerioCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:39.674Z [32mINFO[39m [33m CheerioCrawler:[39m Final request statistics:[90m {"requestsFinished":229,"requestsFailed":0,"retryHistogram":[182,38,7,1,1],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3690,"requestsFinishedPerMinute":66,"requestsFailedPerMinute":0,"requestTotalDurationMillis":845061,"requestsTotal":229,"crawlerRuntimeMillis":208541}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:39.678Z [32mINFO[39m [33m CheerioCrawler:[39m Finished! Total 229 requests: 229 succeeded, 0 failed.[90m {"terminal":true}[39m
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:39.682Z [32mINFO[39m  [Status message]: Scraper finished
+[36minstagram-scraper runId:QDxhddNVDswo8t0C9 -> [39m2026-01-25T02:05:40.090Z [32mINFO[39m  Stopping Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:40.168Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:40.170Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:40.172Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:40.174Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"gNSgifFQRNaS3fo","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[Apify] Run Finished. Status: SUCCEEDED
+[Apify] Detected Error from logs: Rate Limit (429)
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:43.571Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"eVCIFwoMOANuoc1","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[Apify] Fetched 210 items.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:46.274Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"m5GLBzk4dhne3o0","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:51.473Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"xNjlQXl4s4z2y1A","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:57.142Z [32mINFO[39m [33m CheerioCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:57.220Z [32mINFO[39m [33m CheerioCrawler:[39m Final request statistics:[90m {"requestsFinished":229,"requestsFailed":0,"retryHistogram":[193,33,3],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":3922,"requestsFinishedPerMinute":61,"requestsFailedPerMinute":0,"requestTotalDurationMillis":898095,"requestsTotal":229,"crawlerRuntimeMillis":224290}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:57.222Z [32mINFO[39m [33m CheerioCrawler:[39m Finished! Total 229 requests: 229 succeeded, 0 failed.[90m {"terminal":true}[39m
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:57.224Z [32mINFO[39m  [Status message]: Scraper finished
+[36minstagram-scraper runId:TJEobpB6dn238rIlf -> [39m2026-01-25T02:05:57.313Z [32mINFO[39m  Stopping Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[Apify] Run Finished. Status: SUCCEEDED
+[Apify] Detected Error from logs: Rate Limit (429)
+[Apify] Fetched 210 items.
+[Apify] Starting scrape for: https://www.instagram.com/durov/
+[Apify] Target Limit: 210 (based on 14 days)
+[Apify] Using credentials: miawalkers0293
+[Apify] Input: {
+  "directUrls": [
+    "https://www.instagram.com/durov/"
+  ],
+  "resultsType": "posts",
+  "resultsLimit": 210,
+  "searchType": "user",
+  "proxy": {
+    "useApifyProxy": true,
+    "apifyProxyGroups": [
+      "RESIDENTIAL"
+    ]
+  },
+  "loginUsername": "miawalkers0293",
+  "loginPassword": "9ChoEBvE"
+}
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:10.773Z ACTOR: Pulling container image of build swcRI00jLqcRQMeZf from registry.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:10.777Z ACTOR: Creating container.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:10.835Z ACTOR: Starting container.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:10.837Z ACTOR: Running under "LIMITED_PERMISSIONS" permission level.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:12.201Z [32mINFO[39m  System info[90m {"apifyVersion":"3.5.1","apifyClientVersion":"2.19.0","crawleeVersion":"3.15.3","osType":"Linux","nodeVersion":"v22.21.1"}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:12.321Z [32mINFO[39m  Results Limit [object Object], ACTOR_MAX_PAID_DATASET_ITEMS
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:12.492Z [32mINFO[39m  Starting Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:12.599Z [32mINFO[39m  [Status message]: Starting the scraper with 1 direct URL(s)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:12.769Z [32mINFO[39m [33m CheerioCrawler:[39m Starting the crawler.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:24.520Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:24.521Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"juw0rZLZqZVXvAY","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:25.861Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:25.862Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"llSgHf463ZwLNh5","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.222Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"LedlsJR3Ok9cdtK","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.309Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"8m8r65YaVaewAiV","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.311Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"AJTYdF8ebTx69c8","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.317Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"qLOAevCuQ4CddtT","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.318Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"ywIXPINiUfoqLIp","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.320Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"rqJSH2g1YGuASRe","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.322Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"8MHKoU4YB0LTzjy","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.324Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"ClZ4mXP6H2hhbtB","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.326Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"b9FtxWLjLQQy5eb","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.327Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"YkiMw1qglWD2X8M","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.329Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"n6NrDEQpikducin","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:28.331Z [33mWARN[39m [33m RequestQueue(YxkwN8eTPmWPRYcWW, no-name):[39m Queue head returned a request that is already in progress?![90m {"nextRequestId":"QDC8kRYmEFdMT0N","inProgress":true,"recentlyHandled":false}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:32.609Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:32.611Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"kQb13RHmzq6nJbU","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:34.613Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:34.615Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:34.616Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:34.618Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"rqJSH2g1YGuASRe","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:36.465Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:36.467Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"Fq5Dr52bn0VxWxP","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.038Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.040Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.041Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.043Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"AJTYdF8ebTx69c8","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.308Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.310Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.311Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:39.313Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"1nJ6k5egulodetV","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%224663052%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFDQS1jcER5OWJVSzBNTlVDWU9oRGVSRU40eml1ZkN4SkNLRGs4bEYwbFZZVkFheDR4UEp2eUk4VXExSEhvU0wtQUdPYXBBaXBabjZTSXlRWU5wWkQ0Vg%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:50.411Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"r2bnXOyuKIIkUZU","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:53.008Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"V3u9EfwamIB9SbH","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:18:58.218Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"8m8r65YaVaewAiV","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:04.619Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"NGXqaWJqGeBi5uh","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:12.518Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"1nJ6k5egulodetV","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%224663052%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFDQS1jcER5OWJVSzBNTlVDWU9oRGVSRU40eml1ZkN4SkNLRGs4bEYwbFZZVkFheDR4UEp2eUk4VXExSEhvU0wtQUdPYXBBaXBabjZTSXlRWU5wWkQ0Vg%3D%3D%22%7D","retryCount":2}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:12.770Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":6258,"requestsFinishedPerMinute":65,"requestsFailedPerMinute":0,"requestTotalDurationMillis":406776,"requestsTotal":65,"crawlerRuntimeMillis":60118,"retryHistogram":[56,9]}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:12.780Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":1,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.02},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:18.810Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:18.812Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"eSqOckbPqCSLdIa","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:19.228Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:19.229Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"rNhJRoeTPHz5MLj","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:23.756Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:23.757Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:23.759Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:23.760Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"vKSZr72R726JlDi","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:27.465Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. The HTTP/2 stream has been early terminated
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:27.467Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"J2kfgqKCMBAjaNm","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:30.890Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:30.892Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:30.894Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:30.897Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"PsmNtx4iI51TxFS","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:47.412Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"84zK7HTlrhhbPnL","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%224663052%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFBNVZxV2l0UUduODcxZ0QwZlpBRG1wNjJ3S1B3dUJFaFFqcURXa1dTVUwwanVwZF9BWTZnSE9rMXdPMnZ0UXBYNnU2UXd1ZWZLR01qRjRtQnllRWdxSw%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:54.535Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:54.536Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"VEdxGwYww6nAlOj","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.086Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.088Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.090Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.091Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"T29uQund0W8No85","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.609Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.611Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.613Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:56.614Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"2gvpw2ZD5gzAYgq","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:59.269Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:59.270Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"s8zfqVx9rsG3Kq3","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:59.829Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:19:59.831Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"D0YYroa7skDRV77","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:12.770Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":6017,"requestsFinishedPerMinute":52,"requestsFailedPerMinute":0,"requestTotalDurationMillis":625795,"requestsTotal":104,"crawlerRuntimeMillis":120119,"retryHistogram":[82,21,1]}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:12.797Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":2,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.039},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:25.547Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Hb97w6zWXrZdmGg","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%224663052%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFBQ0lzVkhGdHNSMmRKc1hnNTVMQlltQnF1OGljVlQ3aWNCNWxiWS1NbTY0Qmc1MmpWZmViazMwb1o5VWZlSlJaNmxZNmhFUGo0S0dPRzFqM1JuRnZiSA%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:25.712Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"SNBbkXxsfLPjizp","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:38.131Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:38.133Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:38.134Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:38.135Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"21Rz6zEllnjDrij","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:40.648Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:40.649Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:40.651Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:40.652Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"mwxdyarQXoEjDKU","url":"https://www.instagram.com/graphql/query/?doc_id=7950326061742207&variables=%7B%22id%22%3A%224663052%22%2C%22first%22%3A12%2C%22after%22%3A%22QVFBMmVnb2NxdzhnYThlT0Q4T1p1UTh1ZDN0eC1WR25keXJ3bmdHVHpUVWlRangtZUZqOWNLeGpMU1NFS2tvVGNEZ0taclY4R2ZqODVSNG1CcWFVR0dmeQ%3D%3D%22%7D","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:42.185Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:42.187Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:42.188Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:42.190Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"5vcsVSah05xDc6q","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:52.273Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:52.275Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"qvSpvJ7N7Xlj3tn","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:53.071Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:53.073Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"M8KBQFqSMgz0CyL","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:59.966Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:20:59.969Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"5L8P2vyjQaw0xqw","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:00.609Z [32mINFO[39m  [END-OF-RESULTS]: durov confirmed end of results at pos 162
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.136Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"8LAzs0baVyc7P6m","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.144Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Ezaw3pEURtqxl2Y","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.209Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"afRLE7lx9miXBBn","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.464Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Request blocked, retrying it again with different session
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.465Z     at handlePostDetails (file:///usr/src/app/dist/index.js:44:611871)[90m {"id":"H59uxBt7HfvWzSy","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.510Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Timeout awaiting 'request' for 30000ms
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:03.511Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:63)[90m {"id":"iIoTjZS80P2vCFF","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:12.772Z [32mINFO[39m [33m CheerioCrawler:Statistics:[39m CheerioCrawler request statistics:[90m {"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":5842,"requestsFinishedPerMinute":56,"requestsFailedPerMinute":0,"requestTotalDurationMillis":975634,"requestsTotal":167,"crawlerRuntimeMillis":180119,"retryHistogram":[134,32,1]}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:12.805Z [32mINFO[39m [33m CheerioCrawler:AutoscaledPool:[39m state[90m {"currentConcurrency":10,"desiredConcurrency":52,"systemStatus":{"isSystemIdle":true,"memInfo":{"isOverloaded":false,"limitRatio":0.2,"actualRatio":0},"eventLoopInfo":{"isOverloaded":false,"limitRatio":0.6,"actualRatio":0.059},"cpuInfo":{"isOverloaded":false,"limitRatio":0.4,"actualRatio":0},"clientInfo":{"isOverloaded":false,"limitRatio":0.3,"actualRatio":0}}}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:17.050Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:17.052Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:17.054Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:17.056Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"TYnsR3KY1ot4InR","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:22.506Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"KLODfQJTovCvSkm","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:22.510Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"Lc6BpCE4XzsnXlv","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:25.425Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"vUyeF4Jzz3lZNjq","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:25.616Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"qvSpvJ7N7Xlj3tn","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:25.712Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"3JNl63kRW3yiT7R","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:29.218Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"irRgfHRg4UWCpVr","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:30.723Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"cpn2iz2pjzdehWo","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:30.814Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"SWa8KBkOXG4vspU","url":"https://www.instagram.com/api/graphql","retryCount":1}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:33.679Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. Detected a session error, rotating session...
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:33.683Z The proxy server rejected the request with status code 595 (ECONNRESET)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:33.684Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:33.686Z     at ClientRequest.<anonymous> (file:///usr/src/app/dist/984.index.js:16244:109)[90m {"id":"irRgfHRg4UWCpVr","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:36.545Z [33mWARN[39m [33m CheerioCrawler:[39m Reclaiming failed request back to the list or queue. request timed out after 30 seconds.[90m {"id":"8LAzs0baVyc7P6m","url":"https://www.instagram.com/api/graphql","retryCount":2}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:48.418Z [32mINFO[39m [33m CheerioCrawler:[39m All requests from the queue have been processed, the crawler will shut down.
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:48.523Z [32mINFO[39m [33m CheerioCrawler:[39m Final request statistics:[90m {"requestsFinished":177,"requestsFailed":0,"retryHistogram":[134,39,4],"requestAvgFailedDurationMillis":null,"requestAvgFinishedDurationMillis":5892,"requestsFinishedPerMinute":49,"requestsFailedPerMinute":0,"requestTotalDurationMillis":1042877,"requestsTotal":177,"crawlerRuntimeMillis":215872}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:48.525Z [32mINFO[39m [33m CheerioCrawler:[39m Finished! Total 177 requests: 177 succeeded, 0 failed.[90m {"terminal":true}[39m
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:48.526Z [32mINFO[39m  [Status message]: Scraper finished
+[36minstagram-scraper runId:tCgzi1aj9DeUktseH -> [39m2026-01-25T08:21:48.654Z [32mINFO[39m  Stopping Apify client's scheduler[90m {"clientName":"CLIENT"}[39m
+[Apify] Run Finished. Status: SUCCEEDED
+[Apify] Fetched 162 items.
+Claude vision error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fyei5-1.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+Extract headline error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fyei5-1.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+Claude vision error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: Error: getaddrinfo ENOTFOUND instagram.faip1-2.fna.fbcdn.net
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'instagram.faip1-2.fna.fbcdn.net'
+  }
+}
+Extract headline error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: Error: getaddrinfo ENOTFOUND instagram.faip1-2.fna.fbcdn.net
+      at GetAddrInfoReqWrap.onlookupall [as oncomplete] (node:dns:122:26) {
+    errno: -3008,
+    code: 'ENOTFOUND',
+    syscall: 'getaddrinfo',
+    hostname: 'instagram.faip1-2.fna.fbcdn.net'
+  }
+}
+Claude vision error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fixc4-2.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+Extract headline error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fixc4-2.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+Claude vision error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fura3-1.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+Extract headline error: TypeError: fetch failed
+    at node:internal/deps/undici/undici:13510:13
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async extractHeadlineFromCover (/Users/dimanovikov/Desktop/sergei/parser-service/lib/vision.js:13:31)
+    at async /Users/dimanovikov/Desktop/sergei/parser-service/routes/parse.js:62:26 {
+  [cause]: ConnectTimeoutError: Connect Timeout Error (attempted address: instagram.fura3-1.fna.fbcdn.net:443, timeout: 10000ms)
+      at onConnectTimeout (node:internal/deps/undici/undici:2602:28)
+      at Immediate._onImmediate (node:internal/deps/undici/undici:2583:11)
+      at process.processImmediate (node:internal/timers:485:21) {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}

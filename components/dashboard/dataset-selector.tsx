@@ -56,7 +56,11 @@ export function DatasetSelector({ chatId, currentDatasetId, datasets }: DatasetS
         >
             <SelectTrigger className="w-[180px] h-8 text-xs">
                 <div className="flex items-center gap-2 truncate">
-                    <Icons.database className="h-3 w-3 flex-shrink-0" />
+                    {isPending ? (
+                        <Icons.spinner className="h-3 w-3 animate-spin flex-shrink-0" />
+                    ) : (
+                        <Icons.database className="h-3 w-3 flex-shrink-0" />
+                    )}
                     <SelectValue placeholder="Без котекста" />
                 </div>
             </SelectTrigger>

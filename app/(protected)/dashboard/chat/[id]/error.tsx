@@ -21,10 +21,10 @@ export default function Error({
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
                     <Icons.warning className="h-8 w-8 text-zinc-500" />
                 </div>
-                <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
+                <h2 className="text-xl font-semibold text-foreground">
                     Ошибка чата
                 </h2>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                <p className="text-sm text-muted-foreground">
                     {error.message || "Не удалось загрузить этот чат."}
                 </p>
                 <Button onClick={() => reset()} variant="outline">

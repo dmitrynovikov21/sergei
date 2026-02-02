@@ -1,9 +1,7 @@
 "use client"
 
 import { Agent } from "@prisma/client"
-import { useRouter } from "next/navigation"
-import { useTransition } from "react"
-import { createChat } from "@/actions/chat"
+import { useStartChat } from "@/hooks/use-start-chat"
 import {
     Card,
     CardContent,
@@ -21,22 +19,10 @@ interface AgentItemProps {
 }
 
 export function AgentItem({ agent }: AgentItemProps) {
-    const router = useRouter()
-    const [isPending, startTransition] = useTransition()
+    const { startChat, isPending } = useStartChat()
 
     const onStartChat = () => {
-        startTransition(async () => {
-            try {
-                // Read datasetId from localStorage (set by ContextSelector)
-                const datasetId = localStorage.getItem("global_dataset_context") || undefined
-                console.log("[AgentItem] Creating chat with datasetId:", datasetId)
-                const chatId = await createChat(agent.id, undefined, datasetId)
-                router.refresh() // Update sidebar with new chat
-                router.push(`/dashboard/chat/${chatId}`)
-            } catch (error) {
-                console.error("Failed to start chat", error)
-            }
-        })
+        startChat(agent.id)
     }
 
     return (

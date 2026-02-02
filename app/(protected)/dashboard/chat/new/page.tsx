@@ -21,8 +21,10 @@ export default async function NewChatPage() {
 
     // 2. If not found, create it
     if (!agent) {
+        const { v4: uuidv4 } = await import("uuid");
         agent = await prisma.agent.create({
             data: {
+                id: uuidv4(),
                 userId,
                 name: "Claude Assistant",
                 emoji: "✨",

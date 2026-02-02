@@ -28,15 +28,18 @@ export default async function DashboardPage() {
   const datasets = await getDatasets();
 
   return (
-    <div className="flex h-full flex-col items-center justify-center p-8">
-      <div className="max-w-2xl w-full text-center space-y-6">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white">
-          Выберите агента для начала
-        </h1>
-        <p className="text-zinc-500 dark:text-zinc-400">
-          Нажмите на агента, чтобы начать новый чат
-        </p>
-        <div className="mt-8 space-y-6">
+    <div className="flex h-full flex-col items-center p-8 pt-24 overflow-y-auto">
+      <div className="max-w-5xl w-full text-center space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
+            Выберите агента для начала
+          </h1>
+          <p className="text-muted-foreground max-w-lg mx-auto">
+            Наши AI-агенты помогут вам с созданием контента. Выберите подходящего агента ниже, чтобы начать.
+          </p>
+        </div>
+
+        <div className="space-y-8">
           <div className="flex justify-center">
             <ContextSelector datasets={datasets} />
           </div>

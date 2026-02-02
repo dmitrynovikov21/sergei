@@ -27,9 +27,9 @@ export function AgentChatHistory({ chats }: AgentChatHistoryProps) {
                 <Link
                     key={chat.id}
                     href={`/dashboard/chat/${chat.id}`}
-                    className="block py-3 px-3 -mx-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-lg transition-colors"
+                    className="block py-3 px-3 -mx-3 border-b border-border/50 last:border-0 hover:bg-muted rounded-lg transition-colors"
                 >
-                    <p className="text-zinc-900 dark:text-white text-sm font-medium truncate">
+                    <p className="text-foreground text-sm font-medium truncate">
                         {chat.title || "Новый чат"}
                     </p>
                     <p className="text-zinc-500 text-xs mt-1">

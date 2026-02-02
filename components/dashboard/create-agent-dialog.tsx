@@ -147,7 +147,7 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                     <Button
                         onClick={handleCreate}
                         disabled={isPending || !name.trim()}
-                        className="bg-zinc-900 hover:bg-black text-white dark:bg-white dark:hover:bg-zinc-200 dark:text-black"
+                        className="bg-foreground hover:bg-foreground/90 text-background"
                     >
                         {isPending ? (
                             <>Создание...</>

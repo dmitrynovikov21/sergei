@@ -1,0 +1,22 @@
+{
+    "name": "parser-service",
+    "version": "1.0.0",
+    "description": "Instagram Parser Microservice using Apify",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js",
+        "dev": "node --watch index.js"
+    },
+    "dependencies": {
+        "@anthropic-ai/sdk": "^0.32.1",
+        "@prisma/client": "^7.3.0",
+        "apify-client": "^2.9.5",
+        "bullmq": "^5.67.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "ioredis": "^5.9.2",
+        "node-cron": "^4.2.1",
+        "prisma": "^7.3.0"
+    }
+}

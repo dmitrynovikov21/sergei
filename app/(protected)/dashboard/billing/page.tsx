@@ -1,54 +1,27 @@
-import { redirect } from "next/navigation";
+import { redirect } from "next/navigation"
+import { getCurrentUser } from "@/lib/session"
+import { getBillingDashboard } from "@/actions/billing"
+import { BillingDashboard } from "./billing-client"
+import { Metadata } from "next"
 
-import { getCurrentUser } from "@/lib/session";
-import { getUserSubscriptionPlan } from "@/lib/subscription";
-import { constructMetadata } from "@/lib/utils";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { DashboardHeader } from "@/components/dashboard/header";
-import { BillingInfo } from "@/components/pricing/billing-info";
-import { Icons } from "@/components/shared/icons";
-
-export const metadata = constructMetadata({
-  title: "Billing – SaaS Starter",
-  description: "Manage billing and your subscription plan.",
-});
+export const metadata: Metadata = {
+  title: "Биллинг",
+  description: "Управление балансом и подписками",
+}
 
 export default async function BillingPage() {
-  const user = await getCurrentUser();
+  const user = await getCurrentUser()
+  if (!user) redirect("/login")
 
-  let userSubscriptionPlan;
-  if (user && user.id && user.role === "USER") {
-    userSubscriptionPlan = await getUserSubscriptionPlan(user.id);
-  } else {
-    redirect("/login");
-  }
+  const data = await getBillingDashboard()
 
   return (
-    <>
-      <DashboardHeader
-        heading="Billing"
-        text="Manage billing and your subscription plan."
-      />
-      <div className="grid gap-8">
-        <Alert className="!pl-14">
-          <Icons.warning />
-          <AlertTitle>This is a demo app.</AlertTitle>
-          <AlertDescription className="text-balance">
-            SaaS Starter app is a demo app using a Stripe test environment. You
-            can find a list of test card numbers on the{" "}
-            <a
-              href="https://stripe.com/docs/testing#cards"
-              target="_blank"
-              rel="noreferrer"
-              className="font-medium underline underline-offset-8"
-            >
-              Stripe docs
-            </a>
-            .
-          </AlertDescription>
-        </Alert>
-        <BillingInfo userSubscriptionPlan={userSubscriptionPlan} />
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-3xl font-bold tracking-tight">Биллинг</h2>
       </div>
-    </>
-  );
+
+      <BillingDashboard data={data} />
+    </div>
+  )
 }

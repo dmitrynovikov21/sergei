@@ -22,6 +22,7 @@ import {
     createChatStream,
     createStreamingResponse,
 } from "@/lib/services/chat"
+import { checkAgentAccess } from "@/lib/subscription-guard"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // Allow up to 300 seconds for streaming
@@ -38,7 +39,7 @@ export async function POST(
         }
 
         // 2. Parse request
-        const { message, attachments } = await req.json()
+        const { message, attachments, datasetId: requestDatasetId } = await req.json()
         if ((!message || typeof message !== "string") && (!attachments || attachments.length === 0)) {
             return new Response("Message or attachment is required", { status: 400 })
         }
@@ -50,12 +51,40 @@ export async function POST(
             return new Response("Chat not found", { status: 404 })
         }
 
-        // 4. Build system prompt with all context
+        // 4. CHECK SUBSCRIPTION ACCESS
+        const accessResult = await checkAgentAccess(session.user.id, chat.agent.name)
+
+        if (!accessResult.hasAccess) {
+            console.log(`[Chat API] Access denied for user ${session.user.id} to agent ${chat.agent.name}:`, accessResult.error)
+
+            if (accessResult.error?.startsWith('SUBSCRIPTION_REQUIRED')) {
+                return new Response(JSON.stringify({
+                    error: 'SUBSCRIPTION_REQUIRED',
+                    requiredPlan: accessResult.requiredPlan,
+                    message: `Для использования этого агента нужна подписка "${accessResult.requiredPlan === 'reels' ? 'Reels' : 'Карусели'}"`
+                }), {
+                    status: 403,
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            }
+
+            if (accessResult.error === 'CREDITS_EXHAUSTED') {
+                return new Response(JSON.stringify({
+                    error: 'CREDITS_EXHAUSTED',
+                    requiredPlan: accessResult.requiredPlan,
+                    message: 'Лимит кредитов исчерпан. Дождитесь обновления или купите дополнительный пакет.'
+                }), {
+                    status: 402,
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            }
+        }
+
+        // 5. Build system prompt with all context
         let datasetContext: string | null = null
-        // PRIORITY: agent.datasetId takes precedence (user can change it anytime)
-        // chat.datasetId is fallback (set at chat creation, may be outdated)
-        const effectiveDatasetId = chat.agent.datasetId || chat.datasetId
-        console.log("[Chat API] agent.datasetId:", chat.agent.datasetId, "chat.datasetId:", chat.datasetId, "=> using:", effectiveDatasetId)
+        // PRIORITY: requestDatasetId (from chat input selector) > agent.datasetId > chat.datasetId
+        const effectiveDatasetId = requestDatasetId || chat.agent.datasetId || chat.datasetId
+        console.log("[Chat API] requestDatasetId:", requestDatasetId, "agent.datasetId:", chat.agent.datasetId, "chat.datasetId:", chat.datasetId, "=> using:", effectiveDatasetId)
         if (effectiveDatasetId) {
             datasetContext = await getDatasetContext(effectiveDatasetId)
             console.log("[Chat API] Dataset context loaded, length:", datasetContext?.length || 0)
@@ -64,37 +93,55 @@ export async function POST(
         }
         const systemPrompt = buildSystemPrompt(chat.agent, datasetContext)
 
-        // 5. Prepare messages for Claude API
+        // 6. Prepare messages for Claude API
         const claudeMessages = prepareClaudeMessages(chat.messages, message, attachments, chat.agent.files)
 
-        // 6. Save user message to DB
+        // 7. Save user message to DB
         await saveUserMessage(params.chatId, message, attachments)
 
-        // 7. Generate title for first message
+        // 8. Generate title for first message
         if (chat.messages.length === 0) {
             const titlePrompt = message || (attachments && attachments.length > 0 ? "Analyzed file" : "New Chat")
             generateAndSaveChatTitle(params.chatId, titlePrompt) // Fire-and-forget
         }
 
-        // 8. Create streaming response
-        const stream = await createChatStream({
+        // 9. Create streaming response via AiGateway
+        // Pass subscription info for credit deduction
+        const streamResponse = await createChatStream({
             systemPrompt,
             messages: claudeMessages,
             userId: session.user.id,
-        })
+            subscriptionId: accessResult.subscription?.id,
+            onFinish: async (response, usage) => {
+                await saveAssistantMessage(params.chatId, response, usage)
+            }
+        } as any)
 
-        // 9. Return streaming response with save callback
+        // 10. Return streaming response
         return createStreamingResponse(
-            stream,
+            streamResponse,
             params.chatId,
-            (response, usage) => saveAssistantMessage(params.chatId, response, usage)
+            async () => { } // Callback handled in createChatStream onFinish
         )
 
     } catch (error) {
         console.error("[Chat API] Error:", error)
+
+        // Handle credits blocked error
+        if (error instanceof Error && error.message === 'CREDITS_BLOCKED') {
+            return new Response(JSON.stringify({
+                error: 'CREDITS_BLOCKED',
+                message: 'Недостаточно кредитов. Пожалуйста, пополните баланс.'
+            }), {
+                status: 402, // Payment Required
+                headers: { 'Content-Type': 'application/json' }
+            })
+        }
+
         return new Response(
             error instanceof Error ? error.message : "Internal server error",
             { status: 500 }
         )
     }
 }
+

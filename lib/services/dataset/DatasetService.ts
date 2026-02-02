@@ -72,7 +72,7 @@ export async function getDatasetById(
                 orderBy: { createdAt: "desc" },
                 include: {
                     parseHistory: {
-                        orderBy: { startedAt: 'desc' },
+                        orderBy: { started_at: 'desc' },
                         take: 1
                     }
                 }

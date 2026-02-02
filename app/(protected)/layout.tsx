@@ -8,6 +8,7 @@ import {
 import MaxWidthWrapper from "@/components/shared/max-width-wrapper";
 import { getFeaturedAgents } from "@/actions/agents";
 import { HeaderProvider, HeaderDisplay } from "@/components/dashboard/header-context";
+import { EmailVerificationBanner } from "@/components/dashboard/email-verification-banner";
 
 interface ProtectedLayoutProps {
   children: React.ReactNode;
@@ -29,19 +30,15 @@ export default async function Dashboard({ children }: ProtectedLayoutProps) {
           user={user}
         />
 
-        {/* Main content wrapper with dark mode support */}
-        <div className="flex flex-1 flex-col overflow-hidden bg-[#F9FAFB] dark:bg-[#0f0f0f]">
-          <header className="flex-none flex h-14 px-4 lg:h-[60px] xl:px-8 bg-transparent">
-            <MaxWidthWrapper className="flex max-w-7xl items-center gap-x-3 px-0">
-              <MobileSheetSidebar
-                agents={starterAgents}
-              />
-
-              <HeaderDisplay />
-            </MaxWidthWrapper>
-          </header>
+        {/* Main content - no header to prevent overlap */}
+        <div className="flex flex-1 flex-col overflow-hidden bg-background">
+          {/* Mobile menu toggle only */}
+          <div className="flex-none h-10 px-4 items-center md:hidden flex">
+            <MobileSheetSidebar agents={starterAgents} />
+          </div>
 
           <main className="flex-1 overflow-y-auto">
+            <EmailVerificationBanner />
             {children}
           </main>
         </div>

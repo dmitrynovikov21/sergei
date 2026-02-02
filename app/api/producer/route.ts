@@ -4,12 +4,12 @@
  * AI понимает намерение пользователя и сам вызывает нужные функции
  */
 
-import { anthropic } from "@ai-sdk/anthropic"
-import { streamText, tool } from "ai"
 import { z } from "zod"
+import { tool } from "ai"
 import { prisma } from "@/lib/db"
+import { AiGateway } from "@/lib/services/ai-gateway"
+import { auth } from "@/auth"
 
-export const runtime = "edge"
 export const maxDuration = 60
 
 // Available tools for the AI
@@ -17,11 +17,10 @@ const producerTools = {
     generateHeadlines: tool({
         description: "Генерирует новые заголовки для постов на основе виральных трендов. Вызывай когда пользователь просит создать/сделать/сгенерировать заголовки или посты.",
         parameters: z.object({
-            count: z.number().min(1).max(50).describe("Количество заголовков для генерации"),
-            topic: z.string().optional().describe("Тема или ниша для заголовков, если указана"),
+            count: z.number().min(1).max(50),
+            topic: z.string().optional(),
         }),
         execute: async ({ count, topic }) => {
-            // Fetch viral trends from DB for context
             const trends = await prisma.contentItem.findMany({
                 where: {
                     views: { gte: 50000 },
@@ -50,7 +49,7 @@ const producerTools = {
     addMoreHeadlines: tool({
         description: "Добавляет ещё заголовков к существующему списку. Вызывай когда пользователь просит 'ещё', 'добавь', 'больше'.",
         parameters: z.object({
-            count: z.number().min(1).max(20).default(5).describe("Сколько добавить заголовков"),
+            count: z.number().min(1).max(20).default(5),
         }),
         execute: async ({ count }) => {
             return {
@@ -63,7 +62,7 @@ const producerTools = {
     generateScripts: tool({
         description: "Генерирует скрипты/тексты для выбранных заголовков. Вызывай когда пользователь просит написать скрипты, тексты, посты к выбранным заголовкам или говорит 'далее'.",
         parameters: z.object({
-            includeReasoning: z.boolean().default(true).describe("Включить объяснение психологии"),
+            includeReasoning: z.boolean().default(true),
         }),
         execute: async ({ includeReasoning }) => {
             return {
@@ -76,7 +75,7 @@ const producerTools = {
     analyzeContent: tool({
         description: "Анализирует виральный контент и показывает паттерны. Вызывай когда пользователь просит проанализировать, показать тренды, статистику.",
         parameters: z.object({
-            days: z.number().min(1).max(30).default(7).describe("За сколько дней анализировать"),
+            days: z.number().min(1).max(30).default(7),
         }),
         execute: async ({ days }) => {
             const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
@@ -114,9 +113,11 @@ const producerTools = {
 
 export async function POST(req: Request) {
     try {
+        const session = await auth()
+        const userId = session?.user?.id || "anonymous"
+
         const { messages, posts } = await req.json()
 
-        // Add context about current state
         const systemPrompt = `Ты Master Agent — AI продюсер контента. Твоя задача помогать создавать виральный контент.
 
 ТЕКУЩЕЕ СОСТОЯНИЕ:
@@ -137,20 +138,25 @@ export async function POST(req: Request) {
 - Отвечай кратко и по делу
 - Используй эмодзи для наглядности`
 
-        const result = streamText({
-            model: anthropic("claude-sonnet-4-20250514"),
-            system: systemPrompt,
+        // Use AiGateway for centralized logging
+        const result = await AiGateway.streamCompletion({
+            model: "gpt-4o",
             messages,
+            userId,
+            system: systemPrompt,
             tools: producerTools,
-            maxSteps: 3, // Allow tool calls
+            maxSteps: 3,
+            context: { endpoint: "producer", postsCount: posts?.length || 0 }
         })
 
-        return result.toDataStreamResponse()
+        return result.toTextStreamResponse()
     } catch (error) {
-        console.error("[Producer API Error]", error)
+        console.error("[Producer API Error] Stack:", error);
+        console.error("[Producer API Error] Cause:", (error as any)?.cause);
         return new Response(
-            JSON.stringify({ error: "Failed to process request" }),
+            JSON.stringify({ error: "Failed to process request", details: String(error) }),
             { status: 500, headers: { "Content-Type": "application/json" } }
         )
     }
 }
+

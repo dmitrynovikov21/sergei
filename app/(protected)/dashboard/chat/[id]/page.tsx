@@ -52,25 +52,11 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
     const isOwner = session?.user?.id === agentWithFiles?.userId;
     const initialInput = typeof searchParams.init === 'string' ? searchParams.init : undefined;
 
-    return (
-        <div className="flex h-full flex-col overflow-hidden bg-[#F9FAFB] dark:bg-[#0f0f0f]">
-            <HeaderUpdater
-                title={chat.agent.name}
-                href={`/dashboard/agents/${chat.agent.id}`}
-                description={chat.agent.description || "AI Ассистент"}
-                icon={chat.agent.emoji ? (
-                    <span className="text-xl leading-none">
-                        {chat.agent.emoji}
-                    </span>
-                ) : (
-                    <Avatar className="h-6 w-6">
-                        <AvatarImage src={`https://avatar.vercel.sh/${chat.agent.name}`} />
-                        <AvatarFallback className="text-[10px]">{chat.agent.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                )}
-            />
+    // Dataset date for Заголовки Reels
+    const showDataset = chat.agent.name === "Заголовки Reels";
 
-            {/* Chat Interface - No local header */}
+    return (
+        <div className="flex h-full flex-col overflow-hidden bg-background">
             <ChatInterface
                 chatId={chat.id}
                 initialMessages={chat.messages as any}
@@ -78,6 +64,7 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
                 agentIcon={chat.agent.emoji}
                 agent={chat.agent}
                 initialInput={initialInput}
+                userName={session?.user?.name?.split(' ')[0] || 'there'}
             />
         </div>
     );

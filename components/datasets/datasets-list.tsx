@@ -1,5 +1,5 @@
 /**
- * Datasets List Component
+ * Datasets List Component - Table View
  */
 
 "use client"
@@ -7,11 +7,28 @@
 import { useState, useTransition } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Icons } from "@/components/shared/icons"
 import { deleteDataset } from "@/actions/datasets"
 import { toast } from "sonner"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table"
 
 interface Dataset {
     id: string
@@ -33,22 +50,34 @@ export function DatasetsList({ datasets }: DatasetsListProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null)
     const router = useRouter()
 
-    const handleDelete = (e: React.MouseEvent, datasetId: string, name: string) => {
-        e.preventDefault() // Prevent navigation
+    const [alertOpen, setAlertOpen] = useState(false)
+    const [datasetToDelete, setDatasetToDelete] = useState<{ id: string, name: string } | null>(null)
+
+    const handleDeleteClick = (e: React.MouseEvent, dataset: { id: string, name: string }) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setDatasetToDelete(dataset)
+        setAlertOpen(true)
+    }
+
+    const handleConfirmDelete = (e: React.MouseEvent) => {
+        e.preventDefault()
         e.stopPropagation()
 
-        if (!confirm(`Удалить датасет "${name}"? Все источники и контент будут удалены.`)) return
+        if (!datasetToDelete) return
 
-        setDeletingId(datasetId)
+        setDeletingId(datasetToDelete.id)
         startTransition(async () => {
             try {
-                await deleteDataset(datasetId)
+                await deleteDataset(datasetToDelete.id)
                 toast.success("Датасет удален")
                 router.refresh()
             } catch (error) {
                 toast.error("Ошибка удаления")
             } finally {
                 setDeletingId(null)
+                setAlertOpen(false)
+                setDatasetToDelete(null)
             }
         })
     }
@@ -66,46 +95,87 @@ export function DatasetsList({ datasets }: DatasetsListProps) {
     }
 
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {datasets.map((dataset) => (
-                <Link key={dataset.id} href={`/dashboard/datasets/${dataset.id}`}>
-                    <Card className="hover:border-primary/50 transition-colors cursor-pointer h-[140px] flex flex-col group relative">
-                        {/* Delete button */}
-                        <Button
-                            size="icon"
-                            variant="ghost"
-                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                            onClick={(e) => handleDelete(e, dataset.id, dataset.name)}
-                            disabled={isPending || deletingId === dataset.id}
-                        >
-                            {deletingId === dataset.id ? (
-                                <Icons.spinner className="h-4 w-4 animate-spin" />
-                            ) : (
-                                <Icons.trash className="h-4 w-4 text-destructive" />
-                            )}
-                        </Button>
+        <>
+            <div className="rounded-lg border border-border/50 overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow className="bg-muted/50 hover:bg-muted/50">
+                            <TableHead className="font-semibold">Название</TableHead>
+                            <TableHead className="font-semibold w-[120px]">Источников</TableHead>
+                            <TableHead className="font-semibold w-[120px]">Постов</TableHead>
+                            <TableHead className="font-semibold w-[150px]">Создан</TableHead>
+                            <TableHead className="w-[80px]"></TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {datasets.map((dataset) => (
+                            <TableRow
+                                key={dataset.id}
+                                className="cursor-pointer hover:bg-muted/30 transition-colors"
+                                onClick={() => router.push(`/dashboard/datasets/${dataset.id}`)}
+                            >
+                                <TableCell className="font-medium">
+                                    <div className="flex items-center gap-2">
+                                        <Icons.database className="h-4 w-4 text-muted-foreground shrink-0" />
+                                        <span className="truncate max-w-[300px]">{dataset.name}</span>
+                                    </div>
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                    {dataset._count.sources}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground">
+                                    {dataset._count.items}
+                                </TableCell>
+                                <TableCell className="text-muted-foreground text-sm">
+                                    {new Date(dataset.createdAt).toLocaleDateString('ru-RU', {
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })}
+                                </TableCell>
+                                <TableCell>
+                                    <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-8 w-8 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-900/20"
+                                        onClick={(e) => handleDeleteClick(e, { id: dataset.id, name: dataset.name })}
+                                        disabled={isPending || deletingId === dataset.id}
+                                    >
+                                        {deletingId === dataset.id ? (
+                                            <Icons.spinner className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Icons.trash className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
 
-                        <CardHeader className="pb-2">
-                            <CardTitle className="flex items-center gap-2 text-base pr-8">
-                                <Icons.database className="h-4 w-4 shrink-0" />
-                                <span className="truncate">{dataset.name}</span>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex-1 flex flex-col justify-end">
-                            <div className="flex gap-4 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                    <Icons.link className="h-4 w-4" />
-                                    {dataset._count.sources} источников
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Icons.fileText className="h-4 w-4" />
-                                    {dataset._count.items} постов
-                                </span>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </Link>
-            ))}
-        </div>
+            <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Удалить датасет?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Датасет "{datasetToDelete?.name}" и все связанные с ним источники и контент будут безвозвратно удалены.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={(e) => { e.stopPropagation(); setAlertOpen(false) }}>
+                            Отмена
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleConfirmDelete}
+                            className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
+                            disabled={isPending}
+                        >
+                            {isPending ? "Удаление..." : "Удалить"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     )
 }
