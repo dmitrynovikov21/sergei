@@ -103,8 +103,14 @@ export const {
 
       return token;
     },
-    async signIn({ user, account }) {
-      console.log('[Auth] signIn callback triggered', { userId: user.id, provider: account?.provider })
+    async signIn({ user, account, profile }) {
+      console.log('[Auth] signIn callback triggered', {
+        userId: user?.id,
+        email: user?.email,
+        provider: account?.provider,
+        accountType: account?.type,
+        profileEmail: profile?.email
+      });
       // System agents are global (isPublic=true), no need to seed per-user copies
       return true
     },
