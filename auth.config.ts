@@ -28,10 +28,11 @@ export default {
     //   clientSecret: env.YANDEX_CLIENT_SECRET,
     //   allowDangerousEmailAccountLinking: true,
     // }),
-    Resend({
-      apiKey: env.RESEND_API_KEY,
-      from: env.EMAIL_FROM,
-    }),
+    // TEMP: Disabled Resend to isolate OAuth issue
+    // Resend({
+    //   apiKey: env.RESEND_API_KEY,
+    //   from: env.EMAIL_FROM,
+    // }),
     Credentials({
       name: "credentials",
       credentials: {
