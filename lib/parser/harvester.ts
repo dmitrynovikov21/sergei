@@ -24,7 +24,8 @@ import os from "os"
 // ==========================================
 
 const openai = new OpenAI()
-const DEFAULT_DAYS_LIMIT = 30
+// HARDCODED: Always parse last 14 days
+const DAYS_LIMIT = 14
 
 // ==========================================
 // Main Harvester Functions
@@ -69,9 +70,13 @@ export async function processTrackingSource(sourceId: string): Promise<{
             id: crypto.randomUUID(),
             sourceId,
             status: "running",
-            daysRange: source.daysLimit || DEFAULT_DAYS_LIMIT
+            daysRange: DAYS_LIMIT  // Always 14 days
         }
     })
+
+    // Track detailed stats
+    let filtered = 0
+    let archived = 0
 
     try {
         const skipCounts: Record<string, number> = {}
@@ -81,75 +86,66 @@ export async function processTrackingSource(sourceId: string): Promise<{
             throw new Error(`Could not extract username from URL: ${source.url}`)
         }
 
-        // 2. Scrape Instagram with date filter
-        const daysLimit = source.daysLimit || DEFAULT_DAYS_LIMIT
-        // FIXED: Pass full URL (preserves /reels/) instead of just username
+        // 2. Scrape Instagram with HARDCODED 14-day filter
         const urlToScrape = source.url
 
         let posts: ApifyInstagramPost[]
         try {
-            posts = await scrapeInstagram(urlToScrape, source.fetchLimit, daysLimit, source.contentTypes)
+            posts = await scrapeInstagram(urlToScrape, source.fetchLimit, DAYS_LIMIT, source.contentTypes)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Scrape error"
             throw new Error(errorMsg)
         }
 
         result.fetched = posts.length
+        console.log(`[Harvester] Apify returned ${posts.length} posts (raw count)`)
 
-        // Calculate average views for virality filter
+        // Calculate average views for virality context
         const totalViews = posts.reduce((sum, p) => sum + (p.videoPlayCount || p.playCount || p.videoViewCount || p.viewCount || 0), 0)
         const averageViews = posts.length > 0 ? totalViews / posts.length : 0
 
         // 3. Process each post
-        // First pass: standard days limit (e.g. 7 or 30)
-        let savedInPass = 0
+        for (const post of posts) {
+            try {
+                const postResult = await processPost(
+                    post,
+                    source.id,
+                    source.datasetId,
+                    source.minViewsFilter,
+                    (source as any).minLikesFilter || 0,  // NEW: separate likes filter
+                    source.contentTypes || "Video,Sidecar,Image",
+                    averageViews
+                )
 
-        const runProcessingPass = async (overrideDaysLimit?: number) => {
-            const currentDaysLimit = overrideDaysLimit || source.daysLimit || DEFAULT_DAYS_LIMIT
-
-            for (const post of posts) {
-                // Optimization: If we already saved this post in a previous pass (unlikely if logic is correct, but safe), skip?
-                // Actually, we reset result.saved if we want purely fallback logic?
-                // No, fallback says "If no posts found... look back".
-                // So if first pass yields 0, run second pass.
-
-                try {
-                    const postResult = await processPost(
-                        post,
-                        source.id,
-                        source.datasetId,
-                        source.minViewsFilter,
-                        currentDaysLimit,
-                        source.contentTypes || "Video,Sidecar,Image",
-                        averageViews
-                    )
-
-                    if (postResult.status === "saved") {
-                        result.saved++
-                        savedInPass++
-                    } else if (postResult.status === "updated") {
-                        result.updated++ // Don't count as 'saved' new content for fallback purposes
-                    } else if (postResult.status === "skipped") {
-                        result.skipped++
-                        skipCounts[postResult.reason] = (skipCounts[postResult.reason] || 0) + 1
+                if (postResult.status === "saved") {
+                    result.saved++
+                } else if (postResult.status === "updated") {
+                    result.updated++
+                } else if (postResult.status === "skipped") {
+                    result.skipped++
+                    if (postResult.reason.includes("просмотров") || postResult.reason.includes("лайков")) {
+                        filtered++
                     }
-                } catch (error) {
-                    const errorMsg = error instanceof Error ? error.message : "Unknown error"
-                    result.errors.push(`Post ${post.id}: ${errorMsg}`)
+                    skipCounts[postResult.reason] = (skipCounts[postResult.reason] || 0) + 1
                 }
+            } catch (error) {
+                const errorMsg = error instanceof Error ? error.message : "Unknown error"
+                result.errors.push(`Post ${post.id}: ${errorMsg}`)
             }
         }
 
-        await runProcessingPass()
-
-        // Fallback logic removed - respect user's daysLimit setting strictly
+        // 4. Auto-archive old content (14+ days)
+        archived = await archiveOldContent(source.datasetId)
+        if (archived > 0) {
+            console.log(`[Harvester] Archived ${archived} posts older than 14 days`)
+        }
 
         // Convert skip counts to array
         result.skipReasons = Object.entries(skipCounts)
             .map(([reason, count]) => ({ reason, count }))
             .sort((a, b) => b.count - a.count)
 
-        // 4. Update lastScrapedAt & History Success
+        // 5. Update lastScrapedAt & History Success with detailed stats
         await prisma.trackingSource.update({
             where: { id: sourceId },
             data: { lastScrapedAt: new Date() }
@@ -162,7 +158,11 @@ export async function processTrackingSource(sourceId: string): Promise<{
                 completed_at: new Date(),
                 posts_found: result.fetched,
                 posts_added: result.saved,
-                posts_skipped: result.skipped
+                posts_skipped: result.skipped,
+                posts_filtered: filtered,
+                posts_archived: archived,
+                posts_updated: result.updated,
+                apify_raw_count: result.fetched
             }
         })
 
@@ -200,40 +200,42 @@ async function processPost(
     sourceId: string,
     datasetId: string,
     minViews: number,
-    daysLimit: number,
+    minLikes: number,  // NEW: separate likes filter for Carousels
     contentTypes: string,
     averageViews: number = 0
 ): Promise<PostResult> {
-    // Log all view-related fields from Apify for debugging
-    // console.log(`[Harvester] Post ${post.id || post.shortCode} processing...`)
-
     // Try multiple view fields - prioritize videoPlayCount (Instagram's current standard)
     const views = post.videoPlayCount || post.playCount || post.videoViewCount || post.viewCount || 0
+    const likes = post.likesCount || 0
     const instagramId = post.id || post.shortCode
     const publishedAt = new Date(post.timestamp)
 
-    // Content Type Filter
-    const allowedTypes = contentTypes.split(",").map(t => t.trim())
-    // DISABLED strict check: Save everything, let UI filter
-    // if (!allowedTypes.includes(post.type)) {
-    //    return { status: "skipped", reason: `Тип ${post.type} не выбран` }
-    // }
-
-    // Date Filter: Skip if older than limit
+    // Date Filter: Skip if older than 14 days (HARDCODED)
     const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - daysLimit)
+    cutoffDate.setDate(cutoffDate.getDate() - DAYS_LIMIT)
 
-    // STRICT check: Skip if older than limit
     if (publishedAt < cutoffDate) {
-        // console.log(`[Harvester] Post ${instagramId} is older than ${daysLimit} days. Skipping.`)
-        return { status: "skipped", reason: `Старше ${daysLimit} дней` }
+        return { status: "skipped", reason: `Старше ${DAYS_LIMIT} дней` }
+    }
+
+    // SEPARATE FILTERING: Reels by views, Carousels/Images by likes
+    if (post.type === "Video") {
+        // Reels: filter by views
+        if (minViews > 0 && views < minViews) {
+            return { status: "skipped", reason: `${views.toLocaleString()} < ${minViews.toLocaleString()} просмотров` }
+        }
+    } else {
+        // Sidecar (Carousel) or Image: filter by likes
+        if (minLikes > 0 && likes < minLikes) {
+            return { status: "skipped", reason: `${likes.toLocaleString()} < ${minLikes.toLocaleString()} лайков` }
+        }
     }
 
     // Check if already exists IN THIS DATASET
     const existing = await prisma.contentItem.findFirst({
         where: {
             instagramId,
-            datasetId  // Check only in current dataset
+            datasetId
         }
     })
 
@@ -250,26 +252,10 @@ async function processPost(
         return { status: "updated" }
     }
 
-    // Virality Check: 
-    // DISABLED: We now save EVERYTHING and filter in UI.
-    // Must be > minViews AND (> 1.5 * average OR average is 0)
-
-    if (views < minViews) {
-        console.log(`[Harvester] Info: Post ${instagramId} has low views (${views} < ${minViews}) but saving anyway.`)
-        // return { status: "skipped", reason: `${views} < ${minViews} просмотров` }
-    }
-
-    // Virality filter DISABLED - was too restrictive (requiring 3M+ when avg is 2M)
-    // if (averageViews > 0 && views < (averageViews * 1.5)) {
-    //     return { status: "skipped", reason: `Ниже виральности (${views} < ${Math.round(averageViews * 1.5)})` }
-    // }
-
-    console.log(`[Harvester] Post ${instagramId} passed filters: ${views} views, published: ${publishedAt.toISOString()}`)
-
     // Calculate virality score (ratio to batch average)
     const viralityScore = averageViews > 0 ? views / averageViews : null
 
-    // Create new content item
+    // Create new content item with contentType
     const contentItem = await prisma.contentItem.create({
         data: {
             id: crypto.randomUUID(),
@@ -282,21 +268,53 @@ async function processPost(
             likes: post.likesCount,
             comments: post.commentsCount,
             publishedAt: new Date(post.timestamp),
-            description: post.caption, // Save original caption
+            description: post.caption,
             viralityScore,
+            contentType: post.type,  // NEW: save content type
             datasetId,
             isProcessed: false,
             isApproved: false
         }
     })
 
-    console.log(`[Harvester] Created content item ${contentItem.id}`)
+    console.log(`[Harvester] Created ${post.type}: ${contentItem.id}`)
 
-    // Trigger AI processing immediately
+    // Trigger AI processing for headline extraction
     await processContentItemAI(contentItem.id)
 
     return { status: "saved" }
 }
+
+// ==========================================
+// Auto-Archiving
+// ==========================================
+
+/**
+ * Archive content items older than 14 days
+ * Returns count of archived items
+ */
+async function archiveOldContent(datasetId: string): Promise<number> {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - DAYS_LIMIT)
+
+    const result = await prisma.contentItem.updateMany({
+        where: {
+            datasetId,
+            isArchived: false,
+            publishedAt: { lt: cutoffDate }
+        },
+        data: {
+            isArchived: true,
+            archivedAt: new Date()
+        }
+    })
+
+    return result.count
+}
+
+// ==========================================
+// AI Processing
+// ==========================================
 
 /**
  * Run AI processing on a content item

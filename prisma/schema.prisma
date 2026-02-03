@@ -128,11 +128,18 @@ model ContentItem {
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @default(now()) @map("updated_at")
   description     String?
+  // NEW: Archiving
+  isArchived      Boolean   @default(false)
+  archivedAt      DateTime?
+  // NEW: Content categorization
+  topicCategory   String?
+  contentType     String?   // "Video", "Sidecar", "Image"
   dataset         Dataset   @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
   @@unique([instagramId, datasetId])
   @@index([isApproved])
   @@index([datasetId])
+  @@index([isArchived])
   @@map("content_items")
 }
 
@@ -189,10 +196,14 @@ model parse_history {
   started_at       DateTime         @default(now())
   completed_at     DateTime?
   status           String           @default("running")
-  daysRange        Int              @default(7)
+  daysRange        Int              @default(14)  // Hardcoded 14 days
   posts_found      Int              @default(0)
   posts_added      Int              @default(0)
   posts_skipped    Int              @default(0)
+  posts_filtered   Int              @default(0)   // NEW: filtered by threshold
+  posts_archived   Int              @default(0)   // NEW: moved to archive
+  posts_updated    Int              @default(0)   // NEW: stats updated
+  apify_raw_count  Int              @default(0)   // NEW: raw Apify count
   error            String?
   source           TrackingSource   @relation(fields: [sourceId], references: [id], onDelete: Cascade)
 
@@ -280,13 +291,15 @@ model TrackingSource {
   username       String?
   datasetId      String
   isActive       Boolean        @default(true)
-  minViewsFilter Int            @default(0)
+  minViewsFilter Int            @default(0)   // For Reels (Video)
+  minLikesFilter Int            @default(0)   // For Carousels (Sidecar/Image)
   fetchLimit     Int            @default(500)
   lastScrapedAt  DateTime?
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @default(now()) @map("updated_at")
-  daysLimit      Int            @default(30)
+  // daysLimit removed - hardcoded to 14 days
   contentTypes   String         @default("Video,Sidecar,Image")
+  parseFrequency String         @default("weekly") // "daily", "3days", "weekly"
   parseHistory   parse_history[]
   dataset        Dataset        @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 
