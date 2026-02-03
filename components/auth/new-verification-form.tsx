@@ -5,13 +5,11 @@ import { useSearchParams } from "next/navigation";
 import { newVerification } from "@/actions/new-verification";
 import Link from "next/link";
 import { Icons } from "@/components/shared/icons";
-import { useSession } from "next-auth/react";
 
 export const NewVerificationForm = () => {
     const [error, setError] = useState<string | undefined>();
     const [success, setSuccess] = useState<string | undefined>();
     const [redirecting, setRedirecting] = useState(false);
-    const { update } = useSession();
 
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
@@ -29,13 +27,10 @@ export const NewVerificationForm = () => {
                 setSuccess(data.success);
                 setError(data.error);
 
-                // On success, update the session to refresh JWT with new emailVerified
-                // This keeps the user logged in while updating their session data
+                // On success, just redirect to dashboard
+                // The banner will check DB directly and hide itself
                 if (data.success) {
                     setRedirecting(true);
-                    // Force session update - this refreshes the JWT from the database
-                    await update();
-                    // Redirect to dashboard with the new session
                     setTimeout(() => {
                         window.location.href = "/dashboard";
                     }, 1500);
@@ -44,7 +39,7 @@ export const NewVerificationForm = () => {
             .catch(() => {
                 setError("Что-то пошло не так!");
             });
-    }, [token, success, error, update]);
+    }, [token, success, error]);
 
     useEffect(() => {
         onSubmit();

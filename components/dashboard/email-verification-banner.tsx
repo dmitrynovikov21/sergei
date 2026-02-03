@@ -1,18 +1,33 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 import { Icons } from "@/components/shared/icons";
 import { AlertTriangle } from "lucide-react";
+import { checkEmailVerified } from "@/actions/check-email-verified";
 
 export function EmailVerificationBanner() {
     const { data: session } = useSession();
     const [isResending, setIsResending] = useState(false);
     const [dismissed, setDismissed] = useState(false);
+    const [isVerified, setIsVerified] = useState<boolean | null>(null);
 
-    // Don't show if email is verified or dismissed
-    if (!session?.user || session.user.emailVerified || dismissed) {
+    // Check email verification status from database directly (not from cached session)
+    useEffect(() => {
+        if (!session?.user?.email) {
+            setIsVerified(true); // No user = don't show banner
+            return;
+        }
+
+        // Check DB for real status
+        checkEmailVerified().then((verified) => {
+            setIsVerified(verified);
+        });
+    }, [session?.user?.email]);
+
+    // Don't show while loading or if verified or dismissed
+    if (isVerified === null || isVerified || dismissed || !session?.user) {
         return null;
     }
 
