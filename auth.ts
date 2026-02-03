@@ -19,8 +19,7 @@ export const {
   auth,
 } = NextAuth({
   ...authConfig,
-  // TEMP: Disabled adapter to test OAuth
-  // adapter: PrismaAdapter(prisma),
+  adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   cookies: {
     sessionToken: {
@@ -128,7 +127,7 @@ export const {
     }
   },
 
-  debug: true, // TEMP: Enable debug to catch OAuth errors
+  // debug: process.env.NODE_ENV !== "production",
   events: {
     async createUser({ user }) {
       if (user.id) {

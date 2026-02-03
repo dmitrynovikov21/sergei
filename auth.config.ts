@@ -4,31 +4,26 @@ import Resend from "next-auth/providers/resend";
 import Yandex from "next-auth/providers/yandex";
 import Credentials from "next-auth/providers/credentials";
 
-// TEMP: Use process.env directly to test if t3-env is the issue
-// import { env } from "@/env.mjs";
-
-// DEBUG: Log what NextAuth receives
-console.log("[Auth Config] GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "...");
-console.log("[Auth Config] GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "***SET***" : "***MISSING***");
+import { env } from "@/env.mjs";
 
 export default {
 
   providers: [
     Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      allowDangerousEmailAccountLinking: true,
     }),
-    // TEMP: Disabled Yandex to isolate OAuth issue
+    // Yandex disabled - Coming Soon status
     // Yandex({
     //   clientId: env.YANDEX_CLIENT_ID,
     //   clientSecret: env.YANDEX_CLIENT_SECRET,
     //   allowDangerousEmailAccountLinking: true,
     // }),
-    // TEMP: Disabled Resend to isolate OAuth issue
-    // Resend({
-    //   apiKey: env.RESEND_API_KEY,
-    //   from: env.EMAIL_FROM,
-    // }),
+    Resend({
+      apiKey: env.RESEND_API_KEY,
+      from: env.EMAIL_FROM,
+    }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -49,14 +44,8 @@ export default {
         });
 
         if (!user || !user.password) {
-          console.log("Auth Debug: User not found or no password", user);
           return null;
         }
-
-        // Plan A: Allow login without verification (Soft Login)
-        // if (!user.emailVerified) {
-        //   throw new Error("EMAIL_NOT_VERIFIED");
-        // }
 
         const passwordMatch = await verifyPassword(
           credentials.password as string,
@@ -64,7 +53,6 @@ export default {
         );
 
         if (!passwordMatch) {
-          console.log("Auth Debug: Password mismatch for user", user.email);
           return null;
         }
 
@@ -99,4 +87,3 @@ export default {
     },
   },
 } satisfies NextAuthConfig;
-
