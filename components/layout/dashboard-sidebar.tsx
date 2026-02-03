@@ -53,7 +53,7 @@ function DashboardAgentLink({ href, active, icon: Icon, children, isExpanded }: 
               "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
               active
                 ? "text-foreground font-medium bg-muted"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
             )}
           >
             <span className={cn("flex items-center justify-center shrink-0", !isExpanded ? "mx-auto" : "")}>
@@ -134,7 +134,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className={cn("size-7 text-muted-foreground hover:text-foreground hover:bg-muted/50", isSidebarExpanded ? "ml-auto" : "mx-auto")}
+              className={cn("size-7 text-muted-foreground hover:text-foreground hover:bg-zinc-800/50", isSidebarExpanded ? "ml-auto" : "mx-auto")}
               onClick={toggleSidebar}
               title={isSidebarExpanded ? "Close sidebar" : "Open sidebar"}
             >
@@ -166,7 +166,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                     href="/dashboard/chat/new"
                     className={cn(
                       "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
-                      "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                      "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
@@ -189,7 +189,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                       "flex items-center gap-2 px-2 py-1 text-[15px] transition-colors rounded-sm",
                       path.startsWith("/dashboard/datasets")
                         ? "text-foreground font-medium bg-muted"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
@@ -378,7 +378,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
             <Link
               href="/dashboard/agents"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground"
+              className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-800/50 rounded-md text-sm text-muted-foreground"
             >
               <Compass className="h-5 w-5 text-zinc-500" />
               <span>Все агенты</span>
@@ -387,7 +387,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
             <Link
               href="/dashboard/datasets"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground"
+              className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-800/50 rounded-md text-sm text-muted-foreground"
             >
               <Database className="h-5 w-5 text-zinc-500" />
               <span>База знаний</span>
@@ -398,7 +398,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
                 key={agent.id}
                 href={`/dashboard/agents/${agent.id}`}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-2 py-2 hover:bg-muted/50 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-800/50 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span>{agent.name}</span>
               </Link>

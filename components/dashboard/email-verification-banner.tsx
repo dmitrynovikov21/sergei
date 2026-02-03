@@ -39,16 +39,16 @@ export function EmailVerificationBanner() {
     };
 
     return (
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg px-4 py-3 mx-4 mt-4 flex items-center justify-between gap-4">
+        <div className="bg-muted/50 border border-border rounded-lg px-4 py-3 mx-4 mt-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-                <div className="p-2 bg-amber-500/20 rounded-full">
-                    <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" />
+                <div className="p-2 bg-muted rounded-full">
+                    <AlertTriangle className="size-4 text-muted-foreground" />
                 </div>
                 <div>
-                    <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    <p className="text-sm font-medium text-foreground">
                         Подтвердите ваш email
                     </p>
-                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                    <p className="text-xs text-muted-foreground">
                         Проверьте почту {session.user.email} и перейдите по ссылке
                     </p>
                 </div>
@@ -57,7 +57,7 @@ export function EmailVerificationBanner() {
                 <button
                     onClick={handleResend}
                     disabled={isResending}
-                    className="text-xs text-amber-700 dark:text-amber-300 hover:underline disabled:opacity-50"
+                    className="text-xs text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
                 >
                     {isResending ? (
                         <Icons.spinner className="size-3 animate-spin" />
@@ -67,7 +67,7 @@ export function EmailVerificationBanner() {
                 </button>
                 <button
                     onClick={() => setDismissed(true)}
-                    className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200"
+                    className="text-muted-foreground hover:text-foreground"
                 >
                     <Icons.close className="size-4" />
                 </button>

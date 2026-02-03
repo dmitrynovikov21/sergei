@@ -84,7 +84,7 @@ export function SidebarAgentLink({ agent, path, isExpanded, canDelete = false }:
                             "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded mb-1",
                             isAgentPage
                                 ? "text-foreground font-medium bg-muted"
-                                : "text-muted-foreground hover:text-foreground hover:bg-muted",
+                                : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50",
                             canDelete && isExpanded && "pr-7"
                         )}
                     >

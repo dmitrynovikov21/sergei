@@ -320,8 +320,12 @@ export function BillingDashboard({ data }: BillingDashboardProps) {
                                         {format(new Date(tx.createdAt), 'd MMM yyyy', { locale: ru })}
                                     </TableCell>
                                     <TableCell className="text-sm text-muted-foreground">
-                                        {tx.reason === 'purchase' && 'Покупка'}
-                                        {tx.reason === 'subscription' && 'Подписка'}
+                                        {tx.reason === 'purchase' && 'Доп. кредиты'}
+                                        {tx.reason === 'subscription' && (
+                                            tx.metadata?.plan === 'reels' ? 'Подписка Reels' :
+                                                tx.metadata?.plan === 'carousels' ? 'Подписка Карусели' :
+                                                    'Подписка'
+                                        )}
                                         {tx.reason === 'free-test-credits' && 'Бонус'}
                                         {tx.reason === 'referral-conversion' && 'Реферал'}
                                         {!['purchase', 'subscription', 'free-test-credits', 'referral-conversion'].includes(tx.reason) && tx.reason}

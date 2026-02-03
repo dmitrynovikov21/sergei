@@ -50,7 +50,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-[1px] py-2 hover:bg-muted transition-colors text-left">
+                <button className="flex items-center gap-3 w-full px-[1px] py-2 hover:bg-zinc-800/50 transition-colors text-left">
                     {/* Avatar */}
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
                         {initials}
