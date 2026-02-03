@@ -4,14 +4,15 @@ import Resend from "next-auth/providers/resend";
 import Yandex from "next-auth/providers/yandex";
 import Credentials from "next-auth/providers/credentials";
 
-import { env } from "@/env.mjs";
+// TEMP: Use process.env directly to test if t3-env is the issue
+// import { env } from "@/env.mjs";
 
 export default {
 
   providers: [
     Google({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
     // TEMP: Disabled Yandex to isolate OAuth issue
     // Yandex({
