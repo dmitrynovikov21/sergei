@@ -1,7 +1,9 @@
 "use client"
 
-import { Analytics as VercelAnalytics } from "@vercel/analytics/react"
+// Vercel Analytics disabled - doesn't work on self-hosted server
+// import { Analytics as VercelAnalytics } from "@vercel/analytics/react"
 
 export function Analytics() {
-  return <VercelAnalytics />
+  // Disabled: Vercel Analytics only works on Vercel platform
+  return null
 }
