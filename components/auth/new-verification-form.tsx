@@ -15,15 +15,22 @@ export const NewVerificationForm = () => {
     const token = searchParams.get("token");
 
     const onSubmit = useCallback(() => {
-        if (success || error) return;
+        console.log("[Client] onSubmit called, token:", token, "success:", success, "error:", error);
+        if (success || error) {
+            console.log("[Client] Early return - already have result");
+            return;
+        }
 
         if (!token) {
+            console.log("[Client] No token in URL");
             setError("Токен не найден!");
             return;
         }
 
+        console.log("[Client] Calling newVerification action...");
         newVerification(token)
             .then(async (data) => {
+                console.log("[Client] Action returned:", data);
                 setSuccess(data.success);
                 setError(data.error);
 
