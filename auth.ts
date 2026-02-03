@@ -121,7 +121,7 @@ export const {
     }
   },
 
-  // debug: process.env.NODE_ENV !== "production"
+  debug: true, // TEMP: Enable debug to catch OAuth errors
   events: {
     async createUser({ user }) {
       if (user.id) {
