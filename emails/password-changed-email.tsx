@@ -27,14 +27,14 @@ export const PasswordChangedEmail = ({
             `}</style>
         </Head>
         <Preview>Пароль успешно изменён — {siteName}</Preview>
-        <Body style={{ backgroundColor: "#F5F5F4", margin: 0, padding: 0 }}>
+        <Body style={{ backgroundColor: "#0A0A0A", margin: 0, padding: 0 }}>
             <Container style={{ maxWidth: "520px", margin: "0 auto", padding: "40px 20px" }}>
                 {/* Header */}
                 <Section style={{ textAlign: "center", marginBottom: "32px" }}>
                     <Text style={{
                         fontSize: "24px",
                         fontWeight: "600",
-                        color: "#1A1A1A",
+                        color: "#FFFFFF",
                         margin: 0,
                         letterSpacing: "-0.02em"
                     }}>
@@ -42,7 +42,7 @@ export const PasswordChangedEmail = ({
                     </Text>
                     <Text style={{
                         fontSize: "14px",
-                        color: "#6B6B6B",
+                        color: "#A3A3A3",
                         margin: "8px 0 0 0"
                     }}>
                         AI-платформа для создателей контента
@@ -51,15 +51,15 @@ export const PasswordChangedEmail = ({
 
                 {/* Card */}
                 <Section style={{
-                    backgroundColor: "#FFFFFF",
+                    backgroundColor: "#18181B",
                     borderRadius: "16px",
                     padding: "32px",
-                    border: "1px solid #E5E5E5"
+                    border: "1px solid #27272A"
                 }}>
                     <Text style={{
                         fontSize: "18px",
                         fontWeight: "500",
-                        color: "#1A1A1A",
+                        color: "#FFFFFF",
                         margin: "0 0 24px 0"
                     }}>
                         Привет, {firstName}
@@ -67,23 +67,23 @@ export const PasswordChangedEmail = ({
 
                     {/* Success Box */}
                     <Section style={{
-                        backgroundColor: "#F0FDF4",
+                        backgroundColor: "#052E16",
                         borderRadius: "10px",
                         padding: "16px",
-                        border: "1px solid #BBF7D0"
+                        border: "1px solid #166534"
                     }}>
                         <Text style={{
                             fontSize: "15px",
-                            color: "#166534",
+                            color: "#22C55E",
                             fontWeight: "500",
                             margin: 0
                         }}>
-                            Пароль успешно изменён
+                            ✓ Пароль успешно изменён
                         </Text>
                         {changedAt && (
                             <Text style={{
                                 fontSize: "13px",
-                                color: "#15803D",
+                                color: "#4ADE80",
                                 margin: "8px 0 0 0"
                             }}>
                                 {changedAt}
@@ -93,7 +93,7 @@ export const PasswordChangedEmail = ({
 
                     <Text style={{
                         fontSize: "15px",
-                        color: "#525252",
+                        color: "#A3A3A3",
                         lineHeight: "1.6",
                         margin: "24px 0 0 0"
                     }}>
@@ -102,15 +102,15 @@ export const PasswordChangedEmail = ({
 
                     {/* Warning Box */}
                     <Section style={{
-                        backgroundColor: "#FEF2F2",
+                        backgroundColor: "#450A0A",
                         borderRadius: "10px",
                         padding: "16px",
                         marginTop: "24px",
-                        border: "1px solid #FECACA"
+                        border: "1px solid #7F1D1D"
                     }}>
                         <Text style={{
                             fontSize: "14px",
-                            color: "#991B1B",
+                            color: "#FCA5A5",
                             fontWeight: "500",
                             margin: "0 0 8px 0"
                         }}>
@@ -118,7 +118,7 @@ export const PasswordChangedEmail = ({
                         </Text>
                         <Text style={{
                             fontSize: "13px",
-                            color: "#B91C1C",
+                            color: "#F87171",
                             margin: 0,
                             lineHeight: "1.5"
                         }}>
@@ -127,13 +127,13 @@ export const PasswordChangedEmail = ({
                     </Section>
                 </Section>
 
-                <Hr style={{ borderColor: "#E5E5E5", margin: "32px 0" }} />
+                <Hr style={{ borderColor: "#27272A", margin: "32px 0" }} />
 
                 {/* Footer */}
                 <Section style={{ textAlign: "center" }}>
                     <Text style={{
                         fontSize: "12px",
-                        color: "#A3A3A3",
+                        color: "#52525B",
                         margin: 0
                     }}>
                         © 2025 {siteName}. Все права защищены.

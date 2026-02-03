@@ -25,17 +25,18 @@ export const NewVerificationForm = () => {
         }
 
         newVerification(token)
-            .then((data) => {
+            .then(async (data) => {
                 setSuccess(data.success);
                 setError(data.error);
 
-                // On success, force session refresh by redirecting
+                // On success, force session refresh by signing out
+                // User will need to login again, but their email will be verified
                 if (data.success) {
                     setRedirecting(true);
-                    // Force re-login to refresh JWT with new emailVerified
+                    // Sign out and redirect to login - this ensures fresh JWT with emailVerified
+                    await signOut({ redirect: false });
                     setTimeout(() => {
-                        // Hard redirect to dashboard - browser will get fresh session
-                        window.location.href = "/dashboard";
+                        window.location.href = "/login?verified=true";
                     }, 1500);
                 }
             })
