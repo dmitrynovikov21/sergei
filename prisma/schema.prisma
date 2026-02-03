@@ -293,11 +293,11 @@ model TrackingSource {
   isActive       Boolean        @default(true)
   minViewsFilter Int            @default(0)   // For Reels (Video)
   minLikesFilter Int            @default(0)   // For Carousels (Sidecar/Image)
+  daysLimit      Int            @default(14)  // User choice: 7 or 14 days
   fetchLimit     Int            @default(500)
   lastScrapedAt  DateTime?
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @default(now()) @map("updated_at")
-  // daysLimit removed - hardcoded to 14 days
   contentTypes   String         @default("Video,Sidecar,Image")
   parseFrequency String         @default("weekly") // "daily", "3days", "weekly"
   parseHistory   parse_history[]

@@ -24,8 +24,8 @@ import os from "os"
 // ==========================================
 
 const openai = new OpenAI()
-// HARDCODED: Always parse last 14 days
-const DAYS_LIMIT = 14
+// Default days limit if not set on source
+const DEFAULT_DAYS_LIMIT = 14
 
 // ==========================================
 // Main Harvester Functions
@@ -70,7 +70,7 @@ export async function processTrackingSource(sourceId: string): Promise<{
             id: crypto.randomUUID(),
             sourceId,
             status: "running",
-            daysRange: DAYS_LIMIT  // Always 14 days
+            daysRange: source.daysLimit || DEFAULT_DAYS_LIMIT
         }
     })
 
@@ -86,12 +86,13 @@ export async function processTrackingSource(sourceId: string): Promise<{
             throw new Error(`Could not extract username from URL: ${source.url}`)
         }
 
-        // 2. Scrape Instagram with HARDCODED 14-day filter
+        // 2. Scrape Instagram using source's daysLimit setting
         const urlToScrape = source.url
+        const daysLimit = source.daysLimit || DEFAULT_DAYS_LIMIT
 
         let posts: ApifyInstagramPost[]
         try {
-            posts = await scrapeInstagram(urlToScrape, source.fetchLimit, DAYS_LIMIT, source.contentTypes)
+            posts = await scrapeInstagram(urlToScrape, source.fetchLimit, daysLimit, source.contentTypes)
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Scrape error"
             throw new Error(errorMsg)
@@ -212,10 +213,10 @@ async function processPost(
 
     // Date Filter: Skip if older than 14 days (HARDCODED)
     const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - DAYS_LIMIT)
+    cutoffDate.setDate(cutoffDate.getDate() - DEFAULT_DAYS_LIMIT)
 
     if (publishedAt < cutoffDate) {
-        return { status: "skipped", reason: `Старше ${DAYS_LIMIT} дней` }
+        return { status: "skipped", reason: `Старше ${DEFAULT_DAYS_LIMIT} дней` }
     }
 
     // SEPARATE FILTERING: Reels by views, Carousels/Images by likes
@@ -295,7 +296,7 @@ async function processPost(
  */
 async function archiveOldContent(datasetId: string): Promise<number> {
     const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - DAYS_LIMIT)
+    cutoffDate.setDate(cutoffDate.getDate() - DEFAULT_DAYS_LIMIT)
 
     const result = await prisma.contentItem.updateMany({
         where: {

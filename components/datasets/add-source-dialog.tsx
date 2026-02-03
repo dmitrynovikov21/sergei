@@ -33,7 +33,7 @@ interface AddSourceDialogProps {
 export function AddSourceDialog({ datasetId }: AddSourceDialogProps) {
     const [open, setOpen] = useState(false)
     const [urls, setUrls] = useState("")
-    const [daysLimit, setDaysLimit] = useState("30")
+    const [daysLimit, setDaysLimit] = useState("14")
     const [minViews, setMinViews] = useState("0")
 
     // Content type filters
@@ -150,17 +150,30 @@ export function AddSourceDialog({ datasetId }: AddSourceDialogProps) {
                         </div>
                     </div>
 
-                    {/* Time period */}
+                    {/* Time period - Toggle buttons */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="daysLimit">За последние (дней)</Label>
-                            <Input
-                                id="daysLimit"
-                                type="number"
-                                value={daysLimit}
-                                onChange={(e) => setDaysLimit(e.target.value)}
-                                placeholder="30"
-                            />
+                            <Label>За последние</Label>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="button"
+                                    variant={daysLimit === "7" ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setDaysLimit("7")}
+                                    className="flex-1"
+                                >
+                                    7 дней
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant={daysLimit === "14" ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() => setDaysLimit("14")}
+                                    className="flex-1"
+                                >
+                                    14 дней
+                                </Button>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="minViews">Мин. просмотров</Label>
