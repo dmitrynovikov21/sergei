@@ -14,11 +14,12 @@ export default {
       clientSecret: env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
     }),
-    Yandex({
-      clientId: env.YANDEX_CLIENT_ID,
-      clientSecret: env.YANDEX_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // TEMP: Disabled Yandex to isolate OAuth issue
+    // Yandex({
+    //   clientId: env.YANDEX_CLIENT_ID,
+    //   clientSecret: env.YANDEX_CLIENT_SECRET,
+    //   allowDangerousEmailAccountLinking: true,
+    // }),
     Resend({
       apiKey: env.RESEND_API_KEY,
       from: env.EMAIL_FROM,
