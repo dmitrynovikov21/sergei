@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { newVerification } from "@/actions/new-verification";
 import Link from "next/link";
 import { Icons } from "@/components/shared/icons";
-import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 
 export const NewVerificationForm = () => {
     const [error, setError] = useState<string | undefined>();
     const [success, setSuccess] = useState<string | undefined>();
     const [redirecting, setRedirecting] = useState(false);
-    const router = useRouter();
+    const { update } = useSession();
 
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
@@ -29,21 +29,22 @@ export const NewVerificationForm = () => {
                 setSuccess(data.success);
                 setError(data.error);
 
-                // On success, force session refresh by signing out
-                // User will need to login again, but their email will be verified
+                // On success, update the session to refresh JWT with new emailVerified
+                // This keeps the user logged in while updating their session data
                 if (data.success) {
                     setRedirecting(true);
-                    // Sign out and redirect to login - this ensures fresh JWT with emailVerified
-                    await signOut({ redirect: false });
+                    // Force session update - this refreshes the JWT from the database
+                    await update();
+                    // Redirect to dashboard with the new session
                     setTimeout(() => {
-                        window.location.href = "/login?verified=true";
+                        window.location.href = "/dashboard";
                     }, 1500);
                 }
             })
             .catch(() => {
                 setError("Что-то пошло не так!");
             });
-    }, [token, success, error]);
+    }, [token, success, error, update]);
 
     useEffect(() => {
         onSubmit();
@@ -72,7 +73,6 @@ export const NewVerificationForm = () => {
                 )}
                 {error && (
                     <div className="bg-destructive/15 p-3 rounded-md flex items-center gap-x-2 text-sm text-destructive">
-                        {/* Use basic warning icon if Icons.warning not available, or just error icon */}
                         <Icons.close className="h-4 w-4" />
                         <p>{error}</p>
                     </div>
