@@ -38,13 +38,13 @@ export function SidebarAgentLink({ agent, path, isExpanded, canDelete = false }:
     const [isHovered, setIsHovered] = useState(false)
     const isAgentPage = path === `/dashboard/agents/${agent.id}`;
 
-    // Map agent names to display names
+    // Map agent names to display names (only first word capitalized)
     const getDisplayName = (name: string) => {
         const n = name.toLowerCase()
-        if (n.includes("заголовки reels")) return "Сделать Заголовки"
-        if (n.includes("описание reels")) return "Придумать Описания"
-        if (n.includes("заголовки каруселей")) return "Сделать Заголовки"
-        if (n.includes("структура карусел")) return "Придумать Структуру"
+        if (n.includes("заголовки reels")) return "Сделать заголовки"
+        if (n.includes("описание reels")) return "Придумать описания"
+        if (n.includes("заголовки каруселей")) return "Сделать заголовки"
+        if (n.includes("структура карусел")) return "Придумать структуру"
         return name
     }
     const displayName = getDisplayName(agent.name)

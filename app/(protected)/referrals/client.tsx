@@ -160,82 +160,48 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                 </CardContent>
             </Card>
 
-            {/* Actions */}
-            <div className="grid gap-6 md:grid-cols-2">
-                {/* Buy Credits */}
-                <Card className="">
-                    <CardHeader>
-                        <CardTitle>💳 Купить кредиты</CardTitle>
-                        <CardDescription>
-                            Обменяйте реферальный баланс на кредиты для использования AI
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex justify-between items-center">
-                                <span className="text-muted-foreground">Стоимость:</span>
-                                <span className="font-bold">2,000 ₽</span>
-                            </div>
-                            <div className="flex justify-between items-center mt-2">
-                                <span className="text-muted-foreground">Получите:</span>
-                                <span className="font-bold text-green-500">20,000 кредитов</span>
-                            </div>
-                        </div>
-                        <Button
-                            className="w-full"
-                            onClick={handleInternalPay}
-                            disabled={stats.balance < 2000 || isLoading}
-                        >
-                            <CreditCard className="h-4 w-4 mr-2" />
-                            Купить кредиты
-                        </Button>
-                        {stats.balance < 2000 && (
-                            <p className="text-xs text-muted-foreground text-center">
-                                Недостаточно средств. Нужно: 2,000 ₽
-                            </p>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* Withdraw */}
-                <Card className="">
-                    <CardHeader>
-                        <CardTitle>💸 Вывести деньги</CardTitle>
-                        <CardDescription>
-                            Выведите средства на карту или электронный кошелёк
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
+            {/* Withdraw - Full width */}
+            <Card className="border-border/50">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Wallet className="h-5 w-5 text-green-500" />
+                        Вывести деньги
+                    </CardTitle>
+                    <CardDescription>
+                        Выведите средства на карту или электронный кошелёк. Минимум: 1,000 ₽
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-4 md:grid-cols-3 items-end">
                         <div className="space-y-2">
-                            <Label>Сумма (мин. 1,000 ₽)</Label>
+                            <Label>Сумма</Label>
                             <Input
                                 type="number"
                                 placeholder="1000"
                                 value={payoutAmount}
                                 onChange={(e) => setPayoutAmount(Number(e.target.value))}
-                                className="bg-muted border-border"
+                                className="bg-background border-border"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label>Реквизиты</Label>
                             <Input
-                                placeholder="Номер карты / Телефон / USDT кошелёк"
+                                placeholder="Номер карты / Телефон / USDT"
                                 value={payoutDetails}
                                 onChange={(e) => setPayoutDetails(e.target.value)}
-                                className="bg-muted border-border"
+                                className="bg-background border-border"
                             />
                         </div>
                         <Button
-                            className="w-full"
-                            variant="outline"
                             onClick={handlePayout}
                             disabled={stats.balance < 1000 || isLoading}
+                            className="h-10"
                         >
                             Отправить заявку
                         </Button>
-                    </CardContent>
-                </Card>
-            </div>
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Transaction History */}
             <Card className="">

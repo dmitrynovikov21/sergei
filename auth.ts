@@ -73,6 +73,9 @@ export const {
         // Pass credits to session
         session.user.credits = (token.credits as number) || 0;
 
+        // Pass emoji to session
+        session.user.emoji = (token.emoji as string) || null;
+
         // Pass email verification status
         session.user.emailVerified = token.emailVerified as Date | null;
 
@@ -96,6 +99,7 @@ export const {
       token.role = dbUser.role as UserRole;
       token.credits = dbUser.credits;
       token.emailVerified = dbUser.emailVerified;
+      token.emoji = dbUser.emoji;
 
       return token;
     },
@@ -122,14 +126,19 @@ export const {
     async createUser({ user }) {
       if (user.id) {
         try {
-          // 1. Generate Referral Code
+          // 1. Generate Referral Code and Random Emoji
           const { nanoid } = await import("nanoid");
           const referralCode = nanoid(6);
+
+          // Random emoji for user avatar
+          const userEmojis = ["🚀", "⚡", "🔥", "💎", "🌟", "🎯", "💫", "🦊", "🐱", "🦁", "🐼", "🐨", "🦄", "🐸", "🦋", "🌈", "🍀", "🌸", "🎨", "🎭"];
+          const randomEmoji = userEmojis[Math.floor(Math.random() * userEmojis.length)];
+
           await prisma.user.update({
             where: { id: user.id },
-            data: { referralCode }
+            data: { referralCode, emoji: randomEmoji }
           });
-          console.log(`[Auth] Generated referral code for ${user.id}: ${referralCode}`);
+          console.log(`[Auth] Generated referral code for ${user.id}: ${referralCode}, emoji: ${randomEmoji}`);
 
           // 2. Check for Referrer Cookie
           const { cookies } = await import("next/headers");

@@ -6,6 +6,7 @@ export type ExtendedUser = User & {
   role: UserRole;
   credits: number;
   emailVerified: Date | null;
+  emoji?: string | null;
 };
 
 declare module "next-auth/jwt" {
@@ -13,6 +14,7 @@ declare module "next-auth/jwt" {
     role: UserRole;
     credits: number;
     emailVerified: Date | null;
+    emoji?: string | null;
   }
 }
 

@@ -35,6 +35,7 @@ interface SidebarUserProps {
         email?: string | null
         image?: string | null
         credits?: number
+        emoji?: string | null
     }
     isExpanded: boolean
 }
@@ -59,7 +60,8 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
                     {isExpanded && (
                         <>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate">
+                                <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
+                                    {user.emoji && <span className="text-lg">{user.emoji}</span>}
                                     {user.name || "Пользователь"}
                                 </p>
                                 <p className="text-xs text-zinc-500 truncate font-mono flex items-center gap-1.5 mt-0.5">
