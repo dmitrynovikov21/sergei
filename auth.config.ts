@@ -7,6 +7,10 @@ import Credentials from "next-auth/providers/credentials";
 // TEMP: Use process.env directly to test if t3-env is the issue
 // import { env } from "@/env.mjs";
 
+// DEBUG: Log what NextAuth receives
+console.log("[Auth Config] GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + "...");
+console.log("[Auth Config] GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "***SET***" : "***MISSING***");
+
 export default {
 
   providers: [
