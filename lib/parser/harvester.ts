@@ -64,8 +64,9 @@ export async function processTrackingSource(sourceId: string): Promise<{
     }
 
     // 0. Create Parse History Record (Start)
-    const history = await prisma.parseHistory.create({
+    const history = await prisma.parse_history.create({
         data: {
+            id: crypto.randomUUID(),
             sourceId,
             status: "running",
             daysRange: source.daysLimit || DEFAULT_DAYS_LIMIT
@@ -84,7 +85,6 @@ export async function processTrackingSource(sourceId: string): Promise<{
         const daysLimit = source.daysLimit || DEFAULT_DAYS_LIMIT
         // FIXED: Pass full URL (preserves /reels/) instead of just username
         const urlToScrape = source.url
-        console.log(`[Harvester] Scraping ${urlToScrape} (limit: ${source.fetchLimit}, days: ${daysLimit})`)
 
         let posts: ApifyInstagramPost[]
         try {
@@ -95,12 +95,10 @@ export async function processTrackingSource(sourceId: string): Promise<{
         }
 
         result.fetched = posts.length
-        console.log(`[Harvester] Found ${posts.length} posts`)
 
         // Calculate average views for virality filter
         const totalViews = posts.reduce((sum, p) => sum + (p.videoPlayCount || p.playCount || p.videoViewCount || p.viewCount || 0), 0)
         const averageViews = posts.length > 0 ? totalViews / posts.length : 0
-        console.log(`[Harvester] Batch Avg Views: ${Math.round(averageViews)}`)
 
         // 3. Process each post
         // First pass: standard days limit (e.g. 7 or 30)
@@ -108,7 +106,6 @@ export async function processTrackingSource(sourceId: string): Promise<{
 
         const runProcessingPass = async (overrideDaysLimit?: number) => {
             const currentDaysLimit = overrideDaysLimit || source.daysLimit || DEFAULT_DAYS_LIMIT
-            console.log(`[Harvester] Processing pass with limit: ${currentDaysLimit} days`)
 
             for (const post of posts) {
                 // Optimization: If we already saved this post in a previous pass (unlikely if logic is correct, but safe), skip?
@@ -158,14 +155,14 @@ export async function processTrackingSource(sourceId: string): Promise<{
             data: { lastScrapedAt: new Date() }
         })
 
-        await prisma.parseHistory.update({
+        await prisma.parse_history.update({
             where: { id: history.id },
             data: {
                 status: "completed",
-                completedAt: new Date(),
-                postsFound: result.fetched,
-                postsAdded: result.saved,
-                postsSkipped: result.skipped
+                completed_at: new Date(),
+                posts_found: result.fetched,
+                posts_added: result.saved,
+                posts_skipped: result.skipped
             }
         })
 
@@ -176,11 +173,11 @@ export async function processTrackingSource(sourceId: string): Promise<{
         result.errors.push(errorMsg)
 
         // Update History Failure
-        await prisma.parseHistory.update({
+        await prisma.parse_history.update({
             where: { id: history.id },
             data: {
                 status: "failed",
-                completedAt: new Date(),
+                completed_at: new Date(),
                 error: errorMsg
             }
         })
@@ -275,6 +272,7 @@ async function processPost(
     // Create new content item
     const contentItem = await prisma.contentItem.create({
         data: {
+            id: crypto.randomUUID(),
             instagramId,
             originalUrl: post.url,
             sourceUrl: `https://instagram.com/${post.ownerUsername}`,

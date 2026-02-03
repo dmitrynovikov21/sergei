@@ -123,20 +123,7 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                 shouldShowBorder && "border border-border/50 rounded-xl"
             )}>
 
-                {/* Header Row: Only Settings icon (for "Заголовки Reels" & "Заголовки Каруселей") */}
-                {(agent.name === "Заголовки Reels" || agent.name === "Заголовки Каруселей") && (
-                    <div className="flex items-center justify-end mb-2">
-                        {/* Settings Button only */}
-                        <EditAgentDialog
-                            agent={agent}
-                            trigger={
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted">
-                                    <Settings className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
-                    </div>
-                )}
+                {/* Settings button moved to AgentChatStarter for Headlines agents */}
 
                 {/* "Invested" Badge (High Value) - Minimalist Style */}
                 {isDescriptionAgent && (

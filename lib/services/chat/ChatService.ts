@@ -13,6 +13,7 @@ import { getDatasetContext } from "@/actions/datasets"
 import { generateChatTitle } from "@/lib/chat-titles"
 import { Agent, Chat, Message, Attachment } from "@prisma/client"
 import { DEFAULT_MODEL } from "@/lib/anthropic"
+import { v4 as uuidv4 } from "uuid"
 
 // ==========================================
 // Types
@@ -104,10 +105,7 @@ export function buildSystemPrompt(
 
     // Append dataset context (RAG)
     if (datasetContext) {
-        console.log("[ChatService] Adding dataset context, length:", datasetContext.length)
         systemPrompt += datasetContext
-    } else {
-        console.log("[ChatService] No dataset context provided")
     }
 
     // Add dynamic instructions for description agents
@@ -278,7 +276,6 @@ export function prepareClaudeMessages(
             if (att.url && att.url.startsWith('data:image')) {
                 const match = att.url.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
                 if (match) {
-                    console.log('[ChatService] Processing image:', match[1], 'size:', match[2].length)
                     newMsgContent.push({
                         type: "image",
                         image: att.url
@@ -311,6 +308,7 @@ export async function saveUserMessage(
 ): Promise<Message> {
     const savedMessage = await prisma.message.create({
         data: {
+            id: uuidv4(),
             chatId,
             role: "user",
             content: content || "",
@@ -322,6 +320,7 @@ export async function saveUserMessage(
         await Promise.all(attachments.map(async (att: any) => {
             await prisma.attachment.create({
                 data: {
+                    id: uuidv4(),
                     messageId: savedMessage.id,
                     url: att.url,
                     name: att.name,
@@ -342,6 +341,7 @@ export async function saveAssistantMessage(
     try {
         await prisma.message.create({
             data: {
+                id: uuidv4(),
                 chatId,
                 role: "assistant",
                 content,
@@ -355,8 +355,6 @@ export async function saveAssistantMessage(
             where: { id: chatId },
             data: { updatedAt: new Date() }
         })
-
-        console.log(`[ChatService] Saved assistant message to chat ${chatId} (${content.length} chars)`)
     } catch (error) {
         console.error("[ChatService] Failed to save message:", error)
     }

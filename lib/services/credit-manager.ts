@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db"
+import { v4 as uuidv4 } from 'uuid'
 
 // Exchange rate: 1000 credits = $1.00 USD
 // This allows granular billing for AI tokens.
@@ -79,6 +80,7 @@ export class CreditManager {
             // 2. Log Transaction
             await tx.creditTransaction.create({
                 data: {
+                    id: uuidv4(),
                     userId,
                     amount: -amount, // Negative for spending
                     reason,
@@ -104,6 +106,7 @@ export class CreditManager {
 
             await tx.creditTransaction.create({
                 data: {
+                    id: uuidv4(),
                     userId,
                     amount: amount, // Positive for addition
                     reason,

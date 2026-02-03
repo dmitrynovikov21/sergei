@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import { prisma } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { revalidatePath } from "next/cache"
+import { v4 as uuidv4 } from 'uuid'
 
 export async function setReferralCookie(code: string) {
     const cookieStore = cookies()
@@ -30,12 +31,11 @@ export async function getReferralStats() {
             _count: {
                 select: { referrals: true }
             },
-            referralTransactions: {
-                orderBy: { createdAt: 'desc' },
+            referral_transactions: {
                 take: 50
             },
-            payoutRequests: {
-                orderBy: { createdAt: 'desc' },
+            payout_requests: {
+                orderBy: { created_at: 'desc' },
                 take: 10
             }
         }
@@ -58,8 +58,8 @@ export async function getReferralStats() {
         referralCode: dbUser.referralCode,
         balance: dbUser.referralBalance,
         referralsCount: dbUser._count.referrals,
-        transactions: dbUser.referralTransactions,
-        payouts: dbUser.payoutRequests
+        transactions: dbUser.referral_transactions,
+        payouts: dbUser.payout_requests
     }
 }
 
@@ -80,6 +80,7 @@ export async function requestPayout(amount: number, details: string) {
 
     await prisma.payoutRequest.create({
         data: {
+            id: uuidv4(),
             userId: user.id,
             amount: amount,
             status: "PENDING",
@@ -95,6 +96,7 @@ export async function requestPayout(amount: number, details: string) {
         }),
         prisma.referralTransaction.create({
             data: {
+                id: uuidv4(),
                 userId: user.id,
                 amount: -amount,
                 type: "WITHDRAWAL_HOLD",
@@ -131,6 +133,7 @@ export async function paySubscriptionFromReferralBalance() {
 
         await tx.referralTransaction.create({
             data: {
+                id: uuidv4(),
                 userId: user.id,
                 amount: -PRICE_RUB,
                 type: "SPEND_INTERNAL",
@@ -145,6 +148,7 @@ export async function paySubscriptionFromReferralBalance() {
 
         await tx.creditTransaction.create({
             data: {
+                id: uuidv4(),
                 userId: user.id,
                 amount: CREDITS_AMOUNT,
                 reason: "referral-exchange",

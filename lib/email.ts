@@ -57,7 +57,7 @@ export const sendVerificationEmail = async (
 ) => {
   // Use NEXT_PUBLIC_APP_URL if available, otherwise fallback to NEXTAUTH_URL or localhost
   const domain = env.NEXT_PUBLIC_APP_URL;
-  const confirmLink = `${domain}/auth/new-verification?token=${token}`;
+  const confirmLink = `${domain}/new-verification?token=${token}`;
 
   try {
     const { data, error } = await resend.emails.send({

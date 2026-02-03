@@ -161,7 +161,10 @@ export async function updateAgentDataset(agentId: string, datasetId: string | nu
         throw new Error("Agent not found")
     }
 
-    await AgentService.updateAgentSettings(agentId, { datasetId } as any)
+    await prisma.agent.update({
+        where: { id: agentId },
+        data: { datasetId }
+    })
 
     revalidatePath("/dashboard", "layout")
     revalidatePath(`/dashboard/agents/${agentId}`)
@@ -218,8 +221,6 @@ export async function deleteAgent(agentId: string) {
         if (agent.userId !== userId || agent.isPublic) {
             return { success: false, error: "Cannot delete this agent (permission denied)" }
         }
-
-        console.log(`[deleteAgent] Starting deletion for agent ${agentId}`)
 
         // Use transaction to ensure complete cleanup
         await prisma.$transaction(async (tx) => {

@@ -12,6 +12,7 @@ export async function createProject(name: string) {
 
     const project = await prisma.project.create({
         data: {
+            id: crypto.randomUUID(),
             userId: session.user.id,
             name: name.trim(),
             // Default icon or logic could go here if needed

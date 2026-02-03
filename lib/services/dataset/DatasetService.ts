@@ -88,6 +88,7 @@ export async function getDatasetById(
 export async function createDataset(input: CreateDatasetInput): Promise<Dataset> {
     return prisma.dataset.create({
         data: {
+            id: crypto.randomUUID(),
             name: input.name,
             description: input.description,
             userId: input.userId,
@@ -130,6 +131,7 @@ export async function getPublicDatasets() {
 export async function createTrackingSource(input: CreateTrackingSourceInput): Promise<TrackingSource> {
     return prisma.trackingSource.create({
         data: {
+            id: crypto.randomUUID(),
             url: input.url,
             username: input.username,
             datasetId: input.datasetId,

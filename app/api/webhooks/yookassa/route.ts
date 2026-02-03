@@ -100,7 +100,22 @@ export async function POST(req: NextRequest) {
                     }
                 })
 
-                // 2. Referral commission (10% for subscriptions)
+                // 2. Log credit transaction for history
+                await tx.creditTransaction.create({
+                    data: {
+                        id: crypto.randomUUID(),
+                        userId: userId,
+                        amount: credits,
+                        reason: 'subscription',
+                        metadata: JSON.stringify({
+                            paymentId: payment.id,
+                            plan,
+                            priceRub: amountRub
+                        })
+                    }
+                })
+
+                // 3. Referral commission (10% for subscriptions)
                 if (user.referrerId) {
                     const commission = amountRub * SUBSCRIPTION_COMMISSION_RATE
 

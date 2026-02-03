@@ -150,6 +150,7 @@ export async function getFeaturedAgents(userId?: string): Promise<AgentWithFiles
 export async function createAgent(input: CreateAgentInput): Promise<Agent> {
     return prisma.agent.create({
         data: {
+            id: crypto.randomUUID(),
             userId: input.userId,
             name: input.name,
             description: input.description,
@@ -227,6 +228,7 @@ export async function addAgentFile(
 ) {
     return prisma.agentFile.create({
         data: {
+            id: crypto.randomUUID(),
             agentId,
             name,
             content,

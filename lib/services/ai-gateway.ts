@@ -4,6 +4,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { CreditManager } from './credit-manager';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- PRICING CONFIG ---
 const MODEL_COSTS_PER_1M: Record<string, { input: number; output: number }> = {
@@ -46,8 +47,6 @@ export class AiGateway {
         // Resolve using ONLY LiteLLM
         const { provider, modelName, modelInstance } = this.resolveModel(modelToUse);
 
-        console.log(`[AiGateway] generateCompletion: Enforced ${modelName} (was ${params.model}) by ${userId}`);
-
         const result = await generateText({
             model: modelInstance,
             messages,
@@ -82,29 +81,10 @@ export class AiGateway {
             // Check if user is blocked before making AI request
             const isBlocked = await CreditManager.isBlocked(userId);
             if (isBlocked) {
-                console.log(`[AiGateway] User ${userId} is BLOCKED (insufficient credits)`);
                 throw new Error('CREDITS_BLOCKED');
             }
 
             const { provider, modelName, modelInstance } = this.resolveModel(modelToUse);
-            console.log(`[AiGateway] Model resolved via LiteLLM: ${modelName}`);
-
-            // Debug: Log messages structure
-            console.log(`[AiGateway] Messages count: ${messages.length}`);
-            messages.forEach((msg, i) => {
-                if (Array.isArray(msg.content)) {
-                    console.log(`[AiGateway] Message ${i} (${msg.role}): ${msg.content.length} parts`);
-                    msg.content.forEach((part: any, j: number) => {
-                        if (part.type === 'image_url') {
-                            console.log(`  Part ${j}: image_url, data length: ${part.image_url?.url?.length || 0}`);
-                        } else {
-                            console.log(`  Part ${j}: ${part.type}, ${part.text?.substring(0, 50) || 'no text'}`);
-                        }
-                    });
-                } else {
-                    console.log(`[AiGateway] Message ${i} (${msg.role}): ${(msg.content as string)?.substring(0, 100) || 'empty'}`);
-                }
-            });
 
             const result = streamText({
                 model: modelInstance,
@@ -119,24 +99,37 @@ export class AiGateway {
                         thinking: { type: 'enabled', budgetTokens: 10000 }
                     }
                 } : undefined,
-                onFinish: async ({ usage }) => {
-                    console.log("[AiGateway] Stream finished. Usage:", usage);
+                onFinish: async ({ usage, text }) => {
+                    const inputTokens = (usage as any)?.inputTokens ?? (usage as any)?.promptTokens ?? 0;
+                    const outputTokens = (usage as any)?.outputTokens ?? (usage as any)?.completionTokens ?? 0;
+
                     try {
                         await this.logTransaction({
                             userId,
                             provider,
                             model: modelName,
-                            inputTokens: (usage as any)?.inputTokens ?? (usage as any)?.promptTokens ?? 0,
-                            outputTokens: (usage as any)?.outputTokens ?? (usage as any)?.completionTokens ?? 0,
+                            inputTokens,
+                            outputTokens,
                             context,
                         });
                     } catch (logError) {
                         console.error("[AiGateway] Failed to log transaction in onFinish:", logError);
                     }
-                },
-            } as any);
 
-            console.log("[AiGateway] Stream initiated successfully");
+                    // Call external onFinish callback (e.g., saveAssistantMessage)
+                    if (params.onFinish) {
+                        try {
+                            await params.onFinish(text, {
+                                input_tokens: inputTokens,
+                                output_tokens: outputTokens
+                            });
+                        } catch (saveError) {
+                            console.error("[AiGateway] Failed to call onFinish callback:", saveError);
+                        }
+                    }
+                },
+            });
+
             return result;
 
         } catch (error) {
@@ -195,6 +188,7 @@ export class AiGateway {
             // 1. Log Token Transaction
             const tx = await (prisma as any).tokenTransaction.create({
                 data: {
+                    id: uuidv4(),
                     userId,
                     provider,
                     model,

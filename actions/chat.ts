@@ -12,8 +12,6 @@ import { requireAuth, getCurrentUser } from "@/lib/auth-helpers"
 export async function createChat(agentId: string, projectId?: string, datasetId?: string) {
     const user = await requireAuth()
 
-    console.log("[createChat] Creating chat for user:", user.id, "agent:", agentId, "dataset:", datasetId)
-
     try {
         // Get agent name for chat title
         const agent = await prisma.agent.findUnique({
@@ -95,6 +93,7 @@ export async function saveMessage(chatId: string, role: string, content: string)
 
     const message = await prisma.message.create({
         data: {
+            id: crypto.randomUUID(),
             chatId,
             role,
             content,

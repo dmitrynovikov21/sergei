@@ -64,6 +64,7 @@ export async function createDataset(name: string, description?: string) {
 
     const dataset = await prisma.dataset.create({
         data: {
+            id: crypto.randomUUID(),
             name,
             description,
             userId: user.id
@@ -134,6 +135,7 @@ export async function addTrackingSource(
 
     const source = await prisma.trackingSource.create({
         data: {
+            id: crypto.randomUUID(),
             url,
             username,
             datasetId,
@@ -189,6 +191,7 @@ export async function addBulkTrackingSources(
 
             const source = await prisma.trackingSource.create({
                 data: {
+                    id: crypto.randomUUID(),
                     url,
                     username,
                     datasetId,
@@ -335,14 +338,11 @@ export async function reprocessDatasetHeadlines(datasetId: string): Promise<{
         }
     })
 
-    console.log(`[Reprocess] Found ${items.length} items to reprocess in dataset ${datasetId}`)
-
     const errors: string[] = []
     let processed = 0
 
     for (const item of items) {
         try {
-            console.log(`[Reprocess] Processing item ${item.id}...`)
             await processContentItemAI(item.id)
             processed++
         } catch (error) {
@@ -351,8 +351,6 @@ export async function reprocessDatasetHeadlines(datasetId: string): Promise<{
             console.error(`[Reprocess] Error processing item ${item.id}:`, errorMsg)
         }
     }
-
-    console.log(`[Reprocess] Completed: ${processed}/${items.length} items, ${errors.length} errors`)
 
     revalidatePath(`/dashboard/datasets/${datasetId}`)
     revalidatePath("/dashboard/datasets")

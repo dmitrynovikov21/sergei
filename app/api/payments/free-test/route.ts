@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
             }),
             prisma.creditTransaction.create({
                 data: {
+                    id: crypto.randomUUID(),
                     userId: user.id,
                     amount: FREE_CREDITS,
                     reason: 'free-test-credits',
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
                 }),
                 prisma.referralTransaction.create({
                     data: {
+                        id: crypto.randomUUID(),
                         userId: userWithReferrer.referrerId,
                         amount: commission,
                         type: 'COMMISSION',
