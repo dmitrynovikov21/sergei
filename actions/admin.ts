@@ -19,12 +19,24 @@ export async function getAllUsersWithMetrics() {
             email: true,
             image: true,
             credits: true,
+            role: true,
             createdAt: true,
             tokenTransactions: {
                 select: {
                     totalCost: true,
                     inputTokens: true,
                     outputTokens: true
+                }
+            },
+            subscriptions: {
+                where: { isActive: true },
+                orderBy: { expiresAt: 'desc' },
+                take: 1,
+                select: {
+                    plan: true,
+                    priceRub: true,
+                    expiresAt: true,
+                    isActive: true
                 }
             }
         }

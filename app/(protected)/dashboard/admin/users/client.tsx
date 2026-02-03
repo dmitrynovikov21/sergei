@@ -29,6 +29,7 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
                         <TableRow>
                             <TableHead>Пользователь</TableHead>
                             <TableHead>Роль</TableHead>
+                            <TableHead>Тариф</TableHead>
                             <TableHead>Регистрация</TableHead>
                             <TableHead className="text-right">Баланс</TableHead>
                             <TableHead className="text-right">Расход ($)</TableHead>
@@ -53,6 +54,17 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
                                 </TableCell>
                                 <TableCell>
                                     <Badge variant="outline">{user.role || "USER"}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                    {user.subscriptions?.[0] ? (
+                                        <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
+                                            {user.subscriptions[0].plan === 'reels' ? 'Reels' : 'Carousels'}
+                                        </Badge>
+                                    ) : (
+                                        <Badge variant="outline" className="text-muted-foreground">
+                                            Free
+                                        </Badge>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground text-sm">
                                     {format(new Date(user.createdAt), 'MMM d, yyyy')}

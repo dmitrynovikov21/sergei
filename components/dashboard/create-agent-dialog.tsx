@@ -6,7 +6,6 @@ import { createAgent } from "@/actions/agents"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import {
     Dialog,
     DialogContent,
@@ -92,43 +91,51 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-lg">
+            <DialogContent className="sm:max-w-md bg-zinc-900 border-zinc-800">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
+                    <DialogTitle className="flex items-center gap-2 text-foreground">
                         <Sparkles className="h-5 w-5 text-amber-500" />
                         Создать нового агента
                     </DialogTitle>
-                    <DialogDescription>
+                    <DialogDescription className="text-muted-foreground">
                         Введите название, остальное можно настроить потом в настройках
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-5 py-4">
-                    {/* Emoji Selection */}
-                    <div className="flex items-center gap-4">
-                        <div
-                            className="h-16 w-16 rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-4xl cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors"
+                <div className="py-4">
+                    {/* Compact emoji + name row */}
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
                             onClick={handleRandomEmoji}
+                            className="h-10 w-10 shrink-0 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-xl transition-colors"
+                            title="Нажмите для случайного эмодзи"
                         >
                             {emoji}
-                        </div>
+                        </button>
                         <div className="flex-1">
-                            <Label htmlFor="agent-name" className="text-sm font-medium">
+                            <Label htmlFor="agent-name" className="sr-only">
                                 Название агента
                             </Label>
                             <Input
                                 id="agent-name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Мой помощник"
-                                className="mt-1"
+                                placeholder="Название агента"
+                                className="h-10 bg-zinc-800 border-zinc-700 text-foreground placeholder:text-muted-foreground"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && name.trim()) {
+                                        handleCreate()
+                                    }
+                                }}
                             />
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleRandomEmoji}
-                            className="h-10 w-10"
+                            className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
                             title="Случайный эмодзи"
                         >
                             <RefreshCw className="h-4 w-4" />
@@ -136,11 +143,12 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                     </div>
                 </div>
 
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-2">
                     <Button
                         variant="outline"
                         onClick={() => setOpen(false)}
                         disabled={isPending}
+                        className="border-zinc-700 text-muted-foreground hover:text-foreground hover:bg-zinc-800"
                     >
                         Отмена
                     </Button>
@@ -163,3 +171,4 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
         </Dialog>
     )
 }
+

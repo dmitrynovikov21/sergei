@@ -48,20 +48,20 @@ export async function POST(req: NextRequest) {
         })
 
         if (userWithReferrer?.referrerId) {
-            const commission = 0.30 // 30% of 1 RUB (symbolic)
+            const commission = 0.10 // 10% of 1 RUB (symbolic)
             await prisma.$transaction([
                 prisma.user.update({
                     where: { id: userWithReferrer.referrerId },
                     data: { referralBalance: { increment: commission } }
                 }),
-                prisma.referralTransaction.create({
+                prisma.referral_transactions.create({
                     data: {
                         id: crypto.randomUUID(),
-                        userId: userWithReferrer.referrerId,
+                        user_id: userWithReferrer.referrerId,
                         amount: commission,
                         type: 'COMMISSION',
                         status: 'COMPLETED',
-                        sourceUserId: user.id
+                        source_user_id: user.id
                     }
                 })
             ])

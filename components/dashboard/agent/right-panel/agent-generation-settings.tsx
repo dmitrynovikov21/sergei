@@ -40,7 +40,7 @@ export function AgentGenerationSettings({
             <div className="space-y-4">
                 {/* Emoji Toggle */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="emoji" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Эмодзи</Label>
+                    <Label htmlFor="emoji" className="text-sm text-muted-foreground font-medium">Эмодзи</Label>
                     <Switch
                         id="emoji"
                         checked={useEmoji}
@@ -53,7 +53,7 @@ export function AgentGenerationSettings({
 
                 {/* Subscribe Toggle */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="subscribe" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Призыв подписаться</Label>
+                    <Label htmlFor="subscribe" className="text-sm text-muted-foreground font-medium">Призыв подписаться</Label>
                     <Switch
                         id="subscribe"
                         checked={useSubscribe}
@@ -66,7 +66,7 @@ export function AgentGenerationSettings({
 
                 {/* Link in Bio Toggle */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="link" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Призыв на ТГ в шапке профиля</Label>
+                    <Label htmlFor="link" className="text-sm text-muted-foreground font-medium">Призыв на ТГ в шапке профиля</Label>
                     <Switch
                         id="link"
                         checked={useLinkInBio}
@@ -96,7 +96,7 @@ export function AgentGenerationSettings({
                 {/* Code Word Toggle & Input */}
                 <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="codeword-toggle" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Кодовое слово</Label>
+                        <Label htmlFor="codeword-toggle" className="text-sm text-muted-foreground font-medium">Кодовое слово</Label>
                         <Switch
                             id="codeword-toggle"
                             checked={!!codeWord}
@@ -121,7 +121,7 @@ export function AgentGenerationSettings({
 
                 {/* Audience Question Toggle (No Input) */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="question-toggle" className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Вопрос аудитории</Label>
+                    <Label htmlFor="question-toggle" className="text-sm text-muted-foreground font-medium">Вопрос аудитории</Label>
                     <Switch
                         id="question-toggle"
                         checked={!!audienceQuestion}

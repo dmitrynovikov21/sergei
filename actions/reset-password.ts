@@ -32,7 +32,7 @@ export const resetPassword = async (values: z.infer<typeof ResetSchema>) => {
     });
 
     if (!existingUser) {
-        return { error: "Email не найден!" };
+        return { error: "Мы не нашли аккаунт с таким email. Проверьте адрес или зарегистрируйтесь" };
     }
 
     const passwordResetToken = await generatePasswordResetToken(email);

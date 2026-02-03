@@ -1,14 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { newVerification } from "@/actions/new-verification";
 import Link from "next/link";
 import { Icons } from "@/components/shared/icons";
+import { signOut } from "next-auth/react";
 
 export const NewVerificationForm = () => {
     const [error, setError] = useState<string | undefined>();
     const [success, setSuccess] = useState<string | undefined>();
+    const [redirecting, setRedirecting] = useState(false);
+    const router = useRouter();
 
     const searchParams = useSearchParams();
     const token = searchParams.get("token");
@@ -25,6 +28,16 @@ export const NewVerificationForm = () => {
             .then((data) => {
                 setSuccess(data.success);
                 setError(data.error);
+
+                // On success, force session refresh by redirecting
+                if (data.success) {
+                    setRedirecting(true);
+                    // Force re-login to refresh JWT with new emailVerified
+                    setTimeout(() => {
+                        // Hard redirect to dashboard - browser will get fresh session
+                        window.location.href = "/dashboard";
+                    }, 1500);
+                }
             })
             .catch(() => {
                 setError("Что-то пошло не так!");
@@ -42,7 +55,7 @@ export const NewVerificationForm = () => {
                     Подтверждение Email
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                    Подождите, мы подтверждаем ваш email...
+                    {redirecting ? "Перенаправляем в личный кабинет..." : "Подождите, мы подтверждаем ваш email..."}
                 </p>
             </div>
 
@@ -65,14 +78,16 @@ export const NewVerificationForm = () => {
                 )}
             </div>
 
-            <div className="pt-4">
-                <Link
-                    href="/login"
-                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                    Вернуться на страницу входа
-                </Link>
-            </div>
+            {!redirecting && (
+                <div className="pt-4">
+                    <Link
+                        href="/login"
+                        className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    >
+                        Вернуться на страницу входа
+                    </Link>
+                </div>
+            )}
         </div>
     );
 };

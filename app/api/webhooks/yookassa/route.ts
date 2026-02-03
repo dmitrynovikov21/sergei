@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 import { getPayment } from '@/lib/yookassa'
 import { sendReferralCommissionEmail } from '@/lib/mail'
 
-const REFERRAL_COMMISSION_RATE = 0.30 // 30% for credit purchases
+const REFERRAL_COMMISSION_RATE = 0.10 // 10% for credit purchases
 const SUBSCRIPTION_COMMISSION_RATE = 0.10 // 10% for subscriptions
 
 interface YooKassaWebhookEvent {

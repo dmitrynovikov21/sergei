@@ -188,20 +188,22 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                             </svg>
                         </button>
 
-                        {/* Settings Button */}
-                        <EditAgentDialog
-                            agent={agent as any}
-                            trigger={
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                    title="Настройки агента"
-                                >
-                                    <Settings className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
+                        {/* Settings Button - only for public system agents */}
+                        {agent.isPublic && (
+                            <EditAgentDialog
+                                agent={agent as any}
+                                trigger={
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                        title="Настройки агента"
+                                    >
+                                        <Settings className="h-4 w-4" />
+                                    </Button>
+                                }
+                            />
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2">
