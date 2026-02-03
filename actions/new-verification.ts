@@ -8,7 +8,7 @@ export const newVerification = async (token: string) => {
     });
 
     if (!existingToken) {
-        return { error: "Токен не найден или устарел." };
+        return { error: "Ссылка устарела. Используйте последнее письмо или запросите новое." };
     }
 
     const hasExpired = new Date(existingToken.expires) < new Date();
