@@ -19,7 +19,8 @@ export const {
   auth,
 } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
+  // TEMP: Disabled adapter to test OAuth
+  // adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   cookies: {
     sessionToken: {
