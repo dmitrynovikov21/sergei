@@ -12,6 +12,7 @@ import { prisma } from "@/lib/db"
 import { processTrackingSource } from "@/lib/parser/harvester"
 
 export const runtime = "nodejs"
+export const dynamic = "force-dynamic" // Prevent static generation during build
 export const maxDuration = 300 // 5 minutes
 
 const TEST_SOURCES = [
