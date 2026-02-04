@@ -75,9 +75,13 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
             <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 w-full px-3 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
                     {/* Avatar */}
-                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
-                        {displayEmoji ? <span className="text-lg leading-none">{displayEmoji}</span> : initials}
-                    </div>
+                    {displayEmoji ? (
+                        <span className="text-2xl w-8 h-8 flex items-center justify-center shrink-0">{displayEmoji}</span>
+                    ) : (
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
+                            {initials}
+                        </div>
+                    )}
 
                     {isExpanded && (
                         <>
