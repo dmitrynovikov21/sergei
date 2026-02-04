@@ -50,10 +50,10 @@ function DashboardAgentLink({ href, active, icon: Icon, children, isExpanded }: 
           <Link
             href={href}
             className={cn(
-              "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
+              "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
               active
                 ? "text-foreground font-medium bg-muted"
-                : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
+                : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
             )}
           >
             <span className={cn("flex items-center justify-center shrink-0", !isExpanded ? "mx-auto" : "")}>
@@ -134,7 +134,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className={cn("size-7 text-muted-foreground hover:text-foreground hover:bg-zinc-800/50", isSidebarExpanded ? "ml-auto" : "mx-auto")}
+              className={cn("size-7 text-muted-foreground hover:text-foreground hover:bg-[#141413]/95 rounded-md transition-all duration-200", isSidebarExpanded ? "ml-auto" : "mx-auto")}
               onClick={toggleSidebar}
               title={isSidebarExpanded ? "Close sidebar" : "Open sidebar"}
             >
@@ -165,8 +165,8 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                   <Link
                     href="/dashboard/chat/new"
                     className={cn(
-                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-150 rounded-sm",
-                      "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
+                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
+                      "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
@@ -186,10 +186,10 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                   <Link
                     href="/dashboard/datasets"
                     className={cn(
-                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-colors rounded-sm",
+                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
                       path.startsWith("/dashboard/datasets")
                         ? "text-foreground font-medium bg-muted"
-                        : "text-muted-foreground hover:text-foreground hover:bg-zinc-800/50"
+                        : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
                     )}
                   >
                     <span className={cn("flex items-center justify-center shrink-0", !isSidebarExpanded ? "mx-auto" : "")}>
@@ -398,7 +398,7 @@ export function MobileSheetSidebar({ agents }: DashboardSidebarProps) {
                 key={agent.id}
                 href={`/dashboard/agents/${agent.id}`}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-2 py-2 hover:bg-zinc-800/50 rounded-md text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="flex items-center gap-3 px-2 py-2 hover:bg-[#141413]/95 rounded-md text-sm text-muted-foreground hover:text-white transition-all duration-200"
               >
                 <span>{agent.name}</span>
               </Link>

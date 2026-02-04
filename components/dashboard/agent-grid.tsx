@@ -50,24 +50,7 @@ export function AgentGrid({ agents }: AgentGridProps) {
                             <Loader2 className="h-8 w-8 animate-spin text-white" />
                         </div>
                     )}
-                    {/* Settings button */}
-                    <div
-                        className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        <EditAgentDialog
-                            agent={agent}
-                            trigger={
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-full bg-muted/80 backdrop-blur-sm hover:bg-muted text-muted-foreground hover:text-foreground"
-                                >
-                                    <Settings className="h-4 w-4" />
-                                </Button>
-                            }
-                        />
-                    </div>
+                    {/* Settings button - REMOVED per product requirement */}
 
                     {/* Agent content */}
                     <div className="flex flex-col h-full">

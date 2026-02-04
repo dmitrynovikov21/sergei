@@ -66,24 +66,24 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-[1px] py-2 hover:bg-[#141413] hover:text-white transition-colors text-left group rounded-md">
+                <button className="flex items-center gap-3 w-full px-2 py-2 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
                     {/* Avatar */}
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
-                        {displayEmoji ? <span className="text-lg leading-none pt-0.5">{displayEmoji}</span> : initials}
+                        {displayEmoji ? <span className="text-lg leading-none">{displayEmoji}</span> : initials}
                     </div>
 
                     {isExpanded && (
                         <>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground group-hover:text-white truncate flex items-center gap-2">
+                                <p className="text-sm font-medium text-foreground group-hover:text-white truncate">
                                     {displayName}
                                 </p>
-                                <p className="text-xs text-zinc-500 truncate font-mono flex items-center gap-1.5 mt-0.5">
+                                <p className="text-xs text-zinc-500 group-hover:text-zinc-300 truncate font-mono flex items-center gap-1.5 mt-0.5">
                                     <Coins className="w-3 h-3 text-amber-500" />
                                     <span>{user.credits !== undefined ? user.credits : 0} CR</span>
                                 </p>
                             </div>
-                            <ChevronUp className="h-4 w-4 text-zinc-400 shrink-0" />
+                            <ChevronUp className="h-4 w-4 text-zinc-400 group-hover:text-white shrink-0" />
                         </>
                     )}
                 </button>
