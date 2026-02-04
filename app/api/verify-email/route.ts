@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma as db } from "@/lib/db";
+import { revalidatePath } from "next/cache";
 
 // Use env for proper redirect URL (request.url returns localhost on server)
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://contentzavod.biz";
@@ -65,6 +66,10 @@ export async function GET(request: NextRequest) {
             console.error("[Verification API] Error deleting token:", err);
             // Don't fail - user is already verified
         }
+
+        // Revalidate dashboard to update the UI
+        revalidatePath("/dashboard");
+        revalidatePath("/", "layout"); // Revalidate everything
 
         // Redirect to dashboard with success message
         return NextResponse.redirect(`${BASE_URL}/dashboard?verified=true`);
