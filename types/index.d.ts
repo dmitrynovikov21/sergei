@@ -67,6 +67,7 @@ export type UserSubscriptionPlan = SubscriptionPlan &
     isPaid: boolean;
     interval: "month" | "year" | null;
     isCanceled?: boolean;
+    credits: number; // User's current credit balance (demo/top-up)
   };
 
 // compare plans

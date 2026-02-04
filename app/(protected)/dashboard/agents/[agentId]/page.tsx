@@ -52,7 +52,8 @@ export default async function AgentPage({ params }: AgentPageProps) {
                         agent={agent}
                         subscriptionPlan={subscriptionPlan ? {
                             isPaid: subscriptionPlan.isPaid,
-                            stripePriceId: subscriptionPlan.stripePriceId
+                            stripePriceId: subscriptionPlan.stripePriceId,
+                            credits: subscriptionPlan.credits
                         } : undefined}
                     />
 

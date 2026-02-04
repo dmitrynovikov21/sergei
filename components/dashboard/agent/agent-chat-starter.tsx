@@ -25,6 +25,7 @@ interface AgentChatStarterProps {
     subscriptionPlan?: {
         isPaid: boolean;
         stripePriceId: string | null;
+        credits?: number; // User's demo/top-up credits
     }
 }
 
@@ -84,12 +85,14 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
 
     const handleStartChat = async (messageOverride?: string) => {
         // ACCESS CONTROL CHECK
-        // If plan is NOT paid AND no credits (free user), block generation and show modal
-        // Demo users (isPaid=false, but credits > 0) should be allowed to chat
-        const hasCredits = (subscriptionPlan as any)?.credits > 0
-        const isPaid = subscriptionPlan?.isPaid
+        // User is allowed if:
+        // 1. Has paid subscription (isPaid = true), OR
+        // 2. Has demo/top-up credits (credits > 0)
+        // Otherwise, show the credit/demo modal
+        const userCredits = subscriptionPlan?.credits ?? 0
+        const isPaid = subscriptionPlan?.isPaid ?? false
 
-        if (!isPaid && !hasCredits) {
+        if (!isPaid && userCredits <= 0) {
             setShowCreditModal(true)
             return
         }

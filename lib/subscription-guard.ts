@@ -41,6 +41,12 @@ export async function getActiveSubscriptions(userId: string): Promise<ActiveSubs
 /**
  * Check if user has access to a specific agent
  * Returns: { hasAccess: boolean, requiredPlan?: TariffPlan, subscription?: ActiveSubscription }
+ * 
+ * Access Logic:
+ * 1. If user has demo credits (user.credits > 0) → ALLOW access to ALL agents
+ * 2. If agent doesn't require subscription → ALLOW
+ * 3. If user has matching subscription with credits → ALLOW
+ * 4. Otherwise → DENY
  */
 export async function checkAgentAccess(userId: string, agentName: string): Promise<{
     hasAccess: boolean
@@ -48,6 +54,19 @@ export async function checkAgentAccess(userId: string, agentName: string): Promi
     subscription: ActiveSubscription | null
     error?: string
 }> {
+    // FIRST: Check if user has demo/top-up credits
+    // Demo users can access ALL agents (we deduct from user.credits per request)
+    const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { credits: true }
+    })
+
+    if (user && user.credits > 0) {
+        // User has demo credits - allow access to all agents
+        // Credits will be deducted in AI Gateway after response
+        return { hasAccess: true, requiredPlan: null, subscription: null }
+    }
+
     const requiredPlan = getRequiredPlanForAgent(agentName)
 
     // Agent doesn't require subscription (custom agent or free)
@@ -66,6 +85,7 @@ export async function checkAgentAccess(userId: string, agentName: string): Promi
             error: `SUBSCRIPTION_REQUIRED:${requiredPlan}`
         }
     }
+
 
     // Check if subscription has credits left
     if (matchingSub.credits <= 0) {

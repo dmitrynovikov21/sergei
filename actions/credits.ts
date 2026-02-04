@@ -16,8 +16,9 @@ export async function getBlockingStatus() {
         balance: status.balance,
         threshold: status.threshold,
         // Format for display (1000 credits = $1)
-        balanceFormatted: `${(status.balance / 1000).toFixed(2)} $`,
-        thresholdFormatted: `${(status.threshold / 1000).toFixed(2)} $`
+        // Display in Credits format (not USD)
+        balanceFormatted: `${status.balance.toLocaleString()} CR`,
+        thresholdFormatted: `${Math.abs(status.threshold).toLocaleString()} CR`
     }
 }
 

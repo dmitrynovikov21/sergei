@@ -45,17 +45,24 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     const [open, setOpen] = useState(false)
 
     const emojiRegex = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u
+    const DEFAULT_EMOJI = "🎯" // Default emoji for users without custom one
 
     // Extract emoji from name if present, or use DB emoji
     let displayEmoji = user.emoji
     let displayName = user.name || "Пользователь"
 
-    // If no DB emoji, try to find in name
-    if (!displayEmoji && displayName) {
-        const match = displayName.match(emojiRegex)
-        if (match) {
-            displayEmoji = match[0]
-            displayName = displayName.replace(emojiRegex, '').trim()
+    // If no DB emoji, try to find in name, otherwise use default
+    if (!displayEmoji) {
+        if (displayName) {
+            const match = displayName.match(emojiRegex)
+            if (match) {
+                displayEmoji = match[0]
+                displayName = displayName.replace(emojiRegex, '').trim()
+            } else {
+                displayEmoji = DEFAULT_EMOJI
+            }
+        } else {
+            displayEmoji = DEFAULT_EMOJI
         }
     }
 
@@ -66,7 +73,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-2 py-2 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
+                <button className="flex items-center gap-3 w-full px-3 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
                     {/* Avatar */}
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
                         {displayEmoji ? <span className="text-lg leading-none">{displayEmoji}</span> : initials}
