@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma as db } from "@/lib/db";
 
+// Use env for proper redirect URL (request.url returns localhost on server)
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://contentzavod.biz";
+
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const token = searchParams.get("token");
@@ -9,7 +12,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
         console.log("[Verification API] No token provided");
-        return NextResponse.redirect(new URL("/login?error=NoToken", request.url));
+        return NextResponse.redirect(`${BASE_URL}/login?error=NoToken`);
     }
 
     try {
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
 
         if (!existingToken) {
             console.log("[Verification API] Token not found in DB");
-            return NextResponse.redirect(new URL("/login?error=InvalidToken", request.url));
+            return NextResponse.redirect(`${BASE_URL}/login?error=InvalidToken`);
         }
 
         console.log("[Verification API] Token found for:", existingToken.identifier);
@@ -28,7 +31,7 @@ export async function GET(request: NextRequest) {
 
         if (hasExpired) {
             console.log("[Verification API] Token expired at:", existingToken.expires);
-            return NextResponse.redirect(new URL("/login?error=ExpiredToken", request.url));
+            return NextResponse.redirect(`${BASE_URL}/login?error=ExpiredToken`);
         }
 
         const existingUser = await db.user.findUnique({
@@ -37,7 +40,7 @@ export async function GET(request: NextRequest) {
 
         if (!existingUser) {
             console.log("[Verification API] User not found for email:", existingToken.identifier);
-            return NextResponse.redirect(new URL("/login?error=UserNotFound", request.url));
+            return NextResponse.redirect(`${BASE_URL}/login?error=UserNotFound`);
         }
 
         console.log("[Verification API] User found:", existingUser.id, existingUser.email);
@@ -64,10 +67,10 @@ export async function GET(request: NextRequest) {
         }
 
         // Redirect to dashboard with success message
-        return NextResponse.redirect(new URL("/dashboard?verified=true", request.url));
+        return NextResponse.redirect(`${BASE_URL}/dashboard?verified=true`);
 
     } catch (error) {
         console.error("[Verification API] Error:", error);
-        return NextResponse.redirect(new URL("/login?error=VerificationFailed", request.url));
+        return NextResponse.redirect(`${BASE_URL}/login?error=VerificationFailed`);
     }
 }
