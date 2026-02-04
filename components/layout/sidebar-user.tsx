@@ -44,25 +44,39 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     const { setTheme, theme } = useTheme()
     const [open, setOpen] = useState(false)
 
-    const initials = user.name
-        ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    const emojiRegex = /(\p{Emoji_Presentation}|\p{Extended_Pictographic})/u
+
+    // Extract emoji from name if present, or use DB emoji
+    let displayEmoji = user.emoji
+    let displayName = user.name || "Пользователь"
+
+    // If no DB emoji, try to find in name
+    if (!displayEmoji && displayName) {
+        const match = displayName.match(emojiRegex)
+        if (match) {
+            displayEmoji = match[0]
+            displayName = displayName.replace(emojiRegex, '').trim()
+        }
+    }
+
+    const initials = displayName
+        ? displayName.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
         : user.email?.slice(0, 2).toUpperCase() || "U"
 
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-[1px] py-2 hover:bg-zinc-800/50 transition-colors text-left">
+                <button className="flex items-center gap-3 w-full px-[1px] py-2 hover:bg-[#141413] hover:text-white transition-colors text-left group rounded-md">
                     {/* Avatar */}
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500 text-white text-sm font-medium shrink-0">
-                        {initials}
+                        {displayEmoji ? <span className="text-lg leading-none pt-0.5">{displayEmoji}</span> : initials}
                     </div>
 
                     {isExpanded && (
                         <>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-foreground truncate flex items-center gap-2">
-                                    {user.emoji && <span className="text-lg">{user.emoji}</span>}
-                                    {user.name || "Пользователь"}
+                                <p className="text-sm font-medium text-foreground group-hover:text-white truncate flex items-center gap-2">
+                                    {displayName}
                                 </p>
                                 <p className="text-xs text-zinc-500 truncate font-mono flex items-center gap-1.5 mt-0.5">
                                     <Coins className="w-3 h-3 text-amber-500" />

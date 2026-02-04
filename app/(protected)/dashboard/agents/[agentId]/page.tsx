@@ -13,10 +13,17 @@ interface AgentPageProps {
     }
 }
 
+import { getCurrentUser } from "@/lib/auth-helpers"
+import { getUserSubscriptionPlan } from "@/lib/subscription"
+
+// ... imports
+
 export default async function AgentPage({ params }: AgentPageProps) {
-    const [agent, chats] = await Promise.all([
+    const user = await getCurrentUser()
+    const [agent, chats, subscriptionPlan] = await Promise.all([
         getAgentById(params.agentId),
-        getAgentChats(params.agentId)
+        getAgentChats(params.agentId),
+        user ? getUserSubscriptionPlan(user.id) : null
     ])
 
     if (!agent) {
@@ -41,7 +48,13 @@ export default async function AgentPage({ params }: AgentPageProps) {
                     <AgentHeader agent={agent} />
 
                     {/* Chat Input */}
-                    <AgentChatStarter agent={agent} />
+                    <AgentChatStarter
+                        agent={agent}
+                        subscriptionPlan={subscriptionPlan ? {
+                            isPaid: subscriptionPlan.isPaid,
+                            stripePriceId: subscriptionPlan.stripePriceId
+                        } : undefined}
+                    />
 
                     {/* Chat History - no header */}
                     <div className="mt-8">

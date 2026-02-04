@@ -17,28 +17,34 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { CreditBlockModal } from "@/components/chat/credit-block-modal"
+import { TariffPlan } from "@/lib/billing-config"
 
 interface AgentChatStarterProps {
     agent: Agent
+    subscriptionPlan?: {
+        isPaid: boolean;
+        stripePriceId: string | null;
+    }
 }
 
-export function AgentChatStarter({ agent }: AgentChatStarterProps) {
+export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = React.useState(false)
     const [input, setInput] = React.useState("")
+    // Access Control State
+    const [showCreditModal, setShowCreditModal] = React.useState(false)
+
+    // ... existing hooks
     const { attachments, uploadFile, removeAttachment, clearAttachments } = useFileUpload()
     const [isDragging, setIsDragging] = React.useState(false)
     const fileInputRef = React.useRef<HTMLInputElement>(null)
-
-    // Dataset state
     const [datasets, setDatasets] = React.useState<{ id: string, name: string }[]>([])
     const [selectedDatasetId, setSelectedDatasetId] = React.useState<string | null>(null)
 
     React.useEffect(() => {
         getDatasets().then(ds => setDatasets(ds))
     }, [])
-
-    // File upload logic is now handled by useFileUpload hook
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -74,12 +80,20 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
     const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
 
     const { startChat, isPending } = useStartChat()
-
-    // Sync local loading state with hook pending state
-    // We keep local isLoading for file uploads, so effective loading is either
     const isBusy = isLoading || isPending
 
     const handleStartChat = async (messageOverride?: string) => {
+        // ACCESS CONTROL CHECK
+        // If plan is NOT paid AND no credits (free user), block generation and show modal
+        // Demo users (isPaid=false, but credits > 0) should be allowed to chat
+        const hasCredits = (subscriptionPlan as any)?.credits > 0
+        const isPaid = subscriptionPlan?.isPaid
+
+        if (!isPaid && !hasCredits) {
+            setShowCreditModal(true)
+            return
+        }
+
         const messageToSend = messageOverride || input
         // Allow sending with attachments only (no text required)
         if (!messageToSend.trim() && attachments.length === 0) return
@@ -100,12 +114,15 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
             { text: "Дай 10 на тему" }
         )
     }
-    // NOTE: quickActions removed for Description agent per task 4.1
 
     const dropZoneRef = React.useRef<HTMLDivElement>(null)
 
     return (
         <div className="space-y-4">
+            <CreditBlockModal
+                isOpen={showCreditModal}
+                onClose={() => setShowCreditModal(false)}
+            />
             {/* Chat Input Box - Dark theme matching chat design */}
             <div
                 ref={dropZoneRef}
@@ -188,7 +205,7 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                             </svg>
                         </button>
 
-                        {/* Settings Button - only for public system agents */}
+                        {/* Settings Button - REMOVED per product requirement
                         {agent.isPublic && (
                             <EditAgentDialog
                                 agent={agent as any}
@@ -204,6 +221,7 @@ export function AgentChatStarter({ agent }: AgentChatStarterProps) {
                                 }
                             />
                         )}
+                        */}
                     </div>
 
                     <div className="flex items-center gap-2">
