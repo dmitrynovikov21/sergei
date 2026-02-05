@@ -39,7 +39,7 @@ export default async function TrendsPage() {
                 </div>
 
                 {/* Content Table */}
-                <div className="mt-6">
+                <div className="mt-6 min-w-0">
                     <h2 className="text-lg font-semibold mb-4">База контента</h2>
                     <TrendsTable items={contentItems} />
                 </div>

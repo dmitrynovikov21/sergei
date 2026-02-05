@@ -11,7 +11,7 @@
 import { prisma } from "@/lib/db"
 import { getDatasetContext } from "@/actions/datasets"
 import { generateChatTitle } from "@/lib/chat-titles"
-import { Agent, Chat, Message, Attachment } from "@prisma/client"
+import { Agent, Chat, Message, attachments } from "@prisma/client"
 import { DEFAULT_MODEL } from "@/lib/anthropic"
 import { v4 as uuidv4 } from "uuid"
 
@@ -24,7 +24,7 @@ export type ChatWithAgent = Chat & {
         files: { id: string; name: string; content: string }[]
     }
     messages: (Message & {
-        attachments: Attachment[]
+        attachments: attachments[]
     })[]
 }
 
@@ -55,7 +55,8 @@ export const MAX_HISTORY_MESSAGES = 20
 
 export function buildSystemPrompt(
     agent: ChatWithAgent["agent"],
-    datasetContext?: string | null
+    datasetContext?: string | null,
+    hasTools?: boolean
 ): string {
     let systemPrompt = agent.systemPrompt || "You are a helpful AI assistant."
 
@@ -103,7 +104,7 @@ export function buildSystemPrompt(
         systemPrompt += `\n\n=== USER CONTEXT (Target Audience, Style) ===\n${agentWithContext.userContext}`
     }
 
-    // Append dataset context (RAG)
+    // Append dataset context (RAG) - legacy static context
     if (datasetContext) {
         systemPrompt += datasetContext
     }
@@ -116,7 +117,42 @@ export function buildSystemPrompt(
         systemPrompt += buildDescriptionAgentInstructions(agent)
     }
 
+    // Add tool instructions if tools are enabled
+    if (hasTools) {
+        systemPrompt += buildToolInstructions()
+    }
+
     return systemPrompt
+}
+
+/**
+ * Tool instructions for headline agents with dataset
+ */
+function buildToolInstructions(): string {
+    return `
+
+<tool_instructions>
+## 🔧 ДОСТУПНЫЕ ИНСТРУМЕНТЫ
+
+У тебя есть доступ к функции get_headlines() для получения трендовых заголовков из базы.
+
+### КОГДА ВЫЗЫВАТЬ:
+- ✅ Перед генерацией ЛЮБЫХ заголовков — ОБЯЗАТЕЛЬНО
+- ✅ Когда пользователь просит "покажи примеры" или "что сейчас залетает"
+- ✅ Когда нужно понять актуальные тренды
+
+### КАК ИСПОЛЬЗОВАТЬ:
+- get_headlines()                    → Топ 15 по виральности
+- get_headlines(topic: "отношения")  → Топ по теме "отношения"
+- get_headlines(limit: 20)           → 20 заголовков
+
+### ВАЖНО:
+- НЕ выдумывай заголовки из головы — у тебя есть реальные данные
+- СНАЧАЛА вызови get_headlines(), ПОТОМ генерируй
+- Твои заголовки должны ОПИРАТЬСЯ на паттерны из базы
+- Указывай источник: "На основе заголовков с 2M+ просмотрами..."
+</tool_instructions>
+`
 }
 
 function buildDescriptionAgentInstructions(agent: any): string {
@@ -318,7 +354,7 @@ export async function saveUserMessage(
     // Save attachments
     if (attachments && Array.isArray(attachments)) {
         await Promise.all(attachments.map(async (att: any) => {
-            await prisma.attachment.create({
+            await prisma.attachments.create({
                 data: {
                     id: uuidv4(),
                     messageId: savedMessage.id,

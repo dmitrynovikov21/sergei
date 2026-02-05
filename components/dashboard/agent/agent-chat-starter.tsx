@@ -43,6 +43,13 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
     const [datasets, setDatasets] = React.useState<{ id: string, name: string }[]>([])
     const [selectedDatasetId, setSelectedDatasetId] = React.useState<string | null>(null)
 
+    // Initialize selectedDatasetId from agent's default dataset
+    React.useEffect(() => {
+        if (agent.datasetId && !selectedDatasetId) {
+            setSelectedDatasetId(agent.datasetId)
+        }
+    }, [agent.datasetId])
+
     React.useEffect(() => {
         getDatasets().then(ds => setDatasets(ds))
     }, [])

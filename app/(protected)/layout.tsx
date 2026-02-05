@@ -37,7 +37,7 @@ export default async function Dashboard({ children }: ProtectedLayoutProps) {
             <MobileSheetSidebar agents={starterAgents} />
           </div>
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <EmailVerificationBanner />
             {children}
           </main>

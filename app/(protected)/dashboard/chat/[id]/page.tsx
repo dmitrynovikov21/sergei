@@ -64,6 +64,7 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
                 agentIcon={chat.agent.emoji}
                 agent={chat.agent}
                 initialInput={initialInput}
+                initialDatasetId={(chat as any).datasetId}
                 userName={session?.user?.name?.split(' ')[0] || 'there'}
             />
         </div>

@@ -39,7 +39,7 @@ export async function getDataset(id: string) {
     await requireAuth() // Still require login
 
     // Return dataset by ID (shared - no userId filter)
-    return prisma.dataset.findFirst({
+    const dataset = await prisma.dataset.findFirst({
         where: { id },
         include: {
             sources: {
@@ -53,11 +53,68 @@ export async function getDataset(id: string) {
             },
             items: {
                 orderBy: { views: "desc" },
-                take: 100
+                take: 100,
+                select: {
+                    id: true,
+                    instagramId: true,
+                    originalUrl: true,
+                    sourceUrl: true,
+                    coverUrl: true,
+                    videoUrl: true,
+                    views: true,
+                    likes: true,
+                    comments: true,
+                    viralityScore: true,
+                    headline: true,
+                    transcript: true,
+                    description: true,
+                    contentType: true,
+                    isProcessed: true,
+                    isApproved: true,
+                    processingError: true,
+                    publishedAt: true,
+                    // AI Analysis fields
+                    aiTopic: true,
+                    aiSubtopic: true,
+                    aiHookType: true,
+                    aiContentFormula: true,
+                    aiTags: true,
+                    aiSuccessReason: true,
+                    aiEmotionalTrigger: true,
+                    aiTargetAudience: true,
+                    aiAnalyzedAt: true
+                }
             }
         }
     })
+
+    if (!dataset) return null
+
+    // Transform items to TrendsTable format
+    const transformedItems = dataset.items.map(item => {
+        // Extract username from sourceUrl
+        let sourceUsername = 'unknown'
+        if (item.sourceUrl) {
+            const match = item.sourceUrl.match(/instagram\.com\/([^\/]+)/)
+            if (match) sourceUsername = match[1]
+        }
+
+        return {
+            ...item,
+            sourceUsername,
+            datasetName: dataset.name,
+            contentType: (item.contentType === 'Video' ? 'Reel' :
+                item.contentType === 'Sidecar' ? 'Carousel' :
+                    item.contentType === 'Image' ? 'Carousel' : 'Reel') as 'Reel' | 'Carousel'
+        }
+    })
+
+    return {
+        ...dataset,
+        items: transformedItems
+    }
 }
+
 
 export async function createDataset(name: string, description?: string) {
     const user = await requireAuth()
@@ -158,6 +215,7 @@ export async function addBulkTrackingSources(
     urls: string[],
     options: {
         minViewsFilter?: number
+        minLikesFilter?: number
         daysLimit?: number
         contentTypes?: string
     }
@@ -196,6 +254,7 @@ export async function addBulkTrackingSources(
                     username,
                     datasetId,
                     minViewsFilter: options.minViewsFilter ?? 0,
+                    minLikesFilter: options.minLikesFilter ?? 0,
                     daysLimit: options.daysLimit ?? 30,
                     contentTypes: options.contentTypes ?? "Video,Sidecar,Image"
                 }
@@ -398,26 +457,69 @@ export async function updateChatDataset(chatId: string, datasetId: string | null
 }
 
 /**
+ * Format number to human readable (1200000 -> "1.2M")
+ */
+function formatViews(num: number): string {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
+    }
+    return num.toString()
+}
+
+/**
  * Get RAG context from dataset for chat injection
+ * Enhanced: includes metadata (views, topic, score) for smarter AI responses
  */
 export async function getDatasetContext(
     datasetId: string,
-    limit: number = 50,
-    daysBack: number = 14
+    options?: {
+        topic?: string        // Filter by specific topic
+        limit?: number        // Max items (default: 30)
+        daysBack?: number     // Date range (default: 14)
+    }
 ): Promise<string> {
+    const limit = options?.limit ?? 30
+    const daysBack = options?.daysBack ?? 14
+    const topicFilter = options?.topic
+
     // Calculate date threshold
     const dateThreshold = new Date()
     dateThreshold.setDate(dateThreshold.getDate() - daysBack)
 
+    // Build where clause
+    const whereClause: any = {
+        datasetId,
+        isProcessed: true,
+        headline: { not: null },
+        createdAt: { gte: dateThreshold }
+    }
+
+    // Add topic filter if specified
+    if (topicFilter) {
+        whereClause.aiTopic = topicFilter
+    }
+
+    // 1. Fetch top items by viralityScore (or views as fallback)
     const items = await prisma.contentItem.findMany({
-        where: {
-            datasetId,
-            isProcessed: true,
-            headline: { not: null },
-            createdAt: { gte: dateThreshold }
-        },
-        orderBy: { views: "desc" },
-        take: limit
+        where: whereClause,
+        orderBy: [
+            { viralityScore: "desc" },
+            { views: "desc" }
+        ],
+        take: limit,
+        select: {
+            id: true,
+            headline: true,
+            views: true,
+            likes: true,
+            aiTopic: true,
+            viralityScore: true,
+            contentType: true,
+            transcript: true
+        }
     })
 
     if (items.length === 0) {
@@ -428,28 +530,59 @@ export async function getDatasetContext(
         where: { id: datasetId }
     })
 
-    let context = `\n---\n## ПРИМЕРЫ ЗАГОЛОВКОВ (${items.length} штук):\n\n`
+    // Build context with metadata table
+    let context = `\n---\n## 🔥 TOP VIRAL HEADLINES (${items.length} единиц)\n\n`
+    context += `| # | Заголовок | Просмотры | Лайки | Тема | Score |\n`
+    context += `|---|-----------|-----------|-------|------|-------|\n`
 
-    // Add headlines as numbered list
     items.forEach((item, index) => {
-        if (item.headline) {
-            context += `${index + 1}. ${item.headline}\n`
+        const headline = item.headline?.substring(0, 50) || "—"
+        const views = formatViews(item.views)
+        const likes = formatViews(item.likes)
+        const topic = item.aiTopic || "—"
+        const score = item.viralityScore?.toFixed(1) || "—"
+        context += `| ${index + 1} | ${headline} | ${views} | ${likes} | ${topic} | ${score} |\n`
+    })
+
+    // 2. Group by topics for diversity
+    const topicGroups: Record<string, typeof items> = {}
+    items.forEach(item => {
+        if (item.aiTopic) {
+            if (!topicGroups[item.aiTopic]) {
+                topicGroups[item.aiTopic] = []
+            }
+            topicGroups[item.aiTopic].push(item)
         }
     })
 
-    // Add transcripts section if any exist
+    const topicList = Object.keys(topicGroups)
+    if (topicList.length > 1) {
+        context += `\n## 📊 BREAKDOWN BY TOPIC\n\n`
+        context += `Доступные темы: ${topicList.join(", ")}\n\n`
+
+        topicList.slice(0, 5).forEach(topic => {
+            const topicItems = topicGroups[topic].slice(0, 3)
+            context += `### ${topic}\n`
+            topicItems.forEach((item, i) => {
+                context += `${i + 1}. ${item.headline} (${formatViews(item.views)} views)\n`
+            })
+            context += `\n`
+        })
+    }
+
+    // 3. Add transcripts section if any exist
     const itemsWithTranscripts = items.filter(i => i.transcript && i.transcript.length > 50)
     if (itemsWithTranscripts.length > 0) {
-        context += `\n---\n## СЦЕНАРИИ (${itemsWithTranscripts.length} штук):\n\n`
+        context += `\n---\n## СЦЕНАРИИ (${Math.min(itemsWithTranscripts.length, 5)} примеров)\n\n`
 
-        itemsWithTranscripts.forEach((item, index) => {
+        itemsWithTranscripts.slice(0, 5).forEach((item, index) => {
             context += `### ${index + 1}. ${item.headline || "Без заголовка"}\n`
             context += `${item.transcript}\n\n`
         })
     }
 
     context += `---\n`
-    context += `Источник данных: ${dataset?.name || "Instagram RAG"}\n`
+    context += `Источник: ${dataset?.name || "Instagram RAG"} | Период: последние ${daysBack} дней\n`
 
     return context
 }

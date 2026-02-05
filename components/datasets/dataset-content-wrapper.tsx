@@ -2,27 +2,29 @@
  * Dataset Content Wrapper
  * 
  * Client component that polls for new content automatically during parsing
+ * Uses TrendsTable for unified UX with Trends page
  */
 
 "use client"
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { ContentItemsTable } from "@/components/datasets/content-items-table"
+import { TrendsTable } from "@/components/trends/trends-table"
 
 interface ContentItem {
     id: string
-    instagramId: string
+    headline: string | null
+    description: string | null
     originalUrl: string
-    sourceUrl: string | null
     coverUrl: string | null
+    videoUrl?: string | null
     views: number
     likes: number
-    headline: string | null
-    transcript: string | null
-    isProcessed: boolean
-    isApproved: boolean
-    processingError: string | null
+    comments: number
+    viralityScore: number | null
     publishedAt: Date | null
+    sourceUsername: string
+    datasetName: string
+    contentType: 'Reel' | 'Carousel'
 }
 
 interface DatasetContentWrapperProps {
@@ -67,15 +69,15 @@ export function DatasetContentWrapper({ datasetId, initialItems }: DatasetConten
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <span className="flex items-center gap-2">
+            <div className="flex items-center justify-between text-sm text-muted-foreground px-1 py-2 border border-border/50 rounded-lg">
+                <span className="flex items-center gap-2 pl-2">
                     <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                     Обновляется автоматически
                 </span>
-                <span>{items.length} постов</span>
+                <span className="pr-2">{items.length} постов</span>
             </div>
 
-            <ContentItemsTable items={items} />
+            <TrendsTable items={items} />
         </div>
     )
 }

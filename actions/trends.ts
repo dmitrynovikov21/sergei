@@ -86,6 +86,16 @@ export async function getAllContentItems() {
             comments: true,
             viralityScore: true,
             publishedAt: true,
+            // AI Analysis fields
+            aiTopic: true,
+            aiSubtopic: true,
+            aiHookType: true,
+            aiContentFormula: true,
+            aiTags: true,
+            aiSuccessReason: true,
+            aiEmotionalTrigger: true,
+            aiTargetAudience: true,
+            aiAnalyzedAt: true,
             dataset: {
                 select: {
                     id: true,

@@ -1,4 +1,4 @@
-import { generateText, streamText, LanguageModel } from 'ai';
+import { generateText, streamText, LanguageModel, stepCountIs } from 'ai';
 import { prisma } from '@/lib/db';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
@@ -86,15 +86,27 @@ export class AiGateway {
 
             const { provider, modelName, modelInstance } = this.resolveModel(modelToUse);
 
+            // Note: Extended thinking and tools cannot be used together in Claude
+            const hasTools = tools && Object.keys(tools).length > 0;
+            console.log(`[AiGateway] hasTools=${hasTools}, toolNames=${hasTools ? Object.keys(tools) : 'none'}`);
+
             const result = streamText({
                 model: modelInstance,
                 messages,
                 system,
-                temperature: provider === 'anthropic' ? 1 : temperature, // Thinking requires temperature 1
+                temperature: provider === 'anthropic' && !hasTools ? 1 : temperature, // Thinking requires temperature 1
                 tools,
-                maxSteps,
-                // Enable extended thinking for Claude models
-                providerOptions: provider === 'anthropic' ? {
+                // Enable multi-step tool calling - AI will receive tool results and continue
+                stopWhen: hasTools ? stepCountIs(5) : undefined,
+                onStepFinish: hasTools ? (step) => {
+                    console.log(`[AiGateway] Step finished:`, {
+                        stepType: step.stepType,
+                        hasToolCalls: step.toolCalls?.length > 0,
+                        hasToolResults: step.toolResults?.length > 0
+                    });
+                } : undefined,
+                // Enable extended thinking for Claude models ONLY if no tools
+                providerOptions: provider === 'anthropic' && !hasTools ? {
                     anthropic: {
                         thinking: { type: 'enabled', budgetTokens: 10000 }
                     }

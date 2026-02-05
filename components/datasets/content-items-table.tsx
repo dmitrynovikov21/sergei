@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Icons } from "@/components/shared/icons"
 import { deleteContentItem } from "@/actions/datasets"
 import { EditContentDialog } from "@/components/datasets/edit-content-dialog"
+import { PostDetailDialog } from "@/components/datasets/post-detail-dialog"
 import { toast } from "sonner"
 import {
     Dialog,
@@ -291,28 +292,16 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                     {/* Cover Image */}
                                     <TableCell className="p-2">
                                         {item.coverUrl ? (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <div className="relative h-14 w-10 overflow-hidden rounded border bg-muted cursor-pointer hover:opacity-80 transition-opacity">
-                                                        <Image
-                                                            src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
-                                                            alt="Cover"
-                                                            fill
-                                                            className="object-cover"
-                                                        />
-                                                    </div>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-md p-0 overflow-hidden">
-                                                    <div className="relative aspect-[9/16] w-full">
-                                                        <Image
-                                                            src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
-                                                            alt="Cover enlarged"
-                                                            fill
-                                                            className="object-contain"
-                                                        />
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                            <PostDetailDialog item={item}>
+                                                <div className="relative h-14 w-10 overflow-hidden rounded border bg-muted cursor-pointer hover:opacity-80 transition-opacity">
+                                                    <Image
+                                                        src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
+                                                        alt="Cover"
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                </div>
+                                            </PostDetailDialog>
                                         ) : (
                                             <div className="h-14 w-10 bg-muted rounded flex items-center justify-center">
                                                 <Icons.media className="h-4 w-4 text-muted-foreground" />

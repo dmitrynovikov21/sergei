@@ -1,13 +1,15 @@
 const { ApifyClient } = require('apify-client');
 
 /**
- * Instagram Scraper with Reels Support
+ * Instagram Scraper with SEPARATE Reels/Posts Parsing
  * 
- * Uses different actors based on contentType:
- * - contentTypes = "Video" only → apify/instagram-reel-scraper (dedicated Reels scraper)
- * - Other cases → apify/instagram-scraper (general scraper)
+ * NEW LOGIC:
+ * - If user wants BOTH Reels AND Carousels → TWO separate API calls
+ * - Request 1: instagram-reel-scraper for Reels
+ * - Request 2: instagram-scraper for Carousels/Images
+ * - Results are merged before returning
  * 
- * @param {string} urlOrUsername - Full URL (e.g. .../reels/) or username
+ * @param {string} urlOrUsername - Full URL or username
  * @param {number} _limit - Requested limit (ignored)
  * @param {number} daysLimit - Days to look back for date filtering
  * @param {object} credentials - Optional login credentials
@@ -25,64 +27,71 @@ async function scrapeInstagram(urlOrUsername, _limit, daysLimit = 30, credential
         directUrl = `https://www.instagram.com/${urlOrUsername}/`;
     }
 
-    // Extract username from URL
     const usernameMatch = directUrl.match(/instagram\.com\/([^\/\?]+)/);
     const username = usernameMatch ? usernameMatch[1] : urlOrUsername;
 
     // 2. Parse contentTypes
-    const requestedTypes = contentTypes ? contentTypes.split(",").map(t => t.trim()) : [];
-    const onlyReels = requestedTypes.length === 1 && requestedTypes[0] === "Video";
+    const requestedTypes = contentTypes ? contentTypes.split(",").map(t => t.trim()) : ["Video", "Sidecar", "Image"];
+    const wantsReels = requestedTypes.includes("Video");
+    const wantsCarousels = requestedTypes.includes("Sidecar") || requestedTypes.includes("Image");
 
     console.log(`[Apify] Target: ${username}`);
     console.log(`[Apify] URL: ${directUrl}`);
-    console.log(`[Apify] Requested Content Types: ${requestedTypes.join(", ") || "All"}`);
+    console.log(`[Apify] Requested Types: ${requestedTypes.join(", ")}`);
     console.log(`[Apify] Days Limit: ${daysLimit}`);
+    console.log(`[Apify] Wants Reels: ${wantsReels}, Wants Carousels: ${wantsCarousels}`);
 
-    // 3. Choose Actor & Build Input
-    let actorId;
-    let runInput;
+    let allPosts = [];
 
-    if (onlyReels) {
-        // Use dedicated Instagram Reel Scraper for Reels-only requests
-        actorId = "apify/instagram-reel-scraper";
+    // === SEPARATE PARSING ===
 
-        console.log(`[Apify] Using DEDICATED Reels Scraper (apify/instagram-reel-scraper)`);
-
-        runInput = {
+    // 3a. Fetch REELS using dedicated scraper
+    if (wantsReels) {
+        console.log(`\n[Apify] === FETCHING REELS ===`);
+        const reels = await scrapeWithActor(client, "apify/instagram-reel-scraper", {
             "username": [username],
-            "resultsLimit": 500  // Reasonable limit for one profile
-        };
-    } else {
-        // Use general Instagram Scraper for mixed content
-        actorId = "apify/instagram-scraper";
+            "resultsLimit": 500
+        }, credentials, daysLimit, ["Video"]);
+        console.log(`[Apify] Reels fetched: ${reels.length}`);
+        allPosts.push(...reels);
+    }
 
-        console.log(`[Apify] Using General Instagram Scraper (apify/instagram-scraper)`);
-
-        const dateLimitStr = `${daysLimit} days`;
-
-        runInput = {
+    // 3b. Fetch CAROUSELS/IMAGES using general scraper
+    if (wantsCarousels) {
+        console.log(`\n[Apify] === FETCHING CAROUSELS/IMAGES ===`);
+        const nonReelTypes = requestedTypes.filter(t => t !== "Video");
+        const posts = await scrapeWithActor(client, "apify/instagram-scraper", {
             "directUrls": [directUrl],
             "resultsType": "posts",
             "resultsLimit": 2000,
             "searchType": "user",
-            "onlyPostsNewerThan": dateLimitStr,
+            "onlyPostsNewerThan": `${daysLimit} days`,
             "proxy": {
                 "useApifyProxy": true,
                 "apifyProxyGroups": ["RESIDENTIAL"]
             }
-        };
+        }, credentials, daysLimit, nonReelTypes);
+        console.log(`[Apify] Carousels/Images fetched: ${posts.length}`);
+        allPosts.push(...posts);
     }
 
+    console.log(`\n[Apify] === TOTAL MERGED: ${allPosts.length} posts ===`);
+    return allPosts;
+}
+
+/**
+ * Execute a single Apify actor and process results
+ */
+async function scrapeWithActor(client, actorId, runInput, credentials, daysLimit, allowedTypes) {
     // Add credentials if available
     if (credentials.igUsername || process.env.IG_USERNAME) {
         runInput["loginUsername"] = credentials.igUsername || process.env.IG_USERNAME;
         runInput["loginPassword"] = credentials.igPassword || process.env.IG_PASSWORD;
     }
 
-    console.log('[Apify] Actor:', actorId);
-    console.log('[Apify] Input:', JSON.stringify(runInput, null, 2));
+    console.log(`[Apify] Actor: ${actorId}`);
+    console.log(`[Apify] Input:`, JSON.stringify(runInput, null, 2));
 
-    // 4. Run Actor
     try {
         const run = await client.actor(actorId).call(runInput, {
             waitSecs: 600
@@ -90,7 +99,7 @@ async function scrapeInstagram(urlOrUsername, _limit, daysLimit = 30, credential
 
         console.log(`[Apify] Run Finished. Status: ${run.status}`);
 
-        // 5. Check for errors in logs
+        // Check for errors in logs
         const log = await client.log(run.id).get();
         const cleanLog = log ? log.toLowerCase() : "";
 
@@ -106,7 +115,7 @@ async function scrapeInstagram(urlOrUsername, _limit, daysLimit = 30, credential
             if (run.status !== 'SUCCEEDED') throw new Error(runError);
         }
 
-        // 6. Fetch Results
+        // Fetch Results
         const { items } = await client.dataset(run.defaultDatasetId).listItems();
         console.log(`[Apify] Fetched ${items.length} items.`);
 
@@ -114,23 +123,11 @@ async function scrapeInstagram(urlOrUsername, _limit, daysLimit = 30, credential
             throw new Error(`Apify returned 0 items. Reason: ${runError}`);
         }
 
-        // 7. Filter out error items
+        // Filter out error items
         const validItems = items.filter(i => !i.error);
         console.log(`[Apify] Valid items (no errors): ${validItems.length}`);
 
-        if (validItems.length > 0) {
-            console.log("[Apify] Sample Item Keys:", Object.keys(validItems[0]).slice(0, 15));
-            console.log("[Apify] Sample Item:", {
-                type: validItems[0].type,
-                productType: validItems[0].productType,
-                videoPlayCount: validItems[0].videoPlayCount,
-                likesCount: validItems[0].likesCount,
-                timestamp: validItems[0].timestamp,
-                caption: validItems[0].caption ? validItems[0].caption.substring(0, 50) : "N/A"
-            });
-        }
-
-        // 8. Normalize types
+        // Normalize types
         const normalized = validItems.map(item => {
             let type = item.type;
             if (!type) {
@@ -151,32 +148,31 @@ async function scrapeInstagram(urlOrUsername, _limit, daysLimit = 30, credential
             return item;
         });
 
-        // 9. Apply date filter (required for instagram-reel-scraper which doesn't support onlyPostsNewerThan)
+        // Apply date filter
         const cutoffDate = new Date();
         cutoffDate.setDate(cutoffDate.getDate() - daysLimit);
 
         const dateFiltered = normalized.filter(item => {
-            if (!item.timestamp) return true; // Keep items without timestamp
+            if (!item.timestamp) return true;
             const itemDate = new Date(item.timestamp);
             return itemDate >= cutoffDate;
         });
 
         console.log(`[Apify] Date filtered: ${normalized.length} -> ${dateFiltered.length} items (last ${daysLimit} days)`);
 
-        // 10. Apply contentTypes filter
+        // Apply type filter
         let finalResult = dateFiltered;
-        if (requestedTypes.length > 0) {
-            finalResult = dateFiltered.filter(item => requestedTypes.includes(item.type));
-            console.log(`[Apify] Type filtered: ${dateFiltered.length} -> ${finalResult.length} items (types: ${requestedTypes.join(", ")})`);
+        if (allowedTypes && allowedTypes.length > 0) {
+            finalResult = dateFiltered.filter(item => allowedTypes.includes(item.type));
+            console.log(`[Apify] Type filtered: ${dateFiltered.length} -> ${finalResult.length} items (types: ${allowedTypes.join(", ")})`);
         }
-
-        console.log(`[Apify] Final result: ${finalResult.length} items`);
 
         return finalResult;
 
     } catch (e) {
-        console.error("[Apify] CRITICAL ERROR:", e.message);
-        throw e;
+        console.error(`[Apify] CRITICAL ERROR in ${actorId}:`, e.message);
+        // Return empty array on error (don't break entire flow)
+        return [];
     }
 }
 

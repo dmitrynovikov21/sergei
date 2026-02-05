@@ -52,10 +52,11 @@ interface ChatInterfaceProps {
     agentIcon?: string | null
     agent: Agent
     initialInput?: string // New prop
+    initialDatasetId?: string | null // Dataset selected when chat was created
     userName?: string // User name for greeting
 }
 
-export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput, userName = "there" }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput, initialDatasetId, userName = "there" }: ChatInterfaceProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [chatId, setChatId] = useState(initialChatId)
@@ -112,6 +113,15 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
             setDatasets(data.map(d => ({ id: d.id, name: d.name })))
         }).catch(console.error)
     }, [])
+
+    // Initialize selectedDatasetId: chat's dataset takes priority over agent's default
+    useEffect(() => {
+        // Priority: chat's saved dataset > agent's default dataset
+        const effectiveDatasetId = initialDatasetId || agent.datasetId
+        if (effectiveDatasetId && !selectedDatasetId) {
+            setSelectedDatasetId(effectiveDatasetId)
+        }
+    }, [initialDatasetId, agent.datasetId])
 
     const isPending = isLoading
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -363,6 +373,16 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                         fullText += data.textDelta || data.delta || ""
                                     } else if (data.type === 'reasoning-delta') {
                                         fullReasoning += data.textDelta || data.delta || ""
+                                    } else if (data.type === 'tool-call') {
+                                        // AI is calling a tool - update status
+                                        console.log("[Stream] Tool call:", data.toolName || data.name)
+                                        lastStatus = `Вызываю ${data.toolName || data.name || 'инструмент'}...`
+                                        lastStatusUpdate = Date.now()
+                                    } else if (data.type === 'tool-result') {
+                                        // Tool returned result - AI will continue with text
+                                        console.log("[Stream] Tool result received")
+                                        lastStatus = "Анализирую данные..."
+                                        lastStatusUpdate = Date.now()
                                     }
                                 } catch {
                                     // Skip unparseable lines
@@ -589,7 +609,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                     <div className="flex flex-col">
                         <Link
                             href={`/dashboard/agents/${agent.id}`}
-                            className="text-sm font-medium text-foreground hover:bg-muted hover:rounded px-2 py-0.5 transition-colors w-fit"
+                            className="text-sm font-medium text-foreground hover:bg-[#141413]/95 hover:text-white rounded px-2 py-0.5 transition-all duration-200 w-fit"
                         >
                             {agentName}
                         </Link>

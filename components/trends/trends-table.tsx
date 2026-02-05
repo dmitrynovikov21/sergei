@@ -54,6 +54,15 @@ interface ContentItem {
     sourceUsername: string
     datasetName: string
     contentType: 'Reel' | 'Carousel'
+    // AI Analysis fields
+    aiTopic?: string | null
+    aiSubtopic?: string | null
+    aiHookType?: string | null
+    aiContentFormula?: string | null
+    aiTags?: string | null
+    aiSuccessReason?: string | null
+    aiEmotionalTrigger?: string | null
+    aiTargetAudience?: string | null
 }
 
 interface TrendsTableProps {
@@ -163,6 +172,12 @@ export function TrendsTable({ items }: TrendsTableProps) {
     const [minComments, setMinComments] = useState("")
     const [dateFrom, setDateFrom] = useState("")
     const [dateTo, setDateTo] = useState("")
+
+    // Resizable headline column
+    const [headlineWidth, setHeadlineWidth] = useState(200)
+    const isResizing = useRef(false)
+    const startX = useRef(0)
+    const startWidth = useRef(200)
 
     // Get unique sources
     const sources = useMemo(() => {
@@ -288,6 +303,39 @@ export function TrendsTable({ items }: TrendsTableProps) {
             : <ChevronUp className="h-3 w-3" />
     }
 
+    // Resize handlers for headline column
+    const handleResizeStart = (e: React.MouseEvent) => {
+        e.preventDefault()
+        isResizing.current = true
+        startX.current = e.clientX
+        startWidth.current = headlineWidth
+        document.body.style.cursor = 'col-resize'
+        document.body.style.userSelect = 'none'
+    }
+
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isResizing.current) return
+            const delta = e.clientX - startX.current
+            const newWidth = Math.max(100, Math.min(600, startWidth.current + delta))
+            setHeadlineWidth(newWidth)
+        }
+
+        const handleMouseUp = () => {
+            isResizing.current = false
+            document.body.style.cursor = ''
+            document.body.style.userSelect = ''
+        }
+
+        document.addEventListener('mousemove', handleMouseMove)
+        document.addEventListener('mouseup', handleMouseUp)
+        return () => {
+            document.removeEventListener('mousemove', handleMouseMove)
+            document.removeEventListener('mouseup', handleMouseUp)
+        }
+    }, [headlineWidth])
+
+
     return (
         <TooltipProvider>
             <div className="space-y-4">
@@ -350,160 +398,187 @@ export function TrendsTable({ items }: TrendsTableProps) {
                         onChange={(e) => setMinVirality(e.target.value.replace(/[^\d.]/g, ''))}
                         className="w-16 h-8 text-sm bg-muted border-border/50"
                     />
-
-                    <div className="h-4 w-px bg-border/50 mx-1" />
-
-                    <span className="text-xs text-muted-foreground">Дата:</span>
-                    <input
-                        type="date"
-                        value={dateFrom}
-                        onChange={(e) => setDateFrom(e.target.value)}
-                        className="h-8 px-2 text-sm bg-muted border border-border/50 rounded-md text-foreground [color-scheme:dark]"
-                    />
-                    <span className="text-xs text-muted-foreground">—</span>
-                    <input
-                        type="date"
-                        value={dateTo}
-                        onChange={(e) => setDateTo(e.target.value)}
-                        className="h-8 px-2 text-sm bg-muted border border-border/50 rounded-md text-foreground [color-scheme:dark]"
-                    />
                 </div>
 
-                {/* Table with fixed height */}
-                <div className="rounded-lg border border-border/50 overflow-hidden min-h-[500px]">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="bg-muted/50 hover:bg-muted/50">
-                                <TableHead className="w-[40px]"></TableHead>
-                                <TableHead className="w-[120px]">Источник</TableHead>
-                                <TableHead className="w-[70px] text-center">Тип</TableHead>
-                                <TableHead className="min-w-[300px]">Заголовок</TableHead>
-                                <TableHead
-                                    className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('date')}
-                                >
-                                    <span className="flex items-center justify-center gap-1">
-                                        Дата <SortIcon field="date" />
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[90px] text-center cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('views')}
-                                >
-                                    <span className="flex items-center justify-center gap-1">
-                                        Просм. <SortIcon field="views" />
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[70px] text-center cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('likes')}
-                                >
-                                    <span className="flex items-center justify-center gap-1">
-                                        Лайки <SortIcon field="likes" />
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('comments')}
-                                >
-                                    <span className="flex items-center justify-center gap-1">
-                                        Комм. <SortIcon field="comments" />
-                                    </span>
-                                </TableHead>
-                                <TableHead
-                                    className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
-                                    onClick={() => handleSort('virality')}
-                                >
-                                    <span className="flex items-center justify-center gap-1">
-                                        Вирал. <SortIcon field="virality" />
-                                    </span>
-                                </TableHead>
-                                <TableHead className="w-[40px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {filteredItems.slice(0, 100).map((item) => (
-                                <TableRow
-                                    key={item.id}
-                                    className="hover:bg-muted/30 transition-colors cursor-pointer group"
-                                    onClick={() => setSelectedItem(item)}
-                                >
-                                    {/* Image preview */}
-                                    <TableCell className="p-2">
-                                        {item.coverUrl && (
-                                            <Tooltip>
-                                                <TooltipTrigger>
-                                                    <Image className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
-                                                </TooltipTrigger>
-                                                <TooltipContent side="right" className="p-0">
-                                                    <img
-                                                        src={item.coverUrl}
-                                                        alt="Preview"
-                                                        className="w-48 h-48 object-cover rounded"
-                                                    />
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="font-medium text-sm">
-                                        <span className="text-muted-foreground">@</span>{item.sourceUsername}
-                                    </TableCell>
-                                    <TableCell className="text-sm text-muted-foreground text-center">
-                                        {item.contentType}
-                                    </TableCell>
-                                    <TableCell className="min-w-[300px]">
-                                        <div className="flex items-center gap-2">
-                                            <span className="line-clamp-1 text-sm flex-1">
-                                                {item.headline || item.description?.slice(0, 80) || '—'}
-                                            </span>
-                                            {(item.headline || item.description) && (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
-                                                    onClick={(e) => copyText(item.headline || item.description || '', e)}
-                                                >
-                                                    <Copy className="h-3 w-3" />
-                                                </Button>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-center text-sm text-muted-foreground">
-                                        {formatDate(item.publishedAt)}
-                                    </TableCell>
-                                    <TableCell className="text-center font-mono text-sm">
-                                        {formatNumber(item.views)}
-                                    </TableCell>
-                                    <TableCell className="text-center font-mono text-sm">
-                                        {formatNumber(item.likes)}
-                                    </TableCell>
-                                    <TableCell className="text-center font-mono text-sm">
-                                        {formatNumber(item.comments)}
-                                    </TableCell>
-                                    <TableCell className="text-center">
-                                        <span className={cn(
-                                            "font-mono text-sm",
-                                            (item.viralityScore || 0) > 5 ? 'text-green-400' :
-                                                (item.viralityScore || 0) > 2 ? 'text-yellow-400' : 'text-muted-foreground'
-                                        )}>
-                                            {item.viralityScore?.toFixed(1) || '—'}
+                {/* Table with horizontal scroll only inside, not affecting page */}
+                <div className="w-full min-h-[500px] max-w-full">
+                    <div className="rounded-lg border border-border/50 overflow-x-auto overflow-y-visible max-w-full">
+                        <Table className="w-max min-w-full">
+                            <TableHeader>
+                                <TableRow className="bg-muted/50 hover:bg-muted/50">
+                                    <TableHead className="w-[40px]"></TableHead>
+                                    <TableHead className="w-[120px]">Источник</TableHead>
+                                    <TableHead className="w-[70px] text-center">Тип</TableHead>
+                                    <TableHead
+                                        className="relative pr-2"
+                                        style={{ width: headlineWidth, minWidth: headlineWidth, maxWidth: headlineWidth }}
+                                    >
+                                        Заголовок
+                                        <div
+                                            className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/50 transition-colors"
+                                            onMouseDown={handleResizeStart}
+                                        />
+                                    </TableHead>
+                                    <TableHead className="w-[120px]">AI Тема</TableHead>
+                                    <TableHead
+                                        className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('date')}
+                                    >
+                                        <span className="flex items-center justify-center gap-1">
+                                            Дата <SortIcon field="date" />
                                         </span>
-                                    </TableCell>
-                                    <TableCell>
-                                        <a
-                                            href={item.originalUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-muted-foreground hover:text-foreground transition-colors"
-                                            onClick={(e) => e.stopPropagation()}
-                                        >
-                                            <ExternalLink className="h-4 w-4" />
-                                        </a>
-                                    </TableCell>
+                                    </TableHead>
+                                    <TableHead
+                                        className="w-[90px] text-center cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('views')}
+                                    >
+                                        <span className="flex items-center justify-center gap-1">
+                                            Просм. <SortIcon field="views" />
+                                        </span>
+                                    </TableHead>
+                                    <TableHead
+                                        className="w-[70px] text-center cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('likes')}
+                                    >
+                                        <span className="flex items-center justify-center gap-1">
+                                            Лайки <SortIcon field="likes" />
+                                        </span>
+                                    </TableHead>
+                                    <TableHead
+                                        className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('comments')}
+                                    >
+                                        <span className="flex items-center justify-center gap-1">
+                                            Комм. <SortIcon field="comments" />
+                                        </span>
+                                    </TableHead>
+                                    <TableHead
+                                        className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
+                                        onClick={() => handleSort('virality')}
+                                    >
+                                        <span className="flex items-center justify-center gap-1">
+                                            Вирал. <SortIcon field="virality" />
+                                        </span>
+                                    </TableHead>
+                                    <TableHead className="w-[40px]"></TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
+                            </TableHeader>
+                            <TableBody>
+                                {filteredItems.slice(0, 100).map((item) => (
+                                    <TableRow
+                                        key={item.id}
+                                        className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                                        onClick={() => setSelectedItem(item)}
+                                    >
+                                        {/* Image preview */}
+                                        <TableCell className="p-2">
+                                            {item.coverUrl && (
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                        <Image className="h-4 w-4 text-muted-foreground hover:text-foreground transition-colors" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right" className="p-0">
+                                                        <img
+                                                            src={item.coverUrl}
+                                                            alt="Preview"
+                                                            className="w-48 h-48 object-cover rounded"
+                                                        />
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="font-medium text-sm">
+                                            <span className="text-muted-foreground">@</span>{item.sourceUsername}
+                                        </TableCell>
+                                        <TableCell className="text-sm text-muted-foreground text-center">
+                                            {item.contentType}
+                                        </TableCell>
+                                        <TableCell
+                                            className="overflow-hidden"
+                                            style={{ width: headlineWidth, minWidth: headlineWidth, maxWidth: headlineWidth }}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <span className="line-clamp-1 text-sm flex-1">
+                                                    {item.headline || item.description?.slice(0, 80) || '—'}
+                                                </span>
+                                                {(item.headline || item.description) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                                                        onClick={(e) => copyText(item.headline || item.description || '', e)}
+                                                    >
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        {/* AI Topic */}
+                                        <TableCell>
+                                            {item.aiTopic ? (
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-xs font-medium text-primary truncate">
+                                                                {item.aiTopic}
+                                                            </span>
+                                                            {item.aiSubtopic && (
+                                                                <span className="text-[10px] text-muted-foreground truncate">
+                                                                    {item.aiSubtopic}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top" className="max-w-sm">
+                                                        <div className="space-y-1">
+                                                            <div><strong>Тема:</strong> {item.aiTopic}</div>
+                                                            {item.aiSubtopic && <div><strong>Подтема:</strong> {item.aiSubtopic}</div>}
+                                                            {item.aiHookType && <div><strong>Hook:</strong> {item.aiHookType}</div>}
+                                                            {item.aiSuccessReason && <div><strong>Почему:</strong> {item.aiSuccessReason}</div>}
+                                                        </div>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">—</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-center text-sm text-muted-foreground">
+                                            {formatDate(item.publishedAt)}
+                                        </TableCell>
+                                        <TableCell className="text-center font-mono text-sm">
+                                            {formatNumber(item.views)}
+                                        </TableCell>
+                                        <TableCell className="text-center font-mono text-sm">
+                                            {formatNumber(item.likes)}
+                                        </TableCell>
+                                        <TableCell className="text-center font-mono text-sm">
+                                            {formatNumber(item.comments)}
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <span className={cn(
+                                                "font-mono text-sm",
+                                                (item.viralityScore || 0) > 5 ? 'text-green-400' :
+                                                    (item.viralityScore || 0) > 2 ? 'text-yellow-400' : 'text-muted-foreground'
+                                            )}>
+                                                {item.viralityScore?.toFixed(1) || '—'}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <a
+                                                href={item.originalUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <ExternalLink className="h-4 w-4" />
+                                            </a>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
 
                 {filteredItems.length > 100 && (
@@ -623,6 +698,83 @@ export function TrendsTable({ items }: TrendsTableProps) {
                                         {selectedItem.description || '—'}
                                     </p>
                                 </div>
+
+                                {/* AI Analysis Section */}
+                                {selectedItem.aiTopic && (
+                                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 space-y-3">
+                                        <h4 className="text-sm font-semibold text-primary flex items-center gap-2">
+                                            🧠 AI Анализ
+                                        </h4>
+
+                                        {/* Topic & Hook Row */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Тема</span>
+                                                <p className="text-sm font-medium">{selectedItem.aiTopic}</p>
+                                                {selectedItem.aiSubtopic && (
+                                                    <p className="text-xs text-muted-foreground">{selectedItem.aiSubtopic}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Hook Type</span>
+                                                <p className="text-sm font-medium capitalize">{selectedItem.aiHookType || '—'}</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Formula */}
+                                        {selectedItem.aiContentFormula && (
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Формула контента</span>
+                                                <p className="text-sm">{selectedItem.aiContentFormula}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Success Reason */}
+                                        {selectedItem.aiSuccessReason && (
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Почему залетело</span>
+                                                <p className="text-sm text-green-400">{selectedItem.aiSuccessReason}</p>
+                                            </div>
+                                        )}
+
+                                        {/* Tags & Trigger Row */}
+                                        <div className="grid grid-cols-2 gap-3">
+                                            {selectedItem.aiTags && (
+                                                <div>
+                                                    <span className="text-xs text-muted-foreground">Теги</span>
+                                                    <div className="flex flex-wrap gap-1 mt-1">
+                                                        {(() => {
+                                                            try {
+                                                                const tags = JSON.parse(selectedItem.aiTags)
+                                                                return tags.map((tag: string, i: number) => (
+                                                                    <span key={i} className="text-xs px-2 py-0.5 rounded-full bg-muted">
+                                                                        {tag}
+                                                                    </span>
+                                                                ))
+                                                            } catch {
+                                                                return <span className="text-xs">{selectedItem.aiTags}</span>
+                                                            }
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {selectedItem.aiEmotionalTrigger && (
+                                                <div>
+                                                    <span className="text-xs text-muted-foreground">Эмоц. триггер</span>
+                                                    <p className="text-sm capitalize">{selectedItem.aiEmotionalTrigger}</p>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Target Audience */}
+                                        {selectedItem.aiTargetAudience && (
+                                            <div>
+                                                <span className="text-xs text-muted-foreground">Целевая аудитория</span>
+                                                <p className="text-sm">{selectedItem.aiTargetAudience}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 {/* Meta */}
                                 <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2 border-t border-border/50">

@@ -296,8 +296,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
             <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto p-0 gap-0 border-zinc-200 dark:border-zinc-700">
                 {/* Safety Banner */}
                 {showDescriptionSettings && (
-                    <div className="bg-amber-100 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800 p-3 flex items-center justify-center text-center gap-2 text-amber-800 dark:text-amber-200 text-sm font-medium">
-                        <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+                    <div className="border-b border-zinc-200 dark:border-zinc-700 p-3 flex items-center justify-center text-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm">
                         <span>В меня вложили уже много сил и времени, пожалуйста не сломай меня! 🥺</span>
                     </div>
                 )}

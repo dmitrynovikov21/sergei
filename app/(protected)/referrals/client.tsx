@@ -76,7 +76,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Баланс
@@ -91,7 +91,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Рефералы
@@ -106,7 +106,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Комиссия
@@ -121,7 +121,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             На рассмотрении
@@ -138,7 +138,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
             </div>
 
             {/* Referral Link */}
-            <Card className="">
+            <Card className="border-border/50">
                 <CardHeader>
                     <CardTitle>🔗 Ваша реферальная ссылка</CardTitle>
                     <CardDescription>
@@ -204,7 +204,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
             </Card>
 
             {/* Transaction History */}
-            <Card className="">
+            <Card className="border-border/50">
                 <CardHeader>
                     <CardTitle>📊 История транзакций</CardTitle>
                 </CardHeader>

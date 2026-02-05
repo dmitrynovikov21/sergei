@@ -73,7 +73,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-3 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
+                <button className="flex items-center gap-3 w-full px-4 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group">
                     {/* Avatar */}
                     {displayEmoji ? (
                         <span className="text-2xl w-8 h-8 flex items-center justify-center shrink-0">{displayEmoji}</span>
@@ -90,7 +90,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
                                     {displayName}
                                 </p>
                                 <p className="text-xs text-zinc-500 group-hover:text-zinc-300 truncate font-mono flex items-center gap-1.5 mt-0.5">
-                                    <Coins className="w-3 h-3 text-amber-500" />
+                                    <span>🤑</span>
                                     <span>{user.credits !== undefined ? user.credits : 0} CR</span>
                                 </p>
                             </div>

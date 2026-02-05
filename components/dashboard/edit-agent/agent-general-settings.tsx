@@ -49,7 +49,7 @@ export function AgentGeneralSettings({
                     value={systemPrompt}
                     onChange={(e) => setSystemPrompt(e.target.value)}
                     placeholder="Опишите поведение и роль AI агента..."
-                    className="min-h-[300px] font-mono text-sm bg-zinc-50 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-700 rounded-xl resize-y"
+                    className="min-h-[300px] font-mono text-sm bg-transparent border-zinc-200 dark:border-zinc-700 rounded-xl resize-y"
                 />
             </div>
         </div>

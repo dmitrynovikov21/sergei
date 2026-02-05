@@ -52,7 +52,7 @@ function DashboardAgentLink({ href, active, icon: Icon, children, isExpanded }: 
             className={cn(
               "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
               active
-                ? "text-foreground font-medium bg-muted"
+                ? "text-white font-medium bg-[#141413]/95"
                 : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
             )}
           >
@@ -188,7 +188,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                     className={cn(
                       "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
                       path.startsWith("/dashboard/datasets")
-                        ? "text-foreground font-medium bg-muted"
+                        ? "text-white font-medium bg-[#141413]/95"
                         : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
                     )}
                   >
@@ -327,7 +327,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
 
           {/* User Profile at Bottom */}
           {user && (
-            <div className="border-t border-border p-3">
+            <div className="border-t border-border">
               <SidebarUser user={user} isExpanded={isSidebarExpanded} />
             </div>
           )}

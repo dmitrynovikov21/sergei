@@ -10,6 +10,8 @@
 import { NextRequest } from "next/server"
 import { auth } from "@/auth"
 import { getDatasetContext } from "@/actions/datasets"
+import { tool } from "ai"
+import { z } from "zod"
 import {
     getChatWithContext,
     buildSystemPrompt,
@@ -23,6 +25,7 @@ import {
     createStreamingResponse,
 } from "@/lib/services/chat"
 import { checkAgentAccess } from "@/lib/subscription-guard"
+import { getSmartHeadlines } from "@/lib/services/smart-headlines"
 
 export const runtime = "nodejs"
 export const maxDuration = 300 // Allow up to 300 seconds for streaming
@@ -85,13 +88,36 @@ export async function POST(
         // PRIORITY: requestDatasetId (from chat input selector) > agent.datasetId > chat.datasetId
         const effectiveDatasetId = requestDatasetId || chat.agent.datasetId || chat.datasetId
         console.log("[Chat API] requestDatasetId:", requestDatasetId, "agent.datasetId:", chat.agent.datasetId, "chat.datasetId:", chat.datasetId, "=> using:", effectiveDatasetId)
+
+        // Create tools object if dataset is configured
+        let tools: Record<string, any> | undefined
+        const hasTools = !!effectiveDatasetId
+
         if (effectiveDatasetId) {
             datasetContext = await getDatasetContext(effectiveDatasetId)
             console.log("[Chat API] Dataset context loaded, length:", datasetContext?.length || 0)
+
+            // Define tool for AI to query headlines dynamically
+            tools = {
+                get_headlines: tool({
+                    description: `Получить виральные заголовки из базы трендов. ОБЯЗАТЕЛЬНО вызывай перед генерацией заголовков.`,
+                    parameters: z.object({
+                        topic: z.string().optional().describe("Тема для фильтрации (крипта, отношения, лайфхаки)"),
+                        limit: z.number().optional().describe("Количество заголовков (default: 15, max: 30)")
+                    }),
+                    execute: async ({ topic, limit }) => {
+                        console.log("[Tool] get_headlines called with:", { topic, limit, datasetId: effectiveDatasetId })
+                        const result = await getSmartHeadlines(effectiveDatasetId!, { topic, limit })
+                        console.log("[Tool] get_headlines returned:", result.total, "headlines")
+                        return result
+                    }
+                })
+            }
         } else {
             console.log("[Chat API] No dataset configured for chat or agent")
         }
-        const systemPrompt = buildSystemPrompt(chat.agent, datasetContext)
+
+        const systemPrompt = buildSystemPrompt(chat.agent, datasetContext, hasTools)
 
         // 6. Prepare messages for Claude API
         const claudeMessages = prepareClaudeMessages(chat.messages, message, attachments, chat.agent.files)
@@ -106,12 +132,11 @@ export async function POST(
         }
 
         // 9. Create streaming response via AiGateway
-        // Pass subscription info for credit deduction
         const streamResponse = await createChatStream({
             systemPrompt,
             messages: claudeMessages,
             userId: session.user.id,
-            subscriptionId: accessResult.subscription?.id,
+            tools,
             onFinish: async (response, usage) => {
                 await saveAssistantMessage(params.chatId, response, usage)
             }

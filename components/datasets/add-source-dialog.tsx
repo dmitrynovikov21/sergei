@@ -35,6 +35,7 @@ export function AddSourceDialog({ datasetId }: AddSourceDialogProps) {
     const [urls, setUrls] = useState("")
     const [daysLimit, setDaysLimit] = useState("14")
     const [minViews, setMinViews] = useState("0")
+    const [minLikes, setMinLikes] = useState("0")
 
     // Content type filters
     const [includeReels, setIncludeReels] = useState(true)
@@ -75,6 +76,7 @@ export function AddSourceDialog({ datasetId }: AddSourceDialogProps) {
                     urlList,
                     {
                         minViewsFilter: minViewsNum,
+                        minLikesFilter: Number(minLikes) || 0,
                         daysLimit: daysNum,
                         contentTypes: contentTypes.join(",")
                     }
@@ -150,46 +152,50 @@ export function AddSourceDialog({ datasetId }: AddSourceDialogProps) {
                         </div>
                     </div>
 
-                    {/* Time period - Toggle buttons */}
+                    {/* Filters - conditional based on content types */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>За последние</Label>
-                            <div className="flex gap-2">
-                                <Button
-                                    type="button"
-                                    variant={daysLimit === "7" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setDaysLimit("7")}
-                                    className="flex-1"
-                                >
-                                    7 дней
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant={daysLimit === "14" ? "default" : "outline"}
-                                    size="sm"
-                                    onClick={() => setDaysLimit("14")}
-                                    className="flex-1"
-                                >
-                                    14 дней
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="minViews">Мин. просмотров</Label>
+                            <Label htmlFor="daysLimit">За последние (дней)</Label>
                             <Input
-                                id="minViews"
+                                id="daysLimit"
                                 type="number"
-                                value={minViews}
-                                onChange={(e) => setMinViews(e.target.value)}
-                                placeholder="10000"
+                                value={daysLimit}
+                                onChange={(e) => setDaysLimit(e.target.value)}
+                                placeholder="14"
+                                min={1}
+                                max={90}
                             />
                         </div>
+                        {/* Min Views - only if Reels selected */}
+                        {includeReels && (
+                            <div className="space-y-2">
+                                <Label htmlFor="minViews">Мин. просмотров (Reels)</Label>
+                                <Input
+                                    id="minViews"
+                                    type="number"
+                                    value={minViews}
+                                    onChange={(e) => setMinViews(e.target.value)}
+                                    placeholder="10000"
+                                />
+                            </div>
+                        )}
                     </div>
+                    {/* Min Likes - only if Carousels or Posts selected */}
+                    {(includeCarousels || includePosts) && (
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="minLikes">Мин. лайков (Карусели/Посты)</Label>
+                                <Input
+                                    id="minLikes"
+                                    type="number"
+                                    value={minLikes}
+                                    onChange={(e) => setMinLikes(e.target.value)}
+                                    placeholder="500"
+                                />
+                            </div>
+                        </div>
+                    )}
 
-                    <p className="text-xs text-muted-foreground">
-                        Посты с меньшим количеством просмотров будут пропущены при AI обработке
-                    </p>
                 </div>
 
                 <DialogFooter>
