@@ -19,9 +19,38 @@ import { toast } from "sonner"
 import { TARIFFS, TariffPlan } from "@/lib/billing-config"
 import { getMySubscriptions } from "@/actions/subscriptions"
 
+// Types for billing data
+interface BillingUser {
+    id: string
+    name: string | null
+    email: string | null
+    credits: number
+    referralBalance: number
+}
+
+interface CreditTransaction {
+    id: string
+    createdAt: Date
+    reason: string
+    amount: number
+    metadata?: { plan?: string } | null
+}
+
+interface Subscription {
+    id: string
+    plan: string
+    credits: number
+    maxCredits: number
+    creditsPercent: number
+    creditsUsed: number
+    expiresAt: Date
+    isActive: boolean
+    tariff?: unknown  // From Prisma relation
+}
+
 interface BillingDashboardProps {
     data: {
-        user: any
+        user: BillingUser
         stats: {
             credits: number
             referralBalance: number
@@ -33,8 +62,8 @@ interface BillingDashboardProps {
             avgDailySpend: number
             daysRemaining: number
         }
-        purchases: any[]
-        aiTransactions: any[]
+        purchases: CreditTransaction[]
+        aiTransactions: { id: string; createdAt: Date; inputTokens: number; outputTokens: number }[]
         packages: {
             id: string
             amount: number
@@ -49,6 +78,7 @@ interface BillingDashboardProps {
 export function BillingDashboard({ data }: BillingDashboardProps) {
     const { user, stats, purchases, packages } = data
     const [isLoading, setIsLoading] = useState<string | null>(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [subscriptions, setSubscriptions] = useState<any[]>([])
     const [subLoading, setSubLoading] = useState<TariffPlan | null>(null)
 
@@ -161,10 +191,10 @@ export function BillingDashboard({ data }: BillingDashboardProps) {
                                 </div>
 
                                 {/* Description */}
-                                <p className="text-xs text-muted-foreground mb-3">
+                                <p className="text-xs text-muted-foreground mb-3" suppressHydrationWarning>
                                     {isFree
                                         ? `${tariff.credits} кредитов`
-                                        : `${tariff.agentPatterns.length} AI-агента • ${tariff.credits.toLocaleString()} CR/мес`
+                                        : `${tariff.agentPatterns.length} AI-агента • ${tariff.credits.toLocaleString('ru-RU')} CR/мес`
                                     }
                                 </p>
 
@@ -307,14 +337,22 @@ export function BillingDashboard({ data }: BillingDashboardProps) {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {purchases.length === 0 && (
-                                <TableRow>
-                                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                                        История пуста
+                            {/* Show subscriptions first */}
+                            {subscriptions.map((sub) => (
+                                <TableRow key={`sub-${sub.id}`}>
+                                    <TableCell className="text-sm tabular-nums" suppressHydrationWarning>
+                                        {format(new Date(sub.expiresAt), 'd MMM yyyy', { locale: ru })}
+                                    </TableCell>
+                                    <TableCell className="text-sm text-muted-foreground">
+                                        Подписка {sub.plan === 'reels' ? 'Reels' : 'Карусели'}
+                                    </TableCell>
+                                    <TableCell className="text-right font-medium text-accent tabular-nums">
+                                        +{sub.maxCredits.toLocaleString('ru-RU')}
                                     </TableCell>
                                 </TableRow>
-                            )}
-                            {purchases.slice(0, 10).map((tx: any) => (
+                            ))}
+                            {/* Then show regular purchases */}
+                            {purchases.filter(tx => tx.amount > 0).slice(0, 10).map((tx) => (
                                 <TableRow key={tx.id}>
                                     <TableCell className="text-sm tabular-nums" suppressHydrationWarning>
                                         {format(new Date(tx.createdAt), 'd MMM yyyy', { locale: ru })}
@@ -331,10 +369,17 @@ export function BillingDashboard({ data }: BillingDashboardProps) {
                                         {!['purchase', 'subscription', 'free-test-credits', 'referral-conversion'].includes(tx.reason) && tx.reason}
                                     </TableCell>
                                     <TableCell className="text-right font-medium text-accent tabular-nums">
-                                        +{tx.amount.toLocaleString()}
+                                        +{tx.amount.toLocaleString('ru-RU')}
                                     </TableCell>
                                 </TableRow>
                             ))}
+                            {purchases.filter(tx => tx.amount > 0).length === 0 && subscriptions.length === 0 && (
+                                <TableRow>
+                                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                                        История пуста
+                                    </TableCell>
+                                </TableRow>
+                            )}
                         </TableBody>
                     </Table>
                 </div>

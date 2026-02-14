@@ -1,6 +1,7 @@
 "use client"
 
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -43,13 +44,13 @@ export function AgentDescriptionSettings({
         <div className="p-6">
             <div className="space-y-5 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl">
                 <Label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">
-                    Настройки описаний
+                    Дополнительно:
                 </Label>
 
                 <div className="space-y-6">
                     {/* 1. Emoji */}
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="edit-emoji" className="text-base font-medium">Эмоджи</Label>
+                        <Label htmlFor="edit-emoji" className="text-base font-medium">Эмодзи 😎</Label>
                         <Switch
                             id="edit-emoji"
                             className="data-[state=checked]:bg-green-500 will-change-transform"
@@ -70,16 +71,16 @@ export function AgentDescriptionSettings({
                     </div>
 
                     {useSubscribe && (
-                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <Label htmlFor="subscribe-link" className="text-sm text-muted-foreground mb-2 block">
-                                Ссылка для подписки
+                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200 space-y-2">
+                            <Label htmlFor="subscribe-link" className="text-xs text-muted-foreground">
+                                Инструкция для призыва (вшивается в промпт):
                             </Label>
-                            <Input
+                            <Textarea
                                 id="subscribe-link"
                                 value={subscribeLink}
                                 onChange={(e) => setSubscribeLink(e.target.value)}
-                                placeholder="https://instagram.com/..."
-                                className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
+                                placeholder="В конце текста должен быть призыв подписаться..."
+                                className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400 min-h-[80px]"
                             />
                         </div>
                     )}
@@ -95,39 +96,9 @@ export function AgentDescriptionSettings({
                         />
                     </div>
 
-                    {/* 4. Code Word */}
+                    {/* 4. Audience Question */}
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="edit-codeword" className="text-base font-medium">Кодовое слово</Label>
-                        <Switch
-                            id="edit-codeword"
-                            className="data-[state=checked]:bg-green-500 will-change-transform"
-                            checked={useCodeWord}
-                            onCheckedChange={(checked) => {
-                                setUseCodeWord(checked)
-                                if (checked && !codeWord) setCodeWord("СТАРТ")
-                                if (!checked) setCodeWord("")
-                            }}
-                        />
-                    </div>
-
-                    {useCodeWord && (
-                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200">
-                            <Label htmlFor="code-word-input" className="text-sm text-muted-foreground mb-2 block">
-                                Слово
-                            </Label>
-                            <Input
-                                id="code-word-input"
-                                value={codeWord}
-                                onChange={(e) => setCodeWord(e.target.value)}
-                                placeholder="СТАРТ"
-                                className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400"
-                            />
-                        </div>
-                    )}
-
-                    {/* 5. Audience Question */}
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="edit-question" className="text-base font-medium">Вопрос аудитории</Label>
+                        <Label htmlFor="edit-question" className="text-base font-medium">Вопрос к аудитории</Label>
                         <Switch
                             id="edit-question"
                             className="data-[state=checked]:bg-green-500 will-change-transform"
@@ -135,6 +106,21 @@ export function AgentDescriptionSettings({
                             onCheckedChange={setUseAudienceQuestion}
                         />
                     </div>
+
+                    {useAudienceQuestion && (
+                        <div className="pl-0 animate-in fade-in slide-in-from-top-2 duration-200 space-y-2">
+                            <Label htmlFor="audience-question" className="text-xs text-muted-foreground">
+                                Инструкция для вопроса (вшивается в промпт):
+                            </Label>
+                            <Textarea
+                                id="audience-question"
+                                value={audienceQuestion}
+                                onChange={(e) => setAudienceQuestion(e.target.value)}
+                                placeholder="В самом конце текста заканчивай пост виральным вопросом..."
+                                className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400 min-h-[80px]"
+                            />
+                        </div>
+                    )}
 
                     {/* 6. Dataset Selection */}
                     <div className="flex items-center justify-between">

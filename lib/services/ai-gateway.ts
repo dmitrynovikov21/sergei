@@ -19,17 +19,26 @@ const MODEL_COSTS_PER_1M: Record<string, { input: number; output: number }> = {
 
 const DEFAULT_COST_PER_1M = { input: 1.0, output: 1.0 };
 
+import { ClaudeMessage } from './chat/ChatService';
+
+// Usage type for onFinish callback (matches ChatService expectations)
+interface TokenUsage {
+    input_tokens: number;
+    output_tokens: number;
+}
+
 interface AiRequestParams {
     model: string;
-    messages: any[];
+    // Using unknown[] for SDK compatibility - actual type is ClaudeMessage[]
+    messages: unknown[];
     userId: string;
     system?: string;
     temperature?: number;
     maxOutputTokens?: number;
-    tools?: Record<string, any>;
+    tools?: Record<string, unknown>;
     maxSteps?: number;
-    context?: any;
-    onFinish?: (text: string, usage: any) => Promise<void>;
+    context?: Record<string, unknown>;
+    onFinish?: (text: string, usage: TokenUsage) => Promise<void>;
 }
 
 export class AiGateway {
@@ -88,15 +97,14 @@ export class AiGateway {
 
             const result = streamText({
                 model: modelInstance,
-                messages,
+                messages: messages as any,
                 system,
                 temperature: provider === 'anthropic' ? 1 : temperature, // Thinking requires temperature 1
-                tools,
-                maxSteps,
+                // No tools - dataset context is passed in system prompt
                 // Enable extended thinking for Claude models
                 providerOptions: provider === 'anthropic' ? {
                     anthropic: {
-                        thinking: { type: 'enabled', budgetTokens: 10000 }
+                        thinking: { type: 'enabled', budgetTokens: 4000 }
                     }
                 } : undefined,
                 onFinish: async ({ usage, text }) => {
@@ -177,7 +185,7 @@ export class AiGateway {
         model: string;
         inputTokens: number;
         outputTokens: number;
-        context?: any;
+        context?: Record<string, unknown>;
     }) {
         const { userId, provider, model, inputTokens, outputTokens, context } = data;
 

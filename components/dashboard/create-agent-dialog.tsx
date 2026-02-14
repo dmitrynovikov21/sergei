@@ -16,17 +16,7 @@ import {
     DialogFooter,
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
-import { Plus, Sparkles, RefreshCw } from "lucide-react"
-import { cn } from "@/lib/utils"
-
-// Random emoji list for agents
-const AGENT_EMOJIS = [
-    "🤖", "🧠", "💡", "🚀", "✨", "🎯", "📝", "🔥", "💎", "⚡",
-    "🎨", "📊", "🔮", "🌟", "💼", "🎭", "🧩", "📈", "🏆", "💪",
-    "🎪", "🎲", "🎸", "🎹", "🎤", "📚", "🔍", "💻", "🖊️", "✏️"
-]
-
-const getRandomEmoji = () => AGENT_EMOJIS[Math.floor(Math.random() * AGENT_EMOJIS.length)]
+import { Plus, Sparkles } from "lucide-react"
 
 interface CreateAgentDialogProps {
     trigger?: React.ReactNode
@@ -38,14 +28,9 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
     const [isPending, startTransition] = useTransition()
 
     const [name, setName] = useState("")
-    const [emoji, setEmoji] = useState(getRandomEmoji())
 
     // Default system prompt - user can customize in settings later
     const DEFAULT_SYSTEM_PROMPT = "Ты полезный AI-ассистент. Отвечай на русском языке."
-
-    const handleRandomEmoji = () => {
-        setEmoji(getRandomEmoji())
-    }
 
     const handleCreate = () => {
         if (!name.trim()) {
@@ -58,16 +43,12 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                 await createAgent({
                     name: name.trim(),
                     systemPrompt: DEFAULT_SYSTEM_PROMPT,
-                    icon: emoji
+                    icon: "✨"
                 })
 
                 toast.success("Агент создан!")
                 setOpen(false)
-
-                // Reset form
                 setName("")
-                setEmoji(getRandomEmoji())
-
                 router.refresh()
             } catch (error) {
                 console.error("Failed to create agent:", error)
@@ -103,43 +84,23 @@ export function CreateAgentDialog({ trigger }: CreateAgentDialogProps) {
                 </DialogHeader>
 
                 <div className="py-4">
-                    {/* Compact emoji + name row */}
-                    <div className="flex items-center gap-3">
-                        <button
-                            type="button"
-                            onClick={handleRandomEmoji}
-                            className="h-10 w-10 shrink-0 rounded-lg bg-zinc-800 hover:bg-zinc-700 flex items-center justify-center text-xl transition-colors"
-                            title="Нажмите для случайного эмодзи"
-                        >
-                            {emoji}
-                        </button>
-                        <div className="flex-1">
-                            <Label htmlFor="agent-name" className="sr-only">
-                                Название агента
-                            </Label>
-                            <Input
-                                id="agent-name"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                placeholder="Название агента"
-                                className="h-10 bg-zinc-800 border-zinc-700 text-foreground placeholder:text-muted-foreground"
-                                autoFocus
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && name.trim()) {
-                                        handleCreate()
-                                    }
-                                }}
-                            />
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleRandomEmoji}
-                            className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
-                            title="Случайный эмодзи"
-                        >
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
+                    <div className="flex-1">
+                        <Label htmlFor="agent-name" className="sr-only">
+                            Название агента
+                        </Label>
+                        <Input
+                            id="agent-name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            placeholder="Название агента"
+                            className="h-10 bg-zinc-800 border-zinc-700 text-foreground placeholder:text-muted-foreground"
+                            autoFocus
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && name.trim()) {
+                                    handleCreate()
+                                }
+                            }}
+                        />
                     </div>
                 </div>
 

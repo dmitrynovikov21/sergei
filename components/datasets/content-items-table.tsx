@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge"
 import { Icons } from "@/components/shared/icons"
 import { deleteContentItem } from "@/actions/datasets"
 import { EditContentDialog } from "@/components/datasets/edit-content-dialog"
+import { ContentDetailDialog } from "@/components/shared/content-detail-dialog"
 import { toast } from "sonner"
 import {
     Dialog,
@@ -67,6 +68,7 @@ type SortDirection = 'asc' | 'desc'
 export function ContentItemsTable({ items }: ContentItemsTableProps) {
     const [isPending, startTransition] = useTransition()
     const [expandedId, setExpandedId] = useState<string | null>(null)
+    const [selectedPost, setSelectedPost] = useState<any>(null)
 
     // Filter & Sort state
     const [sortField, setSortField] = useState<SortField>('date')
@@ -282,7 +284,7 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                         </TableHeader>
                         <TableBody>
                             {filteredItems.map((item) => (
-                                <TableRow key={item.id} className="group hover:bg-muted/20">
+                                <TableRow key={item.id} className="group hover:bg-muted/20 cursor-pointer" onClick={() => setSelectedPost(item)}>
                                     {/* Index */}
                                     <TableCell className="p-2 text-center text-xs text-muted-foreground">
                                         {filteredItems.indexOf(item) + 1}
@@ -291,28 +293,14 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                     {/* Cover Image */}
                                     <TableCell className="p-2">
                                         {item.coverUrl ? (
-                                            <Dialog>
-                                                <DialogTrigger asChild>
-                                                    <div className="relative h-14 w-10 overflow-hidden rounded border bg-muted cursor-pointer hover:opacity-80 transition-opacity">
-                                                        <Image
-                                                            src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
-                                                            alt="Cover"
-                                                            fill
-                                                            className="object-cover"
-                                                        />
-                                                    </div>
-                                                </DialogTrigger>
-                                                <DialogContent className="max-w-md p-0 overflow-hidden">
-                                                    <div className="relative aspect-[9/16] w-full">
-                                                        <Image
-                                                            src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
-                                                            alt="Cover enlarged"
-                                                            fill
-                                                            className="object-contain"
-                                                        />
-                                                    </div>
-                                                </DialogContent>
-                                            </Dialog>
+                                            <div className="relative h-14 w-10 overflow-hidden rounded border bg-muted hover:opacity-80 transition-opacity">
+                                                <Image
+                                                    src={`https://images.weserv.nl/?url=${encodeURIComponent(item.coverUrl)}`}
+                                                    alt="Cover"
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            </div>
                                         ) : (
                                             <div className="h-14 w-10 bg-muted rounded flex items-center justify-center">
                                                 <Icons.media className="h-4 w-4 text-muted-foreground" />
@@ -390,7 +378,7 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                                     </TableCell>
 
                                     {/* Actions */}
-                                    <TableCell className="p-1 text-right">
+                                    <TableCell className="p-1 text-right" onClick={(e) => e.stopPropagation()}>
                                         <div className="flex justify-end items-center gap-0">
                                             {/* Instagram Link - single small icon */}
                                             <Tooltip>
@@ -417,6 +405,9 @@ export function ContentItemsTable({ items }: ContentItemsTableProps) {
                         </TableBody>
                     </Table>
                 </div>
+
+                {/* Content Detail Dialog */}
+                <ContentDetailDialog item={selectedPost} onClose={() => setSelectedPost(null)} />
             </div>
         </TooltipProvider>
     )

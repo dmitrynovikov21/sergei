@@ -39,7 +39,7 @@ export async function getDataset(id: string) {
     await requireAuth() // Still require login
 
     // Return dataset by ID (shared - no userId filter)
-    return prisma.dataset.findFirst({
+    const dataset = await prisma.dataset.findFirst({
         where: { id },
         include: {
             sources: {
@@ -47,17 +47,111 @@ export async function getDataset(id: string) {
                 include: {
                     parseHistory: {
                         orderBy: { started_at: 'desc' },
-                        take: 1
+                        take: 3,
+                        select: {
+                            id: true,
+                            started_at: true,
+                            completed_at: true,
+                            status: true,
+                            daysRange: true,
+                            posts_found: true,
+                            posts_added: true,
+                            posts_skipped: true,
+                            posts_filtered: true,
+                            posts_archived: true,
+                            posts_updated: true,
+                            apify_raw_count: true,
+                            error: true
+                        }
                     }
                 }
             },
             items: {
                 orderBy: { views: "desc" },
-                take: 100
+                take: 100,
+                select: {
+                    id: true,
+                    instagramId: true,
+                    originalUrl: true,
+                    sourceUrl: true,
+                    coverUrl: true,
+                    videoUrl: true,
+                    views: true,
+                    likes: true,
+                    comments: true,
+                    viralityScore: true,
+                    headline: true,
+                    transcript: true,
+                    description: true,
+                    contentType: true,
+                    isProcessed: true,
+                    isApproved: true,
+                    processingError: true,
+                    publishedAt: true,
+                    // AI Analysis fields
+                    aiTopic: true,
+                    aiSubtopic: true,
+                    aiHookType: true,
+                    aiContentFormula: true,
+                    aiTags: true,
+                    aiSuccessReason: true,
+                    aiEmotionalTrigger: true,
+                    aiTargetAudience: true,
+                    aiAnalyzedAt: true
+                }
             }
         }
     })
+
+    if (!dataset) return null
+
+    // Transform items to TrendsTable format
+    const transformedItems = dataset.items.map(item => {
+        let sourceUsername = 'unknown'
+        if (item.sourceUrl) {
+            const match = item.sourceUrl.match(/instagram\.com\/([^\/]+)/)
+            if (match && match[1] !== 'p' && match[1] !== 'reel') {
+                sourceUsername = match[1]
+            }
+        }
+
+        return {
+            ...item,
+            sourceUsername,
+            datasetName: dataset.name,
+            contentType: (item.contentType === 'Video' ? 'Reel' :
+                item.contentType === 'Sidecar' ? 'Carousel' :
+                    item.contentType === 'Image' ? 'Carousel' : 'Reel') as 'Reel' | 'Carousel'
+        }
+    })
+
+    // Transform sources to include serializable parseHistory
+    const transformedSources = dataset.sources.map(source => ({
+        ...source,
+        parseHistory: source.parseHistory.map(h => ({
+            id: h.id,
+            startedAt: h.started_at,
+            completedAt: h.completed_at,
+            status: h.status,
+            daysRange: h.daysRange,
+            postsFound: h.posts_found,
+            postsAdded: h.posts_added,
+            postsSkipped: h.posts_skipped,
+            postsFiltered: h.posts_filtered,
+            postsArchived: h.posts_archived,
+            postsUpdated: h.posts_updated,
+            apifyRawCount: h.apify_raw_count,
+            error: h.error
+        }))
+    }))
+
+    return {
+        ...dataset,
+        sources: transformedSources,
+        items: transformedItems
+    }
 }
+
 
 export async function createDataset(name: string, description?: string) {
     const user = await requireAuth()
@@ -158,6 +252,7 @@ export async function addBulkTrackingSources(
     urls: string[],
     options: {
         minViewsFilter?: number
+        minLikesFilter?: number
         daysLimit?: number
         contentTypes?: string
     }
@@ -196,6 +291,7 @@ export async function addBulkTrackingSources(
                     username,
                     datasetId,
                     minViewsFilter: options.minViewsFilter ?? 0,
+                    minLikesFilter: options.minLikesFilter ?? 0,
                     daysLimit: options.daysLimit ?? 30,
                     contentTypes: options.contentTypes ?? "Video,Sidecar,Image"
                 }
@@ -398,58 +494,58 @@ export async function updateChatDataset(chatId: string, datasetId: string | null
 }
 
 /**
- * Get RAG context from dataset for chat injection
+ * Format number to human readable (1200000 -> "1.2M")
  */
-export async function getDatasetContext(
-    datasetId: string,
-    limit: number = 50,
-    daysBack: number = 14
-): Promise<string> {
-    // Calculate date threshold
-    const dateThreshold = new Date()
-    dateThreshold.setDate(dateThreshold.getDate() - daysBack)
+function formatViews(num: number): string {
+    if (num >= 1000000) {
+        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+    }
+    if (num >= 1000) {
+        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
+    }
+    return num.toString()
+}
 
+/**
+ * Get RAG context from dataset for chat injection.
+ * Loads ALL items from the dataset — no limits, no date filters, no truncation.
+ */
+export async function getDatasetContext(datasetId: string): Promise<string> {
     const items = await prisma.contentItem.findMany({
-        where: {
-            datasetId,
-            isProcessed: true,
-            headline: { not: null },
-            createdAt: { gte: dateThreshold }
-        },
-        orderBy: { views: "desc" },
-        take: limit
+        where: { datasetId },
+        orderBy: [
+            { viralityScore: "desc" },
+            { views: "desc" }
+        ],
+        select: {
+            headline: true,
+            views: true,
+            likes: true,
+            viralityScore: true,
+            contentType: true,
+        }
     })
 
-    if (items.length === 0) {
-        return ""
-    }
+    if (items.length === 0) return ""
 
     const dataset = await prisma.dataset.findUnique({
         where: { id: datasetId }
     })
 
-    let context = `\n---\n## ПРИМЕРЫ ЗАГОЛОВКОВ (${items.length} штук):\n\n`
+    let context = `\n---\n## 🔥 ДАТАСЕТ: ${dataset?.name || "Instagram"} (${items.length} единиц)\n\n`
+    context += `| # | Заголовок | Просмотры | Лайки | Score |\n`
+    context += `|---|-----------|-----------|-------|-------|\n`
 
-    // Add headlines as numbered list
     items.forEach((item, index) => {
-        if (item.headline) {
-            context += `${index + 1}. ${item.headline}\n`
-        }
+        const headline = item.headline || "—"
+        const views = formatViews(item.views)
+        const likes = formatViews(item.likes)
+        const score = item.viralityScore?.toFixed(1) || "—"
+        context += `| ${index + 1} | ${headline} | ${views} | ${likes} | ${score} |\n`
     })
 
-    // Add transcripts section if any exist
-    const itemsWithTranscripts = items.filter(i => i.transcript && i.transcript.length > 50)
-    if (itemsWithTranscripts.length > 0) {
-        context += `\n---\n## СЦЕНАРИИ (${itemsWithTranscripts.length} штук):\n\n`
-
-        itemsWithTranscripts.forEach((item, index) => {
-            context += `### ${index + 1}. ${item.headline || "Без заголовка"}\n`
-            context += `${item.transcript}\n\n`
-        })
-    }
-
     context += `---\n`
-    context += `Источник данных: ${dataset?.name || "Instagram RAG"}\n`
+    context += `Источник: ${dataset?.name || "Instagram RAG"} | Всего: ${items.length} единиц\n`
 
     return context
 }

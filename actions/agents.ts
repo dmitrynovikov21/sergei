@@ -225,7 +225,7 @@ export async function deleteAgent(agentId: string) {
         // Use transaction to ensure complete cleanup
         await prisma.$transaction(async (tx) => {
             // 1. Delete all files
-            await tx.agentFile.deleteMany({ where: { agentId } })
+            await tx.agent_files.deleteMany({ where: { agentId } })
 
             // 2. Delete chats and messages
             const chats = await tx.chat.findMany({

@@ -11,7 +11,7 @@
 import { prisma } from "@/lib/db"
 import { getDatasetContext } from "@/actions/datasets"
 import { generateChatTitle } from "@/lib/chat-titles"
-import { Agent, Chat, Message, Attachment } from "@prisma/client"
+import { Agent, Chat, Message, attachments } from "@prisma/client"
 import { DEFAULT_MODEL } from "@/lib/anthropic"
 import { v4 as uuidv4 } from "uuid"
 
@@ -24,7 +24,7 @@ export type ChatWithAgent = Chat & {
         files: { id: string; name: string; content: string }[]
     }
     messages: (Message & {
-        attachments: Attachment[]
+        attachments: attachments[]
     })[]
 }
 
@@ -37,6 +37,13 @@ export interface MessageContent {
 export interface ClaudeMessage {
     role: "user" | "assistant"
     content: string | MessageContent[]
+}
+
+// Attachment from client (chat input)
+export interface ChatAttachment {
+    url: string
+    name: string
+    contentType: string
 }
 
 // ==========================================
@@ -55,7 +62,8 @@ export const MAX_HISTORY_MESSAGES = 20
 
 export function buildSystemPrompt(
     agent: ChatWithAgent["agent"],
-    datasetContext?: string | null
+    datasetContext?: string | null,
+    hasTools?: boolean
 ): string {
     let systemPrompt = agent.systemPrompt || "You are a helpful AI assistant."
 
@@ -103,7 +111,7 @@ export function buildSystemPrompt(
         systemPrompt += `\n\n=== USER CONTEXT (Target Audience, Style) ===\n${agentWithContext.userContext}`
     }
 
-    // Append dataset context (RAG)
+    // Append dataset context (RAG) - legacy static context
     if (datasetContext) {
         systemPrompt += datasetContext
     }
@@ -116,22 +124,55 @@ export function buildSystemPrompt(
         systemPrompt += buildDescriptionAgentInstructions(agent)
     }
 
+    // Add tool instructions if tools are enabled
+    if (hasTools) {
+        systemPrompt += buildToolInstructions()
+    }
+
     return systemPrompt
 }
 
-function buildDescriptionAgentInstructions(agent: any): string {
+/**
+ * Tool instructions for headline agents with dataset
+ */
+function buildToolInstructions(): string {
+    return `
+
+<tool_instructions>
+## 🔧 ДОСТУПНЫЕ ИНСТРУМЕНТЫ
+
+У тебя есть доступ к функции get_headlines() для получения трендовых заголовков из базы.
+
+### КОГДА ВЫЗЫВАТЬ:
+- ✅ Перед генерацией ЛЮБЫХ заголовков — ОБЯЗАТЕЛЬНО
+- ✅ Когда пользователь просит "покажи примеры" или "что сейчас залетает"
+- ✅ Когда нужно понять актуальные тренды
+
+### КАК ИСПОЛЬЗОВАТЬ:
+- get_headlines()                    → Топ 15 по виральности
+- get_headlines(topic: "отношения")  → Топ по теме "отношения"
+- get_headlines(limit: 20)           → 20 заголовков
+
+### ВАЖНО:
+- НЕ выдумывай заголовки из головы — у тебя есть реальные данные
+- СНАЧАЛА вызови get_headlines(), ПОТОМ генерируй
+- Твои заголовки должны ОПИРАТЬСЯ на паттерны из базы
+- Указывай источник: "На основе заголовков с 2M+ просмотрами..."
+</tool_instructions>
+`
+}
+
+function buildDescriptionAgentInstructions(agent: ChatWithAgent["agent"]): string {
     const instructions: string[] = []
 
     if (agent.useEmoji) {
         instructions.push("Добавляй в текст эмодзи, где это уместно, но без фанатизма. Например вместо пунктов в тексте, можно сделать соответствующие эмодзи, но если подразумевается нумерованный список, то сделай цифры, а не эмодзи.")
     }
 
-    const userLink = agent.subscribeLink || "@ваш_ник"
+    const userLink = (agent as any).subscribeLink || ""
 
-    if (agent.useSubscribe && agent.useLinkInBio) {
-        instructions.push(`В конце текста должен быть призыв подписаться на мою страницу ${userLink} и в ТГ в шапке профиля. Важно, чтобы это было нативно, то есть призыв был связан с темой текста.`)
-    } else if (agent.useSubscribe) {
-        instructions.push(`В конце текста должен быть призыв подписаться на мою страницу ${userLink}. Важно, чтобы это было нативно, то есть призыв был связан с темой текста.`)
+    if (agent.useSubscribe) {
+        instructions.push(userLink || "В конце текста должен быть призыв подписаться.")
     } else if (agent.useLinkInBio) {
         instructions.push(`Упомяни что полезная информация есть в ТГ по ссылке в шапке профиля.`)
     }
@@ -140,7 +181,7 @@ function buildDescriptionAgentInstructions(agent: any): string {
         instructions.push(`Добавь призыв написать кодовое слово "${agent.codeWord}" в директ/комментарии`)
     }
     if (agent.audienceQuestion) {
-        instructions.push(`Задай вопрос аудитории: "${agent.audienceQuestion}"`)
+        instructions.push(agent.audienceQuestion)
     }
 
     let result = ""
@@ -173,7 +214,7 @@ function buildDescriptionAgentInstructions(agent: any): string {
 export function prepareClaudeMessages(
     historyMessages: ChatWithAgent["messages"],
     newMessage: string | null,
-    attachments: any[] | null,
+    attachments: ChatAttachment[] | null,
     agentFiles?: { name: string; content: string }[]
 ): ClaudeMessage[] {
     const claudeMessages: ClaudeMessage[] = []
@@ -272,7 +313,7 @@ export function prepareClaudeMessages(
     const newMsgContent: MessageContent[] = []
 
     if (attachments && Array.isArray(attachments)) {
-        attachments.forEach((att: any) => {
+        attachments.forEach((att) => {
             if (att.url && att.url.startsWith('data:image')) {
                 const match = att.url.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/)
                 if (match) {
@@ -304,7 +345,7 @@ export function prepareClaudeMessages(
 export async function saveUserMessage(
     chatId: string,
     content: string,
-    attachments: any[] | null
+    attachments: ChatAttachment[] | null
 ): Promise<Message> {
     const savedMessage = await prisma.message.create({
         data: {
@@ -317,8 +358,8 @@ export async function saveUserMessage(
 
     // Save attachments
     if (attachments && Array.isArray(attachments)) {
-        await Promise.all(attachments.map(async (att: any) => {
-            await prisma.attachment.create({
+        await Promise.all(attachments.map(async (att) => {
+            await prisma.attachments.create({
                 data: {
                     id: uuidv4(),
                     messageId: savedMessage.id,

@@ -21,6 +21,7 @@ interface ChatMessageProps {
     onRegenerate: () => void
     onDislike: (id: string) => void
     onCopy: (content: string) => void
+    onLike: (id: string) => void
 }
 
 export function ChatMessage({
@@ -31,7 +32,8 @@ export function ChatMessage({
     onResend,
     onRegenerate,
     onDislike,
-    onCopy
+    onCopy,
+    onLike
 }: ChatMessageProps) {
     // Lightbox state
     const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -104,7 +106,7 @@ export function ChatMessage({
                         "text-[15px] leading-relaxed",
                         msg.role === "user"
                             ? "bg-muted text-foreground rounded-2xl px-4 py-2.5 whitespace-pre-wrap"
-                            : "bg-transparent text-foreground prose dark:prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 prose-p:my-1.5 prose-p:leading-relaxed prose-headings:my-2 prose-headings:mt-3 prose-headings:font-medium prose-headings:text-foreground prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-ul:my-1.5 prose-li:my-0.5 prose-strong:font-medium prose-strong:text-foreground prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-hr:border-border prose-hr:opacity-30"
+                            : "bg-transparent text-foreground prose dark:prose-invert prose-sm max-w-none [\u0026>*:first-child]:mt-0 prose-p:my-1.5 prose-p:leading-relaxed prose-headings:my-2 prose-headings:mt-3 prose-headings:font-medium prose-headings:text-foreground prose-h1:text-base prose-h2:text-base prose-h3:text-sm prose-ul:my-1.5 prose-li:my-0.5 prose-strong:font-medium prose-strong:text-foreground prose-em:text-foreground prose-code:text-foreground prose-code:bg-muted prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:font-normal prose-code:before:content-none prose-code:after:content-none prose-blockquote:text-foreground prose-a:text-accent prose-a:no-underline hover:prose-a:underline prose-hr:border-border prose-hr:opacity-30"
                     )}
                 >
                     {msg.role === "user" ? (
@@ -248,7 +250,7 @@ export function ChatMessage({
                                     variant="ghost"
                                     size="icon"
                                     className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted"
-                                    onClick={() => toast.success("👍 Спасибо за оценку!")}
+                                    onClick={() => onLike(msg.id)}
                                 >
                                     <Icons.thumbsUp className="h-3.5 w-3.5" />
                                 </Button>

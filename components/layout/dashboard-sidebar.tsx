@@ -34,10 +34,12 @@ import { SidebarAgentLink } from "./SidebarAgentLink"; // Note: Filename case se
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog";
 import { FreeCreditsButton } from "./free-credits-button";
 
+import { LucideIcon } from "lucide-react";
+
 interface DashboardAgentLinkProps {
   href: string;
   active: boolean;
-  icon: any;
+  icon: LucideIcon;
   children: React.ReactNode;
   isExpanded: boolean;
 }
@@ -50,9 +52,9 @@ function DashboardAgentLink({ href, active, icon: Icon, children, isExpanded }: 
           <Link
             href={href}
             className={cn(
-              "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
+              "flex items-center gap-2 px-2 py-1.5 text-[15px] transition-all duration-200 rounded-[5px]",
               active
-                ? "text-foreground font-medium bg-muted"
+                ? "text-white font-medium bg-[#141413]/95"
                 : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
             )}
           >
@@ -76,6 +78,7 @@ interface DashboardSidebarProps {
     image?: string | null;
     role?: string;
     credits?: number;
+    emoji?: string | null;
   } | null;
 }
 
@@ -126,7 +129,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
           {/* Toggle & Header Area */}
           <div className="flex h-12 items-center justify-between px-3 pt-1 mb-4">
             {isSidebarExpanded && (
-              <Link href="/dashboard/agents" className="text-2xl font-black text-foreground tracking-tight hover:opacity-70 transition-opacity mx-auto">
+              <Link href="/dashboard/agents" className="text-2xl font-black text-foreground tracking-tight hover:opacity-70 transition-opacity">
                 ai content
               </Link>
             )}
@@ -165,7 +168,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                   <Link
                     href="/dashboard/chat/new"
                     className={cn(
-                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
+                      "flex items-center gap-2 px-2 py-1.5 text-[15px] transition-all duration-200 rounded-[5px]",
                       "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
                     )}
                   >
@@ -186,9 +189,9 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                   <Link
                     href="/dashboard/datasets"
                     className={cn(
-                      "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md",
+                      "flex items-center gap-2 px-2 py-1.5 text-[15px] transition-all duration-200 rounded-[5px]",
                       path.startsWith("/dashboard/datasets")
-                        ? "text-foreground font-medium bg-muted"
+                        ? "text-white font-medium bg-[#141413]/95"
                         : "text-muted-foreground hover:text-white hover:bg-[#141413]/95"
                     )}
                   >
@@ -327,7 +330,7 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
 
           {/* User Profile at Bottom */}
           {user && (
-            <div className="border-t border-border p-3">
+            <div className="border-t border-border">
               <SidebarUser user={user} isExpanded={isSidebarExpanded} />
             </div>
           )}

@@ -81,7 +81,7 @@ export function SidebarAgentLink({ agent, path, isExpanded, canDelete = false }:
                     <Link
                         href={`/dashboard/agents/${agent.id}`}
                         className={cn(
-                            "flex items-center gap-2 px-2 py-1 text-[15px] transition-all duration-200 rounded-md mb-1",
+                            "flex items-center gap-2 px-2 py-1.5 text-[15px] transition-all duration-200 rounded-[5px] mb-1",
                             isAgentPage
                                 ? "text-foreground font-medium bg-muted"
                                 : "text-muted-foreground hover:text-white hover:bg-[#141413]/95",

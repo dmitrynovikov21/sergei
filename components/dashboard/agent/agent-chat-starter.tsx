@@ -43,6 +43,13 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
     const [datasets, setDatasets] = React.useState<{ id: string, name: string }[]>([])
     const [selectedDatasetId, setSelectedDatasetId] = React.useState<string | null>(null)
 
+    // Initialize selectedDatasetId from agent's default dataset
+    React.useEffect(() => {
+        if (agent.datasetId && !selectedDatasetId) {
+            setSelectedDatasetId(agent.datasetId)
+        }
+    }, [agent.datasetId])
+
     React.useEffect(() => {
         getDatasets().then(ds => setDatasets(ds))
     }, [])
@@ -66,6 +73,7 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
 
     const handleDrop = (e: React.DragEvent) => {
         e.preventDefault()
+        e.stopPropagation()
         setIsDragging(false)
         if (e.dataTransfer.files) {
             Array.from(e.dataTransfer.files).forEach(file => {
@@ -73,6 +81,25 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
                     uploadFile(file)
                 }
             })
+        }
+    }
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items
+        if (!items) return
+
+        const imageFiles: File[] = []
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile()
+                if (file) imageFiles.push(file)
+            }
+        }
+
+        if (imageFiles.length > 0) {
+            e.preventDefault()
+            imageFiles.forEach(file => uploadFile(file))
         }
     }
 
@@ -113,8 +140,8 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
 
     if (isHeadlinesAgent) {
         quickActions.push(
-            { text: "Дай 10 заголовков" },
-            { text: "Дай 10 на тему" }
+            { text: "Придумай заголовки для Reels" },
+            { text: "Заголовки на тему" }
         )
     }
 
@@ -154,7 +181,10 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
                             handleStartChat()
                         }
                     }}
-                    className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none outline-none text-[15px] p-4 min-h-[140px]"
+                    onPaste={handlePaste}
+                    onDrop={handleDrop}
+                    onDragOver={(e) => e.preventDefault()}
+                    className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground/60 resize-none outline-none text-[15px] p-4 min-h-[48px]"
                 />
 
                 {/* Attachments Preview */}

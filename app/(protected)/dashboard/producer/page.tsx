@@ -28,6 +28,19 @@ interface GeneratedPost extends Post {
     createdAt: number
 }
 
+// API response types
+interface HeadlineItem {
+    id: string
+    headline: string
+}
+
+interface ScriptItem {
+    headline: string
+    caption: string
+    reasoning: string
+    hook_type?: string
+}
+
 // ==========================================
 // Constants
 // ==========================================
@@ -144,8 +157,8 @@ export default function ProducerPage() {
             const batch = await approveHeadlines(currentBatchId, approvedIds)
             setPosts(prev => mergeScripts(prev, batch.scripts))
             addMessage("assistant", "✅ Скрипты готовы! Напиши 'сделай видео' для продакшна.")
-        } catch (error: any) {
-            addMessage("assistant", `❌ Ошибка: ${error.message}`)
+        } catch (error) {
+            addMessage("assistant", `❌ Ошибка: ${error instanceof Error ? error.message : 'Unknown error'}`)
         }
     }
 
@@ -183,7 +196,7 @@ export default function ProducerPage() {
 // Helper Functions (Pure, testable)
 // ==========================================
 
-function parseHeadlines(headlines: any[]): GeneratedPost[] {
+function parseHeadlines(headlines: HeadlineItem[]): GeneratedPost[] {
     return headlines.map(hl => ({
         id: hl.id,
         headline: hl.headline,
@@ -196,7 +209,7 @@ function parseHeadlines(headlines: any[]): GeneratedPost[] {
     }))
 }
 
-function mergeScripts(posts: GeneratedPost[], scripts: any[]): GeneratedPost[] {
+function mergeScripts(posts: GeneratedPost[], scripts: ScriptItem[]): GeneratedPost[] {
     return posts.map(post => {
         const script = scripts.find(s => s.headline === post.headline)
         if (script) {

@@ -42,6 +42,12 @@ import { useFileUpload } from "@/hooks/use-file-upload"
 import { CreditBlockModal } from "@/components/chat/credit-block-modal"
 import { SubscriptionRequiredModal } from "@/components/chat/subscription-required-modal"
 import type { TariffPlan } from "@/lib/billing-config"
+import {
+    parseSSELine,
+    extractStatusFromReasoning,
+    buildDisplayContent,
+    extractLinesFromBuffer
+} from "@/lib/utils/stream-parser"
 
 
 
@@ -52,16 +58,20 @@ interface ChatInterfaceProps {
     agentIcon?: string | null
     agent: Agent
     initialInput?: string // New prop
+    initialDatasetId?: string | null // Dataset selected when chat was created
     userName?: string // User name for greeting
 }
 
-export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput, userName = "there" }: ChatInterfaceProps) {
+export function ChatInterface({ chatId: initialChatId, initialMessages, agentName, agentIcon, agent, initialInput, initialDatasetId, userName = "there" }: ChatInterfaceProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const [chatId, setChatId] = useState(initialChatId)
-    // Update messages type to include attachments
-    const [messages, setMessages] = useState<any[]>(initialMessages)
-    const [input, setInput] = useState(initialInput || "")
+    // Initialize messages: use initialMessages from DB, or empty for new chats
+    const [messages, setMessages] = useState<any[]>(() => {
+        if (initialMessages && initialMessages.length > 0) return initialMessages
+        return []
+    })
+    const [input, setInput] = useState("")
     const [isLoading, setIsLoading] = useState(false)
 
     // Dataset selector state
@@ -112,6 +122,17 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
             setDatasets(data.map(d => ({ id: d.id, name: d.name })))
         }).catch(console.error)
     }, [])
+
+    // Initialize selectedDatasetId: chat's dataset takes priority over agent's default
+    const datasetInitializedRef = useRef(false)
+    useEffect(() => {
+        // Priority: chat's saved dataset > agent's default dataset
+        const effectiveDatasetId = initialDatasetId || agent.datasetId
+        if (effectiveDatasetId && !selectedDatasetId) {
+            setSelectedDatasetId(effectiveDatasetId)
+        }
+        datasetInitializedRef.current = true
+    }, [initialDatasetId, agent.datasetId])
 
     const isPending = isLoading
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -196,19 +217,31 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     // Track last user message for restore on stop
     const lastUserMessageRef = useRef<{ content: string, attachments: Attachment[] } | null>(null)
 
-    // Handle Stop - keep user message, only remove empty AI response
+    // Handle Stop - abort stream, keep partial AI response visible
     const handleStop = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort()
             abortControllerRef.current = null
             setIsLoading(false)
 
-            // Only remove the empty AI message, keep user's message visible
+            // Keep partial AI response, just mark as stopped (if content exists)
+            // If AI message is still just thinking placeholder, remove it
             setMessages(prev => {
-                // Find and remove only the last empty assistant message
                 const lastMsg = prev[prev.length - 1]
-                if (lastMsg && lastMsg.role === 'assistant' && !lastMsg.content) {
-                    return prev.slice(0, -1) // Remove only empty AI msg
+                if (lastMsg && lastMsg.role === 'assistant') {
+                    // Check if it's just the thinking placeholder with no real content
+                    const hasRealContent = lastMsg.content &&
+                        !lastMsg.content.startsWith('<thinking>') &&
+                        lastMsg.content.trim().length > 0
+                    if (!hasRealContent) {
+                        return prev.slice(0, -1) // Remove empty/thinking-only AI msg
+                    }
+                    // Keep partial content with stop marker
+                    return prev.map(msg =>
+                        msg.id === lastMsg.id
+                            ? { ...msg, content: msg.content + '\n\n[Остановлено]' }
+                            : msg
+                    )
                 }
                 return prev
             })
@@ -286,7 +319,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         body: JSON.stringify({
                             message: userMessage,
                             attachments: currentAttachments, // Use the local variable, not state
-                            datasetId: selectedDatasetId // Pass selected dataset to AI
+                            datasetId: selectedDatasetId ?? initialDatasetId ?? agent.datasetId ?? null // Pass selected dataset to AI, with fallback for first-render race
                         }),
                         signal: controller.signal // Pass signal
                     })
@@ -341,78 +374,39 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             if (done) break
 
                             buffer += decoder.decode(value, { stream: true })
+                            const [lines, remaining] = extractLinesFromBuffer(buffer)
+                            buffer = remaining
 
-                            // Parse UI message stream format (newline-delimited JSON)
-                            const lines = buffer.split('\n')
-                            buffer = lines.pop() || "" // Keep incomplete line in buffer
-
+                            // Process each complete line
                             for (const line of lines) {
-                                if (!line.trim()) continue
+                                const chunk = parseSSELine(line)
+                                if (!chunk) continue
 
-                                // Handle SSE format: "data: {...json...}"
-                                let jsonStr = line
-                                if (line.startsWith('data:')) {
-                                    jsonStr = line.slice(5).trim()
-                                }
-
-                                if (!jsonStr || jsonStr === '[DONE]') continue
-
-                                try {
-                                    const data = JSON.parse(jsonStr)
-                                    if (data.type === 'text-delta') {
-                                        fullText += data.textDelta || data.delta || ""
-                                    } else if (data.type === 'reasoning-delta') {
-                                        fullReasoning += data.textDelta || data.delta || ""
-                                    }
-                                } catch {
-                                    // Skip unparseable lines
+                                if (chunk.type === 'text-delta') {
+                                    fullText += chunk.content || ''
+                                } else if (chunk.type === 'reasoning-delta') {
+                                    fullReasoning += chunk.content || ''
+                                } else if (chunk.type === 'tool-call') {
+                                    lastStatus = `Вызываю ${chunk.toolName}...`
+                                    lastStatusUpdate = Date.now()
+                                } else if (chunk.type === 'tool-result') {
+                                    lastStatus = "Анализирую данные..."
+                                    lastStatusUpdate = Date.now()
                                 }
                             }
 
-                            // Extract last complete sentence for status (throttled to 1s)
+                            // Update status from reasoning (throttled to 1s)
                             const now = Date.now()
                             if (fullReasoning && (now - lastStatusUpdate > 1000)) {
-                                // Find last complete sentence
-                                const sentences = fullReasoning.split(/(?<=[.!?。])\s+/)
-                                const lastSentence = sentences.filter(s => s.trim().length > 15).pop()
-                                if (lastSentence) {
-                                    // Take first 8-10 words for clean display
-                                    const words = lastSentence.trim().split(/\s+/).slice(0, 10)
-                                    lastStatus = words.join(' ')
-                                    if (lastSentence.split(/\s+/).length > 10) lastStatus += '...'
+                                const extracted = extractStatusFromReasoning(fullReasoning)
+                                if (extracted) {
+                                    lastStatus = extracted
                                     lastStatusUpdate = now
                                 }
                             }
 
-                            // Build display content - ALWAYS show thinking block until text arrives
-                            let displayContent = fullText
-
-                            // Always show thinking block - use "Думаю..." if no status yet
-                            // If no lastStatus, extract the last complete sentence from reasoning
-                            let statusToShow = lastStatus
-                            if (!statusToShow && fullReasoning.length > 0) {
-                                const sentences = fullReasoning.split(/(?<=[.!?。])\s+/)
-                                const lastSentence = sentences.filter(s => s.trim().length > 10).pop()
-                                if (lastSentence) {
-                                    const words = lastSentence.trim().split(/\s+/).slice(0, 12)
-                                    statusToShow = words.join(' ')
-                                    if (lastSentence.split(/\s+/).length > 12) statusToShow += '...'
-                                } else {
-                                    statusToShow = "Думаю..."
-                                }
-                            }
-                            const thinkingData = JSON.stringify({
-                                status: statusToShow || "Думаю...",
-                                full: fullReasoning
-                            })
-                            if (fullText) {
-                                displayContent = `<thinking>${thinkingData}</thinking>\n\n${fullText}`
-                            } else {
-                                displayContent = `<thinking>${thinkingData}</thinking>`
-                            }
-
-                            // Fix for "Incorrect line at end"
-                            const cleanedContent = displayContent.replace(/\n---\s*$/, '').replace(/\n_+\s*$/, '')
+                            // Build and update display content
+                            const cleanedContent = buildDisplayContent(fullText, fullReasoning, lastStatus)
 
                             setMessages((prev) =>
                                 prev.map((msg) =>
@@ -426,7 +420,6 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
                 } catch (error: any) {
                     if (error.name === 'AbortError') {
-                        console.log('Request aborted')
                         setMessages((prev) =>
                             prev.map((msg) =>
                                 msg.id === aiMsgId
@@ -464,7 +457,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
         if (initialInput && !hasAutoSubmittedRef.current && messages.length === 0 && attachmentsReady) {
             hasAutoSubmittedRef.current = true
-            handleSendMessage(initialInput || "")
+            handleSendMessage(initialInput)
             window.history.replaceState(null, '', window.location.pathname)
         }
     }, [initialInput, messages.length, attachments.length, initialAttachments.length])
@@ -491,7 +484,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     // Submit feedback
     const handleSubmitFeedback = () => {
         if (!feedbackText.trim()) return
-        console.log("Feedback for message:", feedbackMessageId, "Text:", feedbackText)
+        // TODO: Save feedback to database
         toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
         setFeedbackOpen(false)
         setFeedbackText("")
@@ -501,6 +494,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const handleDislike = (messageId: string) => {
         setFeedbackMessageId(messageId)
         setFeedbackOpen(true)
+    }
+
+    const handleLike = (messageId: string) => {
+        toast.success("Спасибо за оценку!")
+        // TODO: Save to DB
     }
 
 
@@ -545,17 +543,15 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         {(
                             (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
                                 [
-                                    { text: "Дай 10 заголовков" },
-                                    { text: "Дай 10 на тему" },
+                                    { text: "Придумай заголовки для Reels" },
+                                    { text: "Заголовки на тему" },
                                 ] :
                                 (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
                                     [
-                                        { text: "Дай 10" },
-                                        { text: "Дай 10 на тему" },
+                                        { text: "Написать сценарий" },
+                                        { text: "Анализ трендов" },
                                     ] :
                                     [
-                                        { text: "Дай 10 вариантов описания" },
-                                        { text: "Дай 10 описаний на тему" },
                                         { text: "Написать сценарий" },
                                         { text: "Анализ трендов" },
                                     ]
@@ -589,7 +585,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                     <div className="flex flex-col">
                         <Link
                             href={`/dashboard/agents/${agent.id}`}
-                            className="text-sm font-medium text-foreground hover:bg-muted hover:rounded px-2 py-0.5 transition-colors w-fit"
+                            className="text-sm font-medium text-foreground hover:bg-[#141413]/95 hover:text-white rounded px-2 py-0.5 transition-all duration-200 w-fit"
                         >
                             {agentName}
                         </Link>
@@ -607,9 +603,11 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                                 isPending={isPending}
                                 onResend={handleSendMessage}
                                 onRegenerate={handleRegenerate}
+                                onLike={handleLike}
                                 onDislike={handleDislike}
                                 onCopy={(content) => {
                                     navigator.clipboard.writeText(content)
+                                    toast.success("Скопировано!")
                                 }}
                             />
                         ))}

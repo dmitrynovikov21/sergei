@@ -23,14 +23,11 @@ export function buildSettingsBlock(settings: AgentSettings): string {
         parts.push("Добавляй в текст эмодзи, где это уместно, но без фанатизма. Например вместо пунктов в тексте, можно сделать соответствующие эмодзи, но если подразумевается нумерованный список, то сделай цифры, а не эмодзи.")
     }
 
-    const userLink = settings.subscribeLink || "@ваш_ник"
+    const userLink = settings.subscribeLink || ""
 
-    if (settings.useSubscribe && settings.useLinkInBio) {
+    if (settings.useSubscribe) {
         parts.push("\nПРИЗЫВ ПОДПИСАТЬСЯ:")
-        parts.push(`В конце каждого ответа должен быть призыв подписаться на этот аккаунт: ${userLink} и проверить ссылку в шапке профиля. Важно чтобы это было нативно.`)
-    } else if (settings.useSubscribe) {
-        parts.push("\nПРИЗЫВ ПОДПИСАТЬСЯ:")
-        parts.push(`В конце каждого ответа должен быть призыв подписаться на этот аккаунт: ${userLink}. Важно чтобы это было нативно.`)
+        parts.push(userLink || "В конце текста должен быть призыв подписаться.")
     } else if (settings.useLinkInBio) {
         parts.push("\nССЫЛКА В ШАПКЕ:")
         parts.push(`Упомяни что полезная информация есть в ТГ по ссылке в шапке профиля.`)
@@ -43,10 +40,10 @@ export function buildSettingsBlock(settings: AgentSettings): string {
 
     if (settings.useAudienceQuestion) {
         parts.push("\nВОПРОС АУДИТОРИИ:")
-        parts.push("Также важно, чтобы ты заканчивал пост виральным вопросом к зрителям по теме поста. Используй перед вопросом эмоджи ❓")
-
         if (settings.audienceQuestion) {
-            parts.push(`Конкретная формулировка вопроса: "${settings.audienceQuestion}"`)
+            parts.push(settings.audienceQuestion)
+        } else {
+            parts.push("Задай виральный вопрос аудитории в конце поста.")
         }
     }
 

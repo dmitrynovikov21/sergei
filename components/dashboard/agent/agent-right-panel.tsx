@@ -67,8 +67,8 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
     const isStructureAgent = agent.name.toLowerCase().includes("структура")
 
-    // Описание and Структура agents should have border
-    const shouldShowBorder = isDescriptionAgent || isStructureAgent
+    // Always show border on right panel
+    const shouldShowBorder = true
 
     const saveSettings = (updates: Partial<{
         useEmoji: boolean
@@ -123,7 +123,16 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                 shouldShowBorder && "border border-border/50 rounded-xl"
             )}>
 
-                {/* Settings button moved to AgentChatStarter for Headlines agents */}
+                {/* Settings Header for Headlines agents */}
+                {isHeadlinesAgent && !isDescriptionAgent && (
+                    <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">Обновляется автоматически</span>
+                    </div>
+                )}
 
                 {/* "Invested" Badge (High Value) - Minimalist Style */}
                 {isDescriptionAgent && (

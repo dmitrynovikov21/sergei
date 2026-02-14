@@ -21,6 +21,8 @@ export const {
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
+  trustHost: true,
+  debug: process.env.NODE_ENV !== "production",
   cookies: {
     sessionToken: {
       name: `__Secure-cz2.session-token`,
@@ -111,7 +113,29 @@ export const {
         accountType: account?.type,
         profileEmail: profile?.email
       });
-      // System agents are global (isPublic=true), no need to seed per-user copies
+
+      // Auto-verify email for OAuth providers (Google, Yandex)
+      // Note: For NEW users, the adapter creates the user AFTER signIn returns true.
+      // So we only auto-verify here if the user already exists in DB.
+      if (account?.type === 'oidc' && user?.email) {
+        try {
+          const existing = await prisma.user.findUnique({
+            where: { email: user.email },
+            select: { id: true, emailVerified: true }
+          });
+          if (existing && !existing.emailVerified) {
+            await prisma.user.update({
+              where: { id: existing.id },
+              data: { emailVerified: new Date() }
+            });
+            console.log(`[Auth] Auto-verified email for OAuth user ${existing.id}`);
+          }
+        } catch (e) {
+          // Non-critical: don't block login if auto-verify fails
+          console.error('[Auth] Failed to auto-verify OAuth user:', e);
+        }
+      }
+
       return true
     },
     // Redirect to dashboard after successful Google OAuth

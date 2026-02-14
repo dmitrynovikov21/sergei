@@ -21,7 +21,7 @@ export default async function HeroLanding() {
     },
   )
     .then((res) => res.json())
-    .catch((e) => console.log(e));
+    .catch(() => ({ stargazers_count: 0 }));
 
   return (
     <section className="space-y-6 py-12 sm:py-20 lg:py-20">

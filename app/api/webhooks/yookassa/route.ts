@@ -100,7 +100,13 @@ export async function POST(req: NextRequest) {
                     }
                 })
 
-                // 2. Log credit transaction for history
+                // 2. Add credits to user balance (so AI usage can deduct from it)
+                await tx.user.update({
+                    where: { id: userId },
+                    data: { credits: { increment: credits } }
+                })
+
+                // 3. Log credit transaction for history
                 await tx.creditTransaction.create({
                     data: {
                         id: crypto.randomUUID(),
@@ -115,7 +121,7 @@ export async function POST(req: NextRequest) {
                     }
                 })
 
-                // 3. Referral commission (10% for subscriptions)
+                // 4. Referral commission (10% for subscriptions)
                 if (user.referrerId) {
                     const commission = amountRub * SUBSCRIPTION_COMMISSION_RATE
 

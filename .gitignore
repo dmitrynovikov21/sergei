@@ -41,3 +41,16 @@ next-env.d.ts
 
 .vscode
 .contentlayer
+# Database - NEVER sync to git
+prisma/dev.db
+prisma/dev.db-journal
+prisma/dev.db-wal
+
+# Backups
+data/backups/
+
+# Parser service node_modules
+parser-service/node_modules/
+
+prisma/*.db
+prisma/*.db-*

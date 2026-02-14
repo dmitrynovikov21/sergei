@@ -73,7 +73,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
     return (
         <DropdownMenu open={open} onOpenChange={setOpen}>
             <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 w-full px-3 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group rounded-md">
+                <button className="flex items-center gap-3 w-full px-4 py-3 hover:bg-[#141413]/95 transition-all duration-200 text-left group">
                     {/* Avatar */}
                     {displayEmoji ? (
                         <span className="text-2xl w-8 h-8 flex items-center justify-center shrink-0">{displayEmoji}</span>
@@ -90,7 +90,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
                                     {displayName}
                                 </p>
                                 <p className="text-xs text-zinc-500 group-hover:text-zinc-300 truncate font-mono flex items-center gap-1.5 mt-0.5">
-                                    <Coins className="w-3 h-3 text-amber-500" />
+                                    <span>🤑</span>
                                     <span>{user.credits !== undefined ? user.credits : 0} CR</span>
                                 </p>
                             </div>
@@ -103,8 +103,8 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
             <DropdownMenuContent
                 side="top"
                 align="start"
-                className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[200px] mb-2"
-                sideOffset={8}
+                className="w-[var(--radix-dropdown-menu-trigger-width)] min-w-[200px] px-[3px]"
+                sideOffset={0}
             >
                 {/* User Email */}
                 <div className="px-3 py-2">
@@ -127,7 +127,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
                 <DropdownMenuItem asChild>
                     <Link href="/dashboard/billing" className="flex items-center gap-3 cursor-pointer">
                         <CreditCard className="h-4 w-4" />
-                        <span>Биллинг</span>
+                        <span>Оплата и подписка</span>
                     </Link>
                 </DropdownMenuItem>
 
@@ -135,7 +135,7 @@ export function SidebarUser({ user, isExpanded }: SidebarUserProps) {
                 <DropdownMenuItem asChild>
                     <Link href="/referrals" className="flex items-center gap-3 cursor-pointer">
                         <Gift className="h-4 w-4" />
-                        <span>Партнёрка</span>
+                        <span>Реферальная программа</span>
                     </Link>
                 </DropdownMenuItem>
 

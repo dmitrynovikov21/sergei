@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "@/lib/session";
+import { prisma } from "@/lib/db";
 import {
   DashboardSidebar,
   MobileSheetSidebar,
@@ -15,7 +16,23 @@ interface ProtectedLayoutProps {
 }
 
 export default async function Dashboard({ children }: ProtectedLayoutProps) {
-  const user = await getCurrentUser();
+  const sessionUser = await getCurrentUser();
+
+  if (!sessionUser) redirect("/login");
+
+  // Fetch fresh user data to get accurate credits
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      image: true,
+      credits: true,
+      emoji: true,
+      role: true, // Need role for sidebar logic if any
+    }
+  });
 
   if (!user) redirect("/login");
 
@@ -37,7 +54,7 @@ export default async function Dashboard({ children }: ProtectedLayoutProps) {
             <MobileSheetSidebar agents={starterAgents} />
           </div>
 
-          <main className="flex-1 overflow-y-auto">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden">
             <EmailVerificationBanner />
             {children}
           </main>

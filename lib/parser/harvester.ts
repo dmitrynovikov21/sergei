@@ -4,7 +4,8 @@
  * Handles:
  * - Fetching posts from Instagram via Apify
  * - Deduplication (update stats for existing, process new)
- * - AI Processing (Claude Vision for headlines, Whisper for transcription)
+ * - AI Processing (headline extraction + trend analysis)
+ * - Backup raw data to JSON files
  */
 
 import { prisma } from "@/lib/db"
@@ -14,8 +15,10 @@ import {
     extractUsername,
     type ApifyInstagramPost
 } from "./parser-client"
+import { analyzeAndSaveContentItems } from "./ai-analyzer"
 import OpenAI from "openai"
 import fs from "fs"
+import fsp from "fs/promises"
 import path from "path"
 import os from "os"
 
@@ -26,6 +29,10 @@ import os from "os"
 const openai = new OpenAI()
 // Default days limit if not set on source
 const DEFAULT_DAYS_LIMIT = 14
+// Batch size for AI processing (avoid overwhelming the API)
+const AI_BATCH_SIZE = 10
+// Pause between AI batches (ms)
+const AI_BATCH_PAUSE = 2000
 
 // ==========================================
 // Main Harvester Functions
@@ -101,9 +108,15 @@ export async function processTrackingSource(sourceId: string): Promise<{
         result.fetched = posts.length
         console.log(`[Harvester] Apify returned ${posts.length} posts (raw count)`)
 
+        // === BACKUP RAW DATA TO FILE ===
+        await saveBackupFile(source.id, source.username || 'unknown', posts, source.daysLimit || DEFAULT_DAYS_LIMIT, source.contentTypes)
+
         // Calculate average views for virality context
         const totalViews = posts.reduce((sum, p) => sum + (p.videoPlayCount || p.playCount || p.videoViewCount || p.viewCount || 0), 0)
         const averageViews = posts.length > 0 ? totalViews / posts.length : 0
+
+        // Collect new item IDs for batch AI processing
+        const newItemIds: string[] = []
 
         // 3. Process each post
         for (const post of posts) {
@@ -113,13 +126,14 @@ export async function processTrackingSource(sourceId: string): Promise<{
                     source.id,
                     source.datasetId,
                     source.minViewsFilter,
-                    (source as any).minLikesFilter || 0,  // NEW: separate likes filter
+                    (source as any).minLikesFilter || 0,
                     source.contentTypes || "Video,Sidecar,Image",
                     averageViews
                 )
 
                 if (postResult.status === "saved") {
                     result.saved++
+                    newItemIds.push(postResult.itemId)  // Collect for batch AI
                 } else if (postResult.status === "updated") {
                     result.updated++
                 } else if (postResult.status === "skipped") {
@@ -133,6 +147,12 @@ export async function processTrackingSource(sourceId: string): Promise<{
                 const errorMsg = error instanceof Error ? error.message : "Unknown error"
                 result.errors.push(`Post ${post.id}: ${errorMsg}`)
             }
+        }
+
+        // === BATCH AI PROCESSING ===
+        if (newItemIds.length > 0) {
+            console.log(`[Harvester] Processing ${newItemIds.length} new items with AI (batches of ${AI_BATCH_SIZE})`)
+            await processItemsInBatches(newItemIds)
         }
 
         // 4. Auto-archive old content (14+ days)
@@ -189,10 +209,10 @@ export async function processTrackingSource(sourceId: string): Promise<{
 
 /**
  * Process a single post - deduplicate and trigger AI if needed
- * Returns status and reason for tracking
+ * Returns status, reason, and itemId (for batch AI processing)
  */
 type PostResult =
-    | { status: "saved" }
+    | { status: "saved"; itemId: string }
     | { status: "updated" }
     | { status: "skipped"; reason: string }
 
@@ -240,21 +260,28 @@ async function processPost(
         }
     })
 
+    // Calculate virality score (ratio to batch average)
+    const viralityScore = averageViews > 0 ? views / averageViews : null
+
     if (existing) {
-        // Update stats only
+        // Update stats + updatedAt + viralityScore + fix sourceUrl
+        const updateData: Record<string, unknown> = {
+            views,
+            likes: post.likesCount,
+            comments: post.commentsCount,
+            viralityScore,  // Recalculate!
+            updatedAt: new Date()
+        }
+        // Fix broken sourceUrl (from old parser that saved post URL instead of profile URL)
+        if (post.ownerUsername) {
+            updateData.sourceUrl = `https://instagram.com/${post.ownerUsername}`
+        }
         await prisma.contentItem.update({
             where: { id: existing.id },
-            data: {
-                views,
-                likes: post.likesCount,
-                comments: post.commentsCount
-            }
+            data: updateData
         })
         return { status: "updated" }
     }
-
-    // Calculate virality score (ratio to batch average)
-    const viralityScore = averageViews > 0 ? views / averageViews : null
 
     // Create new content item with contentType
     const contentItem = await prisma.contentItem.create({
@@ -271,7 +298,7 @@ async function processPost(
             publishedAt: new Date(post.timestamp),
             description: post.caption,
             viralityScore,
-            contentType: post.type,  // NEW: save content type
+            contentType: post.type,
             datasetId,
             isProcessed: false,
             isApproved: false
@@ -280,10 +307,8 @@ async function processPost(
 
     console.log(`[Harvester] Created ${post.type}: ${contentItem.id}`)
 
-    // Trigger AI processing for headline extraction
-    await processContentItemAI(contentItem.id)
-
-    return { status: "saved" }
+    // Return itemId for batch AI processing (don't process immediately)
+    return { status: "saved", itemId: contentItem.id }
 }
 
 // ==========================================
@@ -454,4 +479,94 @@ export async function harvestAllSources(): Promise<{
     }
 
     return result
+}
+
+// ==========================================
+// Backup & Batch Processing Helpers
+// ==========================================
+
+/**
+ * Save raw Apify data to JSON backup file
+ * Path: /data/backups/parse_{sourceId}_{timestamp}.json
+ */
+async function saveBackupFile(
+    sourceId: string,
+    username: string,
+    posts: ApifyInstagramPost[],
+    daysLimit: number,
+    contentTypes: string | null
+): Promise<void> {
+    try {
+        const backupDir = path.join(process.cwd(), 'data', 'backups')
+        await fsp.mkdir(backupDir, { recursive: true })
+
+        const timestamp = Date.now()
+        const backupFile = path.join(backupDir, `parse_${sourceId}_${timestamp}.json`)
+
+        const backupData = {
+            sourceId,
+            username,
+            timestamp: new Date().toISOString(),
+            daysLimit,
+            contentTypes,
+            postsCount: posts.length,
+            rawPosts: posts
+        }
+
+        await fsp.writeFile(backupFile, JSON.stringify(backupData, null, 2))
+        console.log(`[Backup] Saved ${posts.length} items to ${backupFile}`)
+    } catch (error) {
+        console.error(`[Backup] Failed to save backup:`, error)
+        // Don't throw - backup failure shouldn't stop processing
+    }
+}
+
+/**
+ * Process items in batches:
+ * 1. First extract headlines from covers (parallel)
+ * 2. Then run full AI trend analysis (batch)
+ */
+async function processItemsInBatches(itemIds: string[]): Promise<void> {
+    // Step 1: Extract headlines from covers (existing logic)
+    console.log(`[AI] Step 1: Extracting headlines from ${itemIds.length} items...`)
+
+    for (let i = 0; i < itemIds.length; i += AI_BATCH_SIZE) {
+        const batch = itemIds.slice(i, i + AI_BATCH_SIZE)
+        const batchNum = Math.floor(i / AI_BATCH_SIZE) + 1
+        const totalBatches = Math.ceil(itemIds.length / AI_BATCH_SIZE)
+
+        console.log(`[AI] Headline batch ${batchNum}/${totalBatches} (${batch.length} items)`)
+
+        // Process headline extraction in parallel
+        await Promise.all(batch.map(id => processContentItemAI(id).catch(err => {
+            console.error(`[AI] Headline error ${id}:`, err.message)
+        })))
+
+        // Pause between batches
+        if (i + AI_BATCH_SIZE < itemIds.length) {
+            await sleep(AI_BATCH_PAUSE)
+        }
+    }
+
+    console.log(`[AI] Headlines extracted for ${itemIds.length} items`)
+
+    // Step 2: Run full AI trend analysis
+    console.log(`[AI] Step 2: Running trend analysis on ${itemIds.length} items...`)
+
+    try {
+        const analyzed = await analyzeAndSaveContentItems(itemIds)
+        console.log(`[AI] Trend analysis complete: ${analyzed} items analyzed`)
+    } catch (error) {
+        console.error(`[AI] Trend analysis failed:`, error)
+        // Don't break the pipeline - headline extraction already succeeded
+    }
+
+    console.log(`[AI] All processing complete for ${itemIds.length} items`)
+}
+
+/**
+ * Sleep helper for batch processing
+ */
+function sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms))
 }

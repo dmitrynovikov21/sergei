@@ -65,12 +65,13 @@ export async function getReferralStats() {
 
 export async function requestPayout(amount: number, details: string) {
     const user = await getCurrentUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user?.id) throw new Error("Unauthorized")
+    const userId = user.id
 
     if (amount < 1000) throw new Error("Minimum withdrawal amount is 1,000 RUB")
 
     const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: userId },
         select: { referralBalance: true }
     })
 
@@ -78,10 +79,10 @@ export async function requestPayout(amount: number, details: string) {
         throw new Error("Insufficient referral balance")
     }
 
-    await prisma.payoutRequest.create({
+    await prisma.payout_requests.create({
         data: {
             id: uuidv4(),
-            userId: user.id,
+            user_id: userId,
             amount: amount,
             status: "PENDING",
             details: details
@@ -91,13 +92,13 @@ export async function requestPayout(amount: number, details: string) {
     // Hold funds
     await prisma.$transaction([
         prisma.user.update({
-            where: { id: user.id },
+            where: { id: userId },
             data: { referralBalance: { decrement: amount } }
         }),
-        prisma.referralTransaction.create({
+        prisma.referral_transactions.create({
             data: {
                 id: uuidv4(),
-                userId: user.id,
+                user_id: userId,
                 amount: -amount,
                 type: "WITHDRAWAL_HOLD",
                 status: "PENDING"
@@ -114,10 +115,11 @@ export async function paySubscriptionFromReferralBalance() {
     const CREDITS_AMOUNT = 20000
 
     const user = await getCurrentUser()
-    if (!user) throw new Error("Unauthorized")
+    if (!user?.id) throw new Error("Unauthorized")
+    const userId = user.id
 
     const dbUser = await prisma.user.findUnique({
-        where: { id: user.id },
+        where: { id: userId },
         select: { referralBalance: true }
     })
 
@@ -127,14 +129,14 @@ export async function paySubscriptionFromReferralBalance() {
 
     await prisma.$transaction(async (tx) => {
         await tx.user.update({
-            where: { id: user.id },
+            where: { id: userId },
             data: { referralBalance: { decrement: PRICE_RUB } }
         })
 
-        await tx.referralTransaction.create({
+        await tx.referral_transactions.create({
             data: {
                 id: uuidv4(),
-                userId: user.id,
+                user_id: userId,
                 amount: -PRICE_RUB,
                 type: "SPEND_INTERNAL",
                 status: "COMPLETED"
@@ -142,14 +144,14 @@ export async function paySubscriptionFromReferralBalance() {
         })
 
         await tx.user.update({
-            where: { id: user.id },
+            where: { id: userId },
             data: { credits: { increment: CREDITS_AMOUNT } }
         })
 
         await tx.creditTransaction.create({
             data: {
                 id: uuidv4(),
-                userId: user.id,
+                userId: userId,
                 amount: CREDITS_AMOUNT,
                 reason: "referral-exchange",
                 metadata: JSON.stringify({ costRUB: PRICE_RUB })

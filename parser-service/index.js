@@ -2,6 +2,25 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+// ============================================
+// CRITICAL: Handle unhandled errors gracefully
+// Prevents crash when client disconnects during long Apify jobs
+// ============================================
+process.on('uncaughtException', (err) => {
+    // ECONNRESET happens when client closes connection - this is expected
+    if (err.code === 'ECONNRESET' || err.code === 'EPIPE') {
+        console.log('[Parser] Client disconnected (harmless):', err.code);
+        return; // Don't crash
+    }
+    console.error('[Parser] Uncaught Exception:', err);
+    // For other errors, log but don't exit
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('[Parser] Unhandled Rejection at:', promise, 'reason:', reason);
+    // Don't exit - keep server running
+});
+
 const parseRoutes = require('./routes/parse');
 
 const app = express();

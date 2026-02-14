@@ -13,7 +13,7 @@ interface AgentChatHistoryProps {
 export function AgentChatHistory({ chats }: AgentChatHistoryProps) {
     if (chats.length === 0) {
         return (
-            <div className="text-center py-12 border border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl">
+            <div className="text-center py-12">
                 <Clock className="w-6 h-6 text-zinc-400 mx-auto mb-3" />
                 <h3 className="text-zinc-700 dark:text-zinc-300 font-medium mb-1">Нет истории чатов</h3>
                 <p className="text-zinc-500 text-sm">Начните новый диалог выше</p>

@@ -44,11 +44,12 @@ export async function scrapeInstagram(
     console.log(`[ParserClient] Requesting: ${PARSER_SERVICE_URL}/api/scrape`);
     console.log(`[ParserClient] ContentTypes: ${contentTypes || 'All'}`);
 
-    // Create abort controller with 10-minute timeout for long-running Apify jobs
+    // Create abort controller with 15-minute timeout for long-running Apify jobs
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 minutes
+    const timeoutId = setTimeout(() => controller.abort(), 15 * 60 * 1000); // 15 minutes
 
     try {
+        // Use fetch with extended timeout - Apify jobs can take 6-10 minutes
         const response = await fetch(`${PARSER_SERVICE_URL}/api/scrape`, {
             method: 'POST',
             headers: {
@@ -63,6 +64,8 @@ export async function scrapeInstagram(
                 ...credentials
             }),
             signal: controller.signal,
+            // @ts-ignore - Node.js fetch supports these undici options
+            keepalive: true,
         });
 
         clearTimeout(timeoutId);

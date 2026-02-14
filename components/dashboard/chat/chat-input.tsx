@@ -22,6 +22,7 @@ interface ChatInputProps {
     centered?: boolean
     onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void
     onFileDrop: (files: FileList) => void
+    onFilePaste?: (files: File[]) => void
     attachments: Attachment[]
     removeAttachment: (index: number) => void
     onStop?: () => void
@@ -39,6 +40,7 @@ export function ChatInput({
     centered = false,
     onFileSelect,
     onFileDrop,
+    onFilePaste,
     attachments,
     removeAttachment,
     onStop,
@@ -71,6 +73,32 @@ export function ChatInput({
         setIsDragging(false)
         if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
             onFileDrop(e.dataTransfer.files)
+        }
+    }
+
+    const handlePaste = (e: React.ClipboardEvent) => {
+        const items = e.clipboardData?.items
+        if (!items) return
+
+        const imageFiles: File[] = []
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            if (item.type.startsWith('image/')) {
+                const file = item.getAsFile()
+                if (file) imageFiles.push(file)
+            }
+        }
+
+        if (imageFiles.length > 0) {
+            e.preventDefault() // Prevent pasting image as text
+            if (onFilePaste) {
+                onFilePaste(imageFiles)
+            } else {
+                // Fallback: create a FileList-like via DataTransfer
+                const dt = new DataTransfer()
+                imageFiles.forEach(f => dt.items.add(f))
+                onFileDrop(dt.files)
+            }
         }
     }
 
@@ -124,10 +152,12 @@ export function ChatInput({
                         }
                     }
                 }}
+                onPaste={handlePaste}
                 placeholder="Напишите ваш запрос..."
                 className="w-full h-auto min-h-[20px] max-h-[120px] resize-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 p-0 text-[15px] text-foreground placeholder:text-muted-foreground/60"
                 rows={2}
                 onDrop={handleDrop}
+                onDragOver={(e) => e.preventDefault()}
             />
 
             {/* Row 2: Buttons */}

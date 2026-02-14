@@ -117,7 +117,7 @@ export function DatasetsList({ datasets }: DatasetsListProps) {
                                 <TableCell className="font-medium">
                                     <div className="flex items-center gap-2">
                                         <Icons.database className="h-4 w-4 text-muted-foreground shrink-0" />
-                                        <span className="truncate max-w-[300px]">{dataset.name}</span>
+                                        <span className="">{dataset.name}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-muted-foreground">

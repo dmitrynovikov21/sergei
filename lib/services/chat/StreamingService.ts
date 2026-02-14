@@ -18,6 +18,8 @@ export interface StreamingOptions {
     messages: ClaudeMessage[]
     userId: string
     thinkingBudget?: number
+    tools?: Record<string, any>
+    maxSteps?: number
     onFinish?: (text: string, usage: { input_tokens: number; output_tokens: number }) => Promise<void>
 }
 
@@ -37,6 +39,8 @@ export async function createChatStream(options: StreamingOptions) {
         userId: options.userId,
         system: options.systemPrompt,
         temperature: options.thinkingBudget ? 1.0 : undefined, // Check if thinking requires temp 1
+        tools: options.tools,
+        maxSteps: options.maxSteps,
         onFinish: options.onFinish
     })
 }
@@ -89,6 +93,7 @@ export function createStreamingResponse(
 
     // Let's modify `route.ts` to pass the callback to `createChatStream`.
 
-    // Use toUIMessageStreamResponse for reasoning/thinking support
+    // Use toUIMessageStreamResponse for reasoning support
+    // Note: toDataStreamResponse breaks frontend compatibility
     return streamResult.toUIMessageStreamResponse({ sendReasoning: true });
 }

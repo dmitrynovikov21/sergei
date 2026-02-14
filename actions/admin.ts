@@ -18,6 +18,7 @@ export async function getAllUsersWithMetrics() {
             name: true,
             email: true,
             image: true,
+            emoji: true,
             credits: true,
             role: true,
             createdAt: true,
@@ -31,7 +32,6 @@ export async function getAllUsersWithMetrics() {
             subscriptions: {
                 where: { isActive: true },
                 orderBy: { expiresAt: 'desc' },
-                take: 1,
                 select: {
                     plan: true,
                     priceRub: true,
@@ -86,3 +86,64 @@ export async function getAllUsersWithMetrics() {
 
     return usersWithStats
 }
+
+/**
+ * Update user credits from admin panel
+ * Creates a credit transaction for audit trail
+ */
+export async function updateUserCredits({
+    userId,
+    amount,
+    reason
+}: {
+    userId: string
+    amount: number
+    reason: string
+}): Promise<{ success: boolean; newBalance?: number; error?: string }> {
+    const currentUser = await getCurrentUser()
+    if (!currentUser || currentUser.role !== 'ADMIN') {
+        return { success: false, error: "Unauthorized" }
+    }
+
+    try {
+        // Get current user balance
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { credits: true }
+        })
+
+        if (!user) {
+            return { success: false, error: "User not found" }
+        }
+
+        // Check if subtract would go negative
+        const newBalance = user.credits + amount
+        if (newBalance < 0) {
+            return { success: false, error: "Insufficient balance for deduction" }
+        }
+
+        // Update user credits and log transaction
+        const [updatedUser] = await prisma.$transaction([
+            prisma.user.update({
+                where: { id: userId },
+                data: { credits: { increment: amount } }
+            }),
+            prisma.creditTransaction.create({
+                data: {
+                    userId,
+                    amount: Math.abs(amount),
+                    type: amount > 0 ? 'purchase' : 'usage',
+                    description: `[Admin] ${reason}`,
+                    creditsBefore: user.credits,
+                    creditsAfter: newBalance
+                }
+            })
+        ])
+
+        return { success: true, newBalance: updatedUser.credits }
+    } catch (error: any) {
+        console.error('[updateUserCredits] Error:', error)
+        return { success: false, error: error.message }
+    }
+}
+

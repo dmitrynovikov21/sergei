@@ -14,7 +14,7 @@ export default async function ReferralPage() {
 
     return (
         <DashboardShell>
-            <DashboardHeader heading="Партнёрская программа" text="Приглашайте друзей и получайте 30% с каждой их покупки." />
+            <DashboardHeader heading="Партнёрская программа" text="Приглашайте друзей и получайте 10% с каждой их покупки." />
             <div className="grid gap-10">
                 <ReferralDashboardClient stats={stats} />
             </div>

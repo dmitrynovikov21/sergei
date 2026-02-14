@@ -1,7 +1,7 @@
 {
     "crons": [
         {
-            "path": "/api/cron/daily-parse",
+            "path": "/api/cron/parse-all",
             "schedule": "0 6 * * 1"
         }
     ]

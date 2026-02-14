@@ -4,7 +4,7 @@
  * POST /api/chat/[chatId]
  * Handles chat message submission and AI response streaming.
  * 
- * Refactored to use ChatService and StreamingService.
+ * Dataset context is passed directly in system prompt (no tool calling).
  */
 
 import { NextRequest } from "next/server"
@@ -80,18 +80,24 @@ export async function POST(
             }
         }
 
-        // 5. Build system prompt with all context
+        // 5. Build system prompt with dataset context
         let datasetContext: string | null = null
-        // PRIORITY: requestDatasetId (from chat input selector) > agent.datasetId > chat.datasetId
-        const effectiveDatasetId = requestDatasetId || chat.agent.datasetId || chat.datasetId
-        console.log("[Chat API] requestDatasetId:", requestDatasetId, "agent.datasetId:", chat.agent.datasetId, "chat.datasetId:", chat.datasetId, "=> using:", effectiveDatasetId)
+        // PRIORITY: requestDatasetId (from chat input selector) > chat.datasetId > agent.datasetId
+        // Use requestDatasetId if it's a non-empty string (explicit user choice)
+        const effectiveDatasetId = (requestDatasetId && typeof requestDatasetId === 'string')
+            ? requestDatasetId
+            : (chat.datasetId || chat.agent.datasetId || null)
+        console.log("[Chat API] requestDatasetId:", requestDatasetId, "chat.datasetId:", chat.datasetId, "agent.datasetId:", chat.agent.datasetId, "=> using:", effectiveDatasetId)
+
         if (effectiveDatasetId) {
             datasetContext = await getDatasetContext(effectiveDatasetId)
             console.log("[Chat API] Dataset context loaded, length:", datasetContext?.length || 0)
         } else {
             console.log("[Chat API] No dataset configured for chat or agent")
         }
-        const systemPrompt = buildSystemPrompt(chat.agent, datasetContext)
+
+        // Build system prompt with dataset context (no tools)
+        const systemPrompt = buildSystemPrompt(chat.agent, datasetContext, false)
 
         // 6. Prepare messages for Claude API
         const claudeMessages = prepareClaudeMessages(chat.messages, message, attachments, chat.agent.files)
@@ -105,15 +111,20 @@ export async function POST(
             generateAndSaveChatTitle(params.chatId, titlePrompt) // Fire-and-forget
         }
 
-        // 9. Create streaming response via AiGateway
-        // Pass subscription info for credit deduction
+        // 9. Create streaming response via AiGateway (NO TOOLS)
+        // Track whether onFinish has fired to ensure billing on abort
+        let onFinishFired = false
+
         const streamResponse = await createChatStream({
             systemPrompt,
             messages: claudeMessages,
             userId: session.user.id,
-            subscriptionId: accessResult.subscription?.id,
+            // No tools - dataset context is in system prompt
             onFinish: async (response, usage) => {
-                await saveAssistantMessage(params.chatId, response, usage)
+                onFinishFired = true
+                const wasAborted = req.signal.aborted
+                console.log(`[Chat API] onFinish fired. Aborted: ${wasAborted}. Response length: ${response?.length || 0}. Usage: in=${usage.input_tokens} out=${usage.output_tokens}`)
+                await saveAssistantMessage(params.chatId, response || '[Остановлено пользователем]', usage)
             }
         } as any)
 
@@ -144,4 +155,3 @@ export async function POST(
         )
     }
 }
-

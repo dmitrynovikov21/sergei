@@ -9,12 +9,28 @@ import { useState } from "react"
 import { requestPayout, paySubscriptionFromReferralBalance } from "@/actions/referrals"
 import { Copy, CreditCard, Users, Wallet, TrendingUp, Clock } from "lucide-react"
 
+// Types for referral data - flexible to match API
+interface ReferralTransaction {
+    id: string
+    type: string  // API returns string
+    amount: number
+    createdAt: Date
+}
+
+interface PayoutRequest {
+    id: string
+    status: string  // API returns string
+    amount: number
+    details?: string
+    createdAt: Date
+}
+
 interface ReferralStats {
     referralCode: string | null
     balance: number
     referralsCount: number
-    transactions: any[]
-    payouts: any[]
+    transactions: ReferralTransaction[]
+    payouts: PayoutRequest[]
 }
 
 export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
@@ -22,9 +38,10 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
     const [payoutDetails, setPayoutDetails] = useState("")
     const [payoutAmount, setPayoutAmount] = useState(1000)
 
+    const code = stats.referralCode?.toLowerCase() ?? ""
     const referralLink = typeof window !== "undefined"
-        ? `${window.location.origin}/register?ref=${stats.referralCode}`
-        : `https://aicontent.pro/register?ref=${stats.referralCode}`
+        ? `${window.location.origin}/register?ref=${code}`
+        : `https://contentzavod.biz/register?ref=${code}`
 
     const copyLink = () => {
         navigator.clipboard.writeText(referralLink)
@@ -76,7 +93,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
         <div className="space-y-6">
             {/* Stats Cards */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Баланс
@@ -84,14 +101,14 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                         <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.balance.toFixed(2)} ₽</div>
+                        <div className="text-lg font-bold">{stats.balance.toFixed(2)} ₽</div>
                         <p className="text-xs text-muted-foreground">
                             Доступно для вывода
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Рефералы
@@ -99,14 +116,14 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{stats.referralsCount}</div>
+                        <div className="text-lg font-bold">{stats.referralsCount}</div>
                         <p className="text-xs text-muted-foreground">
                             Приглашённых пользователей
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             Комиссия
@@ -114,14 +131,14 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                         <TrendingUp className="h-4 w-4 text-purple-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">30%</div>
+                        <div className="text-lg font-bold">10%</div>
                         <p className="text-xs text-muted-foreground">
                             С каждой покупки реферала
                         </p>
                     </CardContent>
                 </Card>
 
-                <Card className="">
+                <Card className="border-border/50">
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">
                             На рассмотрении
@@ -129,7 +146,7 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                         <Clock className="h-4 w-4 text-yellow-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{pendingPayouts.length}</div>
+                        <div className="text-lg font-bold">{pendingPayouts.length}</div>
                         <p className="text-xs text-muted-foreground">
                             Заявок на вывод
                         </p>
@@ -138,20 +155,19 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
             </div>
 
             {/* Referral Link */}
-            <Card className="">
+            <Card className="border-border/50">
                 <CardHeader>
-                    <CardTitle>🔗 Ваша реферальная ссылка</CardTitle>
-                    <CardDescription>
-                        Поделитесь этой ссылкой и получайте 30% с каждой покупки приглашённых пользователей
+                    <CardTitle className="text-base">Ваша реферальная ссылка</CardTitle>
+                    <CardDescription className="text-sm">
+                        Поделитесь этой ссылкой и получайте 10% с каждой покупки приглашённых пользователей
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex gap-2">
-                        <Input
-                            readOnly
-                            value={referralLink}
-                            className="bg-muted border-border"
-                        />
+                    <div className="flex gap-2 items-center">
+                        <div className="flex-1 flex items-center px-3 py-2 bg-muted rounded-md border border-border">
+                            <span className="text-muted-foreground text-sm">contentzavod.biz/r/</span>
+                            <span className="font-mono text-sm">{stats.referralCode?.toLowerCase()}</span>
+                        </div>
                         <Button onClick={copyLink} className="shrink-0">
                             <Copy className="h-4 w-4 mr-2" />
                             Скопировать
@@ -163,50 +179,57 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
             {/* Withdraw - Full width */}
             <Card className="border-border/50">
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="text-base flex items-center gap-2">
                         <Wallet className="h-5 w-5 text-green-500" />
                         Вывести деньги
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-sm">
                         Выведите средства на карту или электронный кошелёк. Минимум: 1,000 ₽
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="grid gap-4 md:grid-cols-3 items-end">
-                        <div className="space-y-2">
-                            <Label>Сумма</Label>
-                            <Input
-                                type="number"
-                                placeholder="1000"
-                                value={payoutAmount}
-                                onChange={(e) => setPayoutAmount(Number(e.target.value))}
-                                className="bg-background border-border"
-                            />
+                    {stats.balance < 1000 ? (
+                        <div className="text-center py-4">
+                            <p className="text-sm text-muted-foreground">Минимальная сумма для вывода — 1,000 ₽</p>
+                            <p className="text-xs text-muted-foreground/70 mt-1">Ваш текущий баланс: {stats.balance.toFixed(2)} ₽</p>
                         </div>
-                        <div className="space-y-2">
-                            <Label>Реквизиты</Label>
-                            <Input
-                                placeholder="Номер карты / Телефон / USDT"
-                                value={payoutDetails}
-                                onChange={(e) => setPayoutDetails(e.target.value)}
-                                className="bg-background border-border"
-                            />
+                    ) : (
+                        <div className="grid gap-4 md:grid-cols-3 items-end">
+                            <div className="space-y-2">
+                                <Label>Сумма</Label>
+                                <Input
+                                    type="number"
+                                    placeholder="1000"
+                                    value={payoutAmount}
+                                    onChange={(e) => setPayoutAmount(Number(e.target.value))}
+                                    className="bg-background border-border"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Реквизиты</Label>
+                                <Input
+                                    placeholder="Номер карты / Телефон / USDT"
+                                    value={payoutDetails}
+                                    onChange={(e) => setPayoutDetails(e.target.value)}
+                                    className="bg-background border-border"
+                                />
+                            </div>
+                            <Button
+                                onClick={handlePayout}
+                                disabled={isLoading || !payoutDetails}
+                                className="h-10"
+                            >
+                                Отправить заявку
+                            </Button>
                         </div>
-                        <Button
-                            onClick={handlePayout}
-                            disabled={stats.balance < 1000 || isLoading}
-                            className="h-10"
-                        >
-                            Отправить заявку
-                        </Button>
-                    </div>
+                    )}
                 </CardContent>
             </Card>
 
             {/* Transaction History */}
-            <Card className="">
+            <Card className="border-border/50">
                 <CardHeader>
-                    <CardTitle>📊 История транзакций</CardTitle>
+                    <CardTitle className="text-base">История транзакций</CardTitle>
                 </CardHeader>
                 <CardContent>
                     {stats.transactions.length === 0 ? (
@@ -219,12 +242,12 @@ export function ReferralDashboardClient({ stats }: { stats: ReferralStats }) {
                                 <div key={tx.id} className="flex items-center justify-between border-b border-white/5 pb-3 last:border-0 last:pb-0">
                                     <div>
                                         <p className="font-medium">
-                                            {tx.type === 'COMMISSION' && '💰 Комиссия'}
-                                            {tx.type === 'WITHDRAWAL_HOLD' && '⏳ Заявка на вывод'}
-                                            {tx.type === 'PAYOUT_APPROVED' && '✅ Выплата одобрена'}
-                                            {tx.type === 'PAYOUT_REJECTED' && '↩️ Возврат средств'}
-                                            {tx.type === 'SPEND_INTERNAL' && '💳 Покупка кредитов'}
-                                            {tx.type === 'ADMIN_ADJUSTMENT' && '⚙️ Корректировка'}
+                                            {tx.type === 'COMMISSION' && 'Комиссия от реферала'}
+                                            {tx.type === 'WITHDRAWAL_HOLD' && 'Заявка на вывод'}
+                                            {tx.type === 'PAYOUT_APPROVED' && 'Выплата одобрена'}
+                                            {tx.type === 'PAYOUT_REJECTED' && 'Возврат средств'}
+                                            {tx.type === 'SPEND_INTERNAL' && 'Покупка кредитов'}
+                                            {tx.type === 'ADMIN_ADJUSTMENT' && 'Корректировка админом'}
                                             {!['COMMISSION', 'WITHDRAWAL_HOLD', 'PAYOUT_APPROVED', 'PAYOUT_REJECTED', 'SPEND_INTERNAL', 'ADMIN_ADJUSTMENT'].includes(tx.type) && tx.type}
                                         </p>
                                         <p className="text-sm text-muted-foreground">

@@ -19,13 +19,20 @@ export async function createChat(agentId: string, projectId?: string, datasetId?
             select: { name: true }
         })
 
+        // Validate datasetId exists (prevent FK violation on orphaned references)
+        let validDatasetId = datasetId || null
+        if (validDatasetId) {
+            const dsExists = await prisma.dataset.findUnique({ where: { id: validDatasetId }, select: { id: true } })
+            if (!dsExists) validDatasetId = null
+        }
+
         const chat = await prisma.chat.create({
             data: {
                 id: crypto.randomUUID(),
                 userId: user.id,
                 agentId,
                 projectId: projectId || null,
-                datasetId: datasetId || null,
+                datasetId: validDatasetId,
                 title: agent?.name ? `Чат с ${agent.name}` : "Новый чат",
             },
         })

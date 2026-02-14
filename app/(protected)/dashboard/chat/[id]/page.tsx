@@ -1,11 +1,9 @@
 import { notFound, redirect } from "next/navigation";
 import { constructMetadata } from "@/lib/utils";
 import { getChat, createChat } from "@/actions/chat";
-import { getAgentById, getAgentWithFiles } from "@/actions/agents";
+import { getAgentById } from "@/actions/agents";
 import { auth } from "@/auth";
 import { ChatInterface } from "@/components/dashboard/chat-interface";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { HeaderUpdater } from "@/components/dashboard/header-context";
 
 interface ChatPageProps {
     params: {
@@ -43,29 +41,23 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
         return notFound();
     }
 
-    // Parallelize detailed data fetching and auth
-    const [agentWithFiles, session] = await Promise.all([
-        getAgentWithFiles(chat.agentId),
-        auth()
-    ]);
-
-    const isOwner = session?.user?.id === agentWithFiles?.userId;
+    const session = await auth();
     const initialInput = typeof searchParams.init === 'string' ? searchParams.init : undefined;
 
-    // Dataset date for Заголовки Reels
-    const showDataset = chat.agent.name === "Заголовки Reels";
-
     return (
-        <div className="flex h-full flex-col overflow-hidden bg-background">
-            <ChatInterface
-                chatId={chat.id}
-                initialMessages={chat.messages as any}
-                agentName={chat.agent.name}
-                agentIcon={chat.agent.emoji}
-                agent={chat.agent}
-                initialInput={initialInput}
-                userName={session?.user?.name?.split(' ')[0] || 'there'}
-            />
+        <div className="flex h-full overflow-hidden bg-background">
+            <div className="flex-1 flex flex-col min-w-0">
+                <ChatInterface
+                    chatId={chat.id}
+                    initialMessages={chat.messages as any}
+                    agentName={chat.agent.name}
+                    agentIcon={chat.agent.emoji}
+                    agent={chat.agent}
+                    initialInput={initialInput}
+                    initialDatasetId={(chat as any).datasetId}
+                    userName={session?.user?.name?.split(' ')[0] || 'there'}
+                />
+            </div>
         </div>
     );
 }

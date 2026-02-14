@@ -143,11 +143,11 @@ export function AgentFilesManager({
                     }}
                     onClick={() => fileInputRef.current?.click()}
                 >
-                    <Upload className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground/60" />
+                    <p className="text-sm text-muted-foreground">
                         {isDragging ? "Отпустите файлы" : "Перетащите файлы сюда или нажмите для выбора"}
                     </p>
-                    <p className="text-xs text-zinc-400 mt-1">
+                    <p className="text-xs text-muted-foreground/60 mt-1">
                         TXT, MD, JSON, CSV, PDF, изображения
                     </p>
                 </div>

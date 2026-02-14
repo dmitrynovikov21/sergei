@@ -2,7 +2,7 @@
 
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 
 interface AgentSettings {
     useEmoji: boolean
@@ -35,12 +35,12 @@ export function AgentGenerationSettings({
 
     return (
         <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">Настройки генерации</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground mb-3">Дополнительно:</h3>
 
             <div className="space-y-4">
                 {/* Emoji Toggle */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="emoji" className="text-sm text-muted-foreground font-medium">Эмодзи</Label>
+                    <Label htmlFor="emoji" className="text-sm text-muted-foreground font-medium">Эмодзи 😎</Label>
                     <Switch
                         id="emoji"
                         checked={useEmoji}
@@ -64,6 +64,23 @@ export function AgentGenerationSettings({
                     />
                 </div>
 
+                {/* Subscribe Link Input — directly under subscribe toggle */}
+                {useSubscribe && (
+                    <div className="pt-1 pb-2 space-y-1">
+                        <Label htmlFor="subscribe-instruction" className="text-[10px] text-zinc-400">
+                            Инструкция для призыва (вшивается в промпт):
+                        </Label>
+                        <Textarea
+                            id="subscribe-instruction"
+                            placeholder="В конце текста должен быть призыв подписаться..."
+                            value={subscribeLink}
+                            onChange={(e) => onSettingChange({ subscribeLink: e.target.value })}
+                            onBlur={() => onSave({ subscribeLink })}
+                            className="text-sm bg-zinc-800 border-zinc-700 text-foreground min-h-[70px]"
+                        />
+                    </div>
+                )}
+
                 {/* Link in Bio Toggle */}
                 <div className="flex items-center justify-between">
                     <Label htmlFor="link" className="text-sm text-muted-foreground font-medium">Призыв на ТГ в шапке профиля</Label>
@@ -77,61 +94,35 @@ export function AgentGenerationSettings({
                     />
                 </div>
 
-                {/* Unified Link Input */}
-                {(useSubscribe || useLinkInBio) && (
-                    <div className="pt-1 pb-2">
-                        <Input
-                            placeholder="@ваш_ник или ссылка (https://...)"
-                            value={subscribeLink}
-                            onChange={(e) => onSettingChange({ subscribeLink: e.target.value })}
-                            onBlur={() => onSave({ subscribeLink })}
-                            className="h-9 text-sm bg-zinc-50 dark:bg-zinc-800"
-                        />
-                        <p className="text-[10px] text-zinc-400 mt-1">
-                            Ссылка будет добавлена в призыв.
-                        </p>
-                    </div>
-                )}
-
-                {/* Code Word Toggle & Input */}
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="codeword-toggle" className="text-sm text-muted-foreground font-medium">Кодовое слово</Label>
-                        <Switch
-                            id="codeword-toggle"
-                            checked={!!codeWord}
-                            onCheckedChange={(checked) => {
-                                const val = checked ? "Гайд" : ""
-                                onSettingChange({ codeWord: val })
-                                onSave({ codeWord: val })
-                            }}
-                        />
-                    </div>
-                    {!!codeWord && (
-                        <Input
-                            id="codeword"
-                            placeholder="Например: ГАЙД"
-                            value={codeWord}
-                            onChange={(e) => onSettingChange({ codeWord: e.target.value })}
-                            onBlur={() => onSave({ codeWord })}
-                            className="h-8 text-sm"
-                        />
-                    )}
-                </div>
-
-                {/* Audience Question Toggle (No Input) */}
+                {/* Audience Question Toggle */}
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="question-toggle" className="text-sm text-muted-foreground font-medium">Вопрос аудитории</Label>
+                    <Label htmlFor="question-toggle" className="text-sm text-muted-foreground font-medium">Вопрос к аудитории</Label>
                     <Switch
                         id="question-toggle"
                         checked={!!audienceQuestion}
                         onCheckedChange={(checked) => {
-                            const val = checked ? "Какая у вас ниша?" : ""
+                            const val = checked ? "В самом конце текста заканчивай пост виральным вопросом к зрителям по теме поста. Используй перед вопросом эмодзи ❓" : ""
                             onSettingChange({ audienceQuestion: val })
                             onSave({ audienceQuestion: val })
                         }}
                     />
                 </div>
+
+                {!!audienceQuestion && (
+                    <div className="pt-1 pb-2 space-y-1">
+                        <Label htmlFor="audience-instruction" className="text-[10px] text-zinc-400">
+                            Инструкция для вопроса (вшивается в промпт):
+                        </Label>
+                        <Textarea
+                            id="audience-instruction"
+                            placeholder="В самом конце текста заканчивай пост виральным вопросом..."
+                            value={audienceQuestion}
+                            onChange={(e) => onSettingChange({ audienceQuestion: e.target.value })}
+                            onBlur={() => onSave({ audienceQuestion })}
+                            className="text-sm bg-zinc-800 border-zinc-700 text-foreground min-h-[70px]"
+                        />
+                    </div>
+                )}
             </div>
         </div>
     )

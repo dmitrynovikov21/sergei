@@ -1,7 +1,6 @@
 import { DashboardHeader } from "@/components/dashboard/header";
-import { StatsGrowthChart } from "@/components/trends/stats-growth-chart";
 import { TrendsTable } from "@/components/trends/trends-table";
-import { getTrendsData, getAllContentItems } from "@/actions/trends";
+import { getAllContentItems } from "@/actions/trends";
 
 export const metadata = {
     title: "Trends",
@@ -9,10 +8,13 @@ export const metadata = {
 };
 
 export default async function TrendsPage() {
-    const [{ dailyStats, totals }, contentItems] = await Promise.all([
-        getTrendsData(),
-        getAllContentItems()
-    ]);
+    const contentItems = await getAllContentItems();
+
+    // Compute stats from the SAME deduplicated data the table uses
+    const totalPosts = contentItems.length;
+    const totalViews = contentItems.reduce((sum, item) => sum + item.views, 0);
+    const avgViews = totalPosts > 0 ? Math.round(totalViews / totalPosts) : 0;
+    const highViralityCount = contentItems.filter(i => i.views > (avgViews * 2)).length;
 
     return (
         <div className="container py-8">
@@ -22,24 +24,24 @@ export default async function TrendsPage() {
                     {/* Stats cards */}
                     <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
                         <h3 className="font-semibold leading-none tracking-tight text-sm text-muted-foreground">Всего постов</h3>
-                        <div className="text-2xl font-bold mt-2">{totals.posts}</div>
+                        <div className="text-2xl font-bold mt-2">{totalPosts.toLocaleString()}</div>
                     </div>
                     <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
                         <h3 className="font-semibold leading-none tracking-tight text-sm text-muted-foreground">Всего просмотров</h3>
-                        <div className="text-2xl font-bold mt-2">{totals.views.toLocaleString()}</div>
+                        <div className="text-2xl font-bold mt-2">{totalViews.toLocaleString()}</div>
                     </div>
                     <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
                         <h3 className="font-semibold leading-none tracking-tight text-sm text-muted-foreground">Средние просмотры</h3>
-                        <div className="text-2xl font-bold mt-2">{totals.avgViews.toLocaleString()}</div>
+                        <div className="text-2xl font-bold mt-2">{avgViews.toLocaleString()}</div>
                     </div>
                     <div className="rounded-xl border bg-card text-card-foreground shadow p-6">
                         <h3 className="font-semibold leading-none tracking-tight text-sm text-muted-foreground">Виральные</h3>
-                        <div className="text-2xl font-bold mt-2">{totals.highViralityCount}</div>
+                        <div className="text-2xl font-bold mt-2">{highViralityCount.toLocaleString()}</div>
                     </div>
                 </div>
 
                 {/* Content Table */}
-                <div className="mt-6">
+                <div className="mt-6 min-w-0">
                     <h2 className="text-lg font-semibold mb-4">База контента</h2>
                     <TrendsTable items={contentItems} />
                 </div>

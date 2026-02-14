@@ -86,6 +86,17 @@ export async function getAllContentItems() {
             comments: true,
             viralityScore: true,
             publishedAt: true,
+            // AI Analysis fields
+            aiTopic: true,
+            aiSubtopic: true,
+            aiHookType: true,
+            aiContentFormula: true,
+            aiTags: true,
+            aiSuccessReason: true,
+            aiEmotionalTrigger: true,
+            aiTargetAudience: true,
+            aiAnalyzedAt: true,
+            contentType: true, // Added field
             dataset: {
                 select: {
                     id: true,
@@ -104,10 +115,68 @@ export async function getAllContentItems() {
         }
     })
 
-    return items.map(item => ({
-        ...item,
-        sourceUsername: item.dataset.sources[0]?.username || 'unknown',
-        datasetName: item.dataset.name,
-        contentType: item.videoUrl ? 'Reel' : 'Carousel'
-    }))
+    // Map to flat structure
+    const mapped = items.map(item => {
+        // Determine display type from DB contentType field
+        // Known DB values: 'Video', 'Reel', 'Sidecar', 'Carousel', 'Post', 'Image', null
+        let type: 'Reel' | 'Carousel'
+        switch (item.contentType) {
+            case 'Video':
+            case 'Reel':
+                type = 'Reel'
+                break
+            case 'Sidecar':
+            case 'Carousel':
+            case 'Image':
+                type = 'Carousel'
+                break
+            case 'Post':
+                // Instagram 'Post' can be video or image — check videoUrl
+                type = item.videoUrl ? 'Reel' : 'Carousel'
+                break
+            default:
+                // null/unknown — fallback to videoUrl heuristic
+                type = item.videoUrl ? 'Reel' : 'Carousel'
+        }
+
+        return {
+            ...item,
+            sourceUsername: item.dataset.sources[0]?.username || 'unknown',
+            datasetName: item.dataset.name,
+            contentType: type
+        }
+    })
+
+    // Deduplicate by instagramId AND by headline+metrics combo (cross-dataset duplicates)
+    const dedupedById = new Map<string, typeof mapped[0]>()
+    const dedupedByContent = new Map<string, typeof mapped[0]>()
+
+    for (const item of mapped) {
+        // First pass: dedupe by instagramId
+        const idKey = item.instagramId || item.id
+        const existingById = dedupedById.get(idKey)
+        if (!existingById || (item.viralityScore || 0) > (existingById.viralityScore || 0)) {
+            dedupedById.set(idKey, item)
+        }
+    }
+
+    // Second pass: dedupe by content signature (headline + views + likes)
+    for (const item of dedupedById.values()) {
+        const contentKey = `${(item.headline || '').trim().toLowerCase()}|${item.views}|${item.likes}`
+        const existing = dedupedByContent.get(contentKey)
+        if (!existing) {
+            dedupedByContent.set(contentKey, item)
+        } else {
+            // Prefer entry with AI analysis
+            const hasAi = !!item.aiTopic
+            const existingHasAi = !!existing.aiTopic
+            if (hasAi && !existingHasAi) {
+                dedupedByContent.set(contentKey, item)
+            } else if ((item.viralityScore || 0) > (existing.viralityScore || 0)) {
+                dedupedByContent.set(contentKey, item)
+            }
+        }
+    }
+
+    return Array.from(dedupedByContent.values())
 }
