@@ -50,3 +50,4 @@ jobs:
             curl -s -o /dev/null -w "%{http_code}" http://localhost:3000
             echo ""
             echo "✅ Deployment complete!"
+# CI/CD test Sat Feb 14 17:27:32 +07 2026
