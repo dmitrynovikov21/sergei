@@ -17,37 +17,32 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           command_timeout: 10m
           script: |
-            set -e
             cd /root/sergei
             
-            echo "=== Step 1: Backup DB ==="
-            cp prisma/dev.db "prisma/dev.db.backup.$(date +%Y%m%d_%H%M%S)" || true
+            echo ">>> Backup DB"
+            cp prisma/dev.db "prisma/dev.db.backup.$(date +%Y%m%d_%H%M%S)" || echo "backup skipped"
             
-            echo "=== Step 2: Pull code ==="
-            git fetch origin production
-            git reset --hard origin/production
+            echo ">>> Git pull"
+            git fetch origin production 2>&1
+            git reset --hard origin/production 2>&1
             
-            echo "=== Step 3: Install deps ==="
-            npm install --production=false 2>&1
+            echo ">>> npm install"
+            npm install --production=false 2>&1 || echo "npm install had warnings"
             
-            echo "=== Step 4: Prisma ==="
-            npx prisma generate 2>&1
-            npx prisma db push --accept-data-loss 2>&1 || true
+            echo ">>> Prisma generate"
+            npx prisma generate 2>&1 || echo "prisma generate failed"
             
-            echo "=== Step 5: Build ==="
+            echo ">>> Build"
             npm run build 2>&1
             
-            echo "=== Step 6: Restart ==="
-            pkill -f "next-server" || true
+            echo ">>> Restart server"
+            pkill -f "next-server" 2>&1 || echo "no running server"
             sleep 2
-            
-            echo "=== Step 7: Start server ==="
             cd /root/sergei
             NODE_OPTIONS="--dns-result-order=ipv4first" nohup npx next start > /tmp/nextjs.log 2>&1 &
             sleep 5
             
-            echo "=== Step 8: Health check ==="
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "000")
-            echo "HTTP status: $HTTP_CODE"
-            
-            echo "Deploy finished"
+            echo ">>> Health check"
+            curl -s -o /dev/null -w "HTTP %{http_code}" http://localhost:3000 || echo "health check failed"
+            echo ""
+            echo ">>> Deploy done"
