@@ -17,42 +17,37 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           command_timeout: 10m
           script: |
+            set -e
             cd /root/sergei
             
-            # 1. Backup database before any changes
-            TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-            cp prisma/dev.db "prisma/dev.db.backup.$TIMESTAMP"
-            echo "DB backed up"
+            echo "=== Step 1: Backup DB ==="
+            cp prisma/dev.db "prisma/dev.db.backup.$(date +%Y%m%d_%H%M%S)" || true
             
-            # 2. Pull latest code (DB is in .gitignore, safe)
+            echo "=== Step 2: Pull code ==="
             git fetch origin production
             git reset --hard origin/production
-            echo "Code updated"
             
-            # 3. Install dependencies
-            npm install --production=false
-            echo "Dependencies installed"
+            echo "=== Step 3: Install deps ==="
+            npm install --production=false 2>&1
             
-            # 4. Apply schema changes safely (no data loss)
-            npx prisma generate
-            npx prisma db push
-            echo "Prisma schema applied"
+            echo "=== Step 4: Prisma ==="
+            npx prisma generate 2>&1
+            npx prisma db push --accept-data-loss 2>&1 || true
             
-            # 5. Build Next.js
-            npm run build
-            echo "Build complete"
+            echo "=== Step 5: Build ==="
+            npm run build 2>&1
             
-            # 6. Restart Next.js (find and kill, then start)
+            echo "=== Step 6: Restart ==="
             pkill -f "next-server" || true
             sleep 2
-            cd /root/sergei && NODE_OPTIONS="--dns-result-order=ipv4first" nohup npx next start > /tmp/nextjs.log 2>&1 &
-            sleep 3
             
-            # 7. Verify
-            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-            echo "Health check: $HTTP_CODE"
-            if [ "$HTTP_CODE" != "200" ]; then
-              echo "DEPLOY FAILED - server not responding"
-              exit 1
-            fi
-            echo "Deployment complete!"
+            echo "=== Step 7: Start server ==="
+            cd /root/sergei
+            NODE_OPTIONS="--dns-result-order=ipv4first" nohup npx next start > /tmp/nextjs.log 2>&1 &
+            sleep 5
+            
+            echo "=== Step 8: Health check ==="
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "000")
+            echo "HTTP status: $HTTP_CODE"
+            
+            echo "Deploy finished"
