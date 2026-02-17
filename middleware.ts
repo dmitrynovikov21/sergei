@@ -40,18 +40,11 @@ export function middleware(request: NextRequest) {
     const guardVal = request.cookies.get(GUARD_COOKIE)?.value
     const count = guardVal ? parseInt(guardVal, 10) || 0 : 0
 
-    // LOOP DETECTED — clear everything, render /login
+    // LOOP DETECTED — send to /api/clear-session which sends Clear-Site-Data header
+    // This auto-fixes stuck browsers by nuking ALL cached state for this domain
     if (count >= 2) {
-        console.warn(`[MW] LOOP x${count} on ${pathname} — nuking auth cookies`)
-
-        // If already on login, just render it with cleared cookies
-        if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
-            const response = NextResponse.next()
-            clearAuthCookies(response)
-            return response
-        }
-        // Otherwise redirect to login with cleared cookies
-        const response = NextResponse.redirect(new URL("/login", request.url))
+        console.warn(`[MW] LOOP x${count} on ${pathname} — redirecting to /api/clear-session`)
+        const response = NextResponse.redirect(new URL("/api/clear-session", request.url))
         clearAuthCookies(response)
         return response
     }
