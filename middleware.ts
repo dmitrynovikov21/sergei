@@ -1,86 +1,95 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
-import { auth } from "@/auth"
 
 /**
  * Anti-redirect-loop middleware.
  * 
- * Problem: After deploys, stale JWT cookies make the authorized() callback
- * think the user is logged in → redirects /login → /dashboard → /login (loop).
+ * Root Cause: After deploys, stale JWT cookies make NextAuth's internal
+ * logic think user is logged in → loop between /login ↔ /dashboard.
  * 
- * Solution: Track redirect count via a short-lived cookie. If we detect a loop,
- * clear ALL auth cookies and let the page render fresh.
+ * Strategy: 
+ * 1. NEVER redirect from /login → anywhere in middleware. Login page handles it.
+ * 2. Only redirect /dashboard → /login if no session cookie.
+ * 3. If loop detected (guard cookie), nuke ALL auth cookies.
+ * 
+ * This makes loops IMPOSSIBLE because middleware never redirects FROM /login.
  */
 
-const AUTH_COOKIE_NAMES = [
-    "__Secure-cz2.session-token",
-    "__Host-cz2.csrf-token",
-    "__Secure-cz2.callback-url",
-]
+const SESSION_COOKIE = "__Secure-cz2.session-token"
+const CSRF_COOKIE = "__Host-cz2.csrf-token"
+const CALLBACK_COOKIE = "__Secure-cz2.callback-url"
+const GUARD_COOKIE = "cz2-loop-guard"
 
-const LOOP_COOKIE = "cz2-redirect-guard"
-const MAX_REDIRECTS = 3
+function clearAuthCookies(response: NextResponse) {
+    // Must use set() with maxAge:0 and exact flags to clear __Host-/__Secure- cookies
+    response.cookies.set(SESSION_COOKIE, "", {
+        maxAge: 0, path: "/", httpOnly: true, secure: true, sameSite: "lax"
+    })
+    response.cookies.set(CSRF_COOKIE, "", {
+        maxAge: 0, path: "/", httpOnly: true, secure: true, sameSite: "lax"
+    })
+    response.cookies.set(CALLBACK_COOKIE, "", {
+        maxAge: 0, path: "/", httpOnly: true, secure: true, sameSite: "lax"
+    })
+    response.cookies.set(GUARD_COOKIE, "", { maxAge: 0, path: "/" })
+}
 
-export default async function middleware(request: NextRequest) {
-    // 1. Check if we're in a redirect loop
-    const guardValue = request.cookies.get(LOOP_COOKIE)?.value
-    const redirectCount = guardValue ? parseInt(guardValue, 10) : 0
+export function middleware(request: NextRequest) {
+    const { pathname } = request.nextUrl
+    const hasSession = request.cookies.has(SESSION_COOKIE)
+    const guardVal = request.cookies.get(GUARD_COOKIE)?.value
+    const count = guardVal ? parseInt(guardVal, 10) || 0 : 0
 
-    if (redirectCount >= MAX_REDIRECTS) {
-        // LOOP DETECTED — nuclear option: clear all auth cookies and reset
-        console.warn("[Middleware] Redirect loop detected — clearing stale auth cookies")
-        const response = NextResponse.next()
+    // LOOP DETECTED — clear everything, render /login
+    if (count >= 2) {
+        console.warn(`[MW] LOOP x${count} on ${pathname} — nuking auth cookies`)
 
-        // Delete all auth cookies
-        for (const name of AUTH_COOKIE_NAMES) {
-            response.cookies.delete(name)
+        // If already on login, just render it with cleared cookies
+        if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
+            const response = NextResponse.next()
+            clearAuthCookies(response)
+            return response
         }
-        // Reset the guard
-        response.cookies.delete(LOOP_COOKIE)
-
+        // Otherwise redirect to login with cleared cookies
+        const response = NextResponse.redirect(new URL("/login", request.url))
+        clearAuthCookies(response)
         return response
     }
 
-    // 2. Run the normal auth middleware
-    const authMiddleware = auth((req) => {
-        const { nextUrl } = req
-        const isLoggedIn = !!req.auth?.user
-        const isOnDashboard = nextUrl.pathname.startsWith("/dashboard")
-        const isOnAuth = nextUrl.pathname.startsWith("/login") || nextUrl.pathname.startsWith("/register")
-
-        if (isOnDashboard && !isLoggedIn) {
-            // Not logged in → send to login
-            const loginUrl = new URL("/login", nextUrl)
-            const response = NextResponse.redirect(loginUrl)
-            response.cookies.set(LOOP_COOKIE, String(redirectCount + 1), {
-                maxAge: 10, // Expires in 10 seconds — only catches rapid loops
-                path: "/",
-            })
-            return response
-        }
-
-        if (isOnAuth && isLoggedIn) {
-            // Already logged in → send to dashboard
-            const dashUrl = new URL("/dashboard", nextUrl)
-            const response = NextResponse.redirect(dashUrl)
-            response.cookies.set(LOOP_COOKIE, String(redirectCount + 1), {
-                maxAge: 10,
-                path: "/",
-            })
-            return response
-        }
-
-        // No redirect needed — clear the guard cookie if it exists
-        const response = NextResponse.next()
-        if (redirectCount > 0) {
-            response.cookies.delete(LOOP_COOKIE)
-        }
+    // PROTECTED ROUTES: /dashboard/* requires session
+    if (pathname.startsWith("/dashboard") && !hasSession) {
+        const response = NextResponse.redirect(new URL("/login", request.url))
+        response.cookies.set(GUARD_COOKIE, String(count + 1), {
+            maxAge: 10, path: "/"
+        })
         return response
-    })
+    }
 
-    return authMiddleware(request, {} as any)
+    // AUTH PAGES: /login, /register — NEVER redirect in middleware!
+    // Let the page component handle redirect if user is logged in.
+    // This breaks the redirect loop because only ONE direction is handled by middleware.
+    if (pathname.startsWith("/login") || pathname.startsWith("/register")) {
+        // Just render the page, clear guard if any
+        if (count > 0) {
+            const response = NextResponse.next()
+            response.cookies.set(GUARD_COOKIE, "", { maxAge: 0, path: "/" })
+            return response
+        }
+        return NextResponse.next()
+    }
+
+    // All other routes — pass through, clear guard
+    if (count > 0) {
+        const response = NextResponse.next()
+        response.cookies.set(GUARD_COOKIE, "", { maxAge: 0, path: "/" })
+        return response
+    }
+
+    return NextResponse.next()
 }
 
 export const config = {
-    matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+    matcher: [
+        "/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)",
+    ],
 }
