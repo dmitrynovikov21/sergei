@@ -1,17 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Icons } from "@/components/shared/icons";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { checkEmailVerified } from "@/actions/check-email-verified";
 
 export function EmailVerificationBanner() {
-    const { data: session } = useSession();
+    const { data: session, update: updateSession } = useSession();
+    const searchParams = useSearchParams();
     const [isResending, setIsResending] = useState(false);
     const [dismissed, setDismissed] = useState(false);
     const [isVerified, setIsVerified] = useState<boolean | null>(null);
+
+    const recheckVerification = useCallback(async () => {
+        const verified = await checkEmailVerified();
+        if (verified) {
+            setIsVerified(true);
+            // Update NextAuth session so it doesn't show stale data
+            await updateSession();
+        }
+        return verified;
+    }, [updateSession]);
 
     // Check email verification status from database directly (not from cached session)
     useEffect(() => {
@@ -21,10 +33,29 @@ export function EmailVerificationBanner() {
         }
 
         // Check DB for real status
-        checkEmailVerified().then((verified) => {
-            setIsVerified(verified);
-        });
-    }, [session?.user?.email]);
+        recheckVerification();
+    }, [session?.user?.email, recheckVerification]);
+
+    // Handle redirect from /api/verify-email?verified=true
+    useEffect(() => {
+        if (searchParams?.get("verified") === "true") {
+            // User just verified — re-check and show toast
+            recheckVerification().then((verified) => {
+                if (verified) {
+                    toast.success("Email подтверждён!", {
+                        description: "Теперь вам доступны все функции платформы.",
+                        icon: <CheckCircle2 className="size-4 text-emerald-500" />,
+                    });
+                }
+            });
+            // Clean up URL without reload
+            if (typeof window !== "undefined") {
+                const url = new URL(window.location.href);
+                url.searchParams.delete("verified");
+                window.history.replaceState({}, "", url.toString());
+            }
+        }
+    }, [searchParams, recheckVerification]);
 
     // Don't show while loading or if verified or dismissed
     if (isVerified === null || isVerified || dismissed || !session?.user) {

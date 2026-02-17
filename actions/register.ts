@@ -51,24 +51,23 @@ export async function registerUser(data: z.infer<typeof userAuthSchema>) {
             }
         })
 
-            // Send verification email in background (fire-and-forget)
-            // User gets logged in regardless of email status
-            ; (async () => {
-                try {
-                    const verificationToken = await generateVerificationToken(email.toLowerCase())
-                    await sendVerificationEmail(
-                        verificationToken.identifier,
-                        verificationToken.token,
-                        name
-                    )
-                    console.log(`[Register] Verification email sent to ${email}`)
-                } catch (emailError) {
-                    // Email failed but user is already created - they can resend later
-                    console.error(`[Register] Failed to send verification email to ${email}:`, emailError)
-                }
-            })()
+        // Send verification email — await result to inform user
+        let emailSent = false
+        try {
+            const verificationToken = await generateVerificationToken(email.toLowerCase())
+            await sendVerificationEmail(
+                verificationToken.identifier,
+                verificationToken.token,
+                name
+            )
+            emailSent = true
+            console.log(`[Register] Verification email sent to ${email}`)
+        } catch (emailError) {
+            // Email failed but user is already created — they can resend later
+            console.error(`[Register] Failed to send verification email to ${email}:`, emailError)
+        }
 
-        return { success: true, verificationRequired: true }
+        return { success: true, verificationRequired: true, emailSent }
     } catch (error) {
         console.error("Failed to register user:", error)
         return { error: "Не удалось создать аккаунт. Попробуйте позже." }

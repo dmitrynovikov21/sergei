@@ -186,6 +186,9 @@ export async function adminGrantSubscription(userId: string, plan: TariffPlan) {
         }
     })
 
+    revalidatePath('/dashboard/admin/users')
+    revalidatePath('/dashboard/billing')
+
     return { success: true, subscription }
 }
 

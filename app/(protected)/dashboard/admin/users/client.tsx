@@ -22,6 +22,13 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Tooltip,
@@ -29,9 +36,10 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Wallet, Plus, Minus } from "lucide-react"
+import { Wallet, Plus, Minus, Crown } from "lucide-react"
 import { toast } from "sonner"
 import { updateUserCredits } from "@/actions/admin"
+import { adminGrantSubscription } from "@/actions/subscriptions"
 
 // Types for admin user data
 interface AdminUserSubscription {
@@ -217,6 +225,96 @@ function BalanceModal({ user, onUpdate }: { user: AdminUser; onUpdate?: () => vo
     )
 }
 
+// Subscription Grant Modal Component
+function SubscriptionModal({ user, onUpdate }: { user: AdminUser; onUpdate?: () => void }) {
+    const [plan, setPlan] = useState<string>("")
+    const [isLoading, setIsLoading] = useState(false)
+    const [open, setOpen] = useState(false)
+
+    const activePlans = user.subscriptions.filter(s => s.isActive).map(s => s.plan)
+
+    async function handleGrant() {
+        if (!plan) {
+            toast.error("Выберите тариф")
+            return
+        }
+
+        if (activePlans.includes(plan)) {
+            toast.error(`Тариф ${plan === 'reels' ? 'Reels' : 'Карусели'} уже активен`)
+            return
+        }
+
+        setIsLoading(true)
+        try {
+            const result = await adminGrantSubscription(user.id, plan as 'reels' | 'carousels')
+            if (result.success) {
+                toast.success(`Тариф ${plan === 'reels' ? 'Reels' : 'Карусели'} выдан на 30 дней`)
+                setPlan("")
+                setOpen(false)
+                onUpdate?.()
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Ошибка выдачи тарифа")
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-60 hover:opacity-100">
+                    <Crown className="h-3 w-3" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                        <Crown className="h-4 w-4 text-amber-500" />
+                        Выдать тариф
+                    </DialogTitle>
+                    <DialogDescription>
+                        {user.name || user.email} — {activePlans.length > 0
+                            ? `Активные: ${activePlans.map(p => p === 'reels' ? 'Reels' : 'Карусели').join(', ')}`
+                            : 'Нет активных тарифов'
+                        }
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid gap-4 py-4">
+                    <div className="grid gap-2">
+                        <Label>Тариф</Label>
+                        <Select value={plan} onValueChange={setPlan}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Выберите тариф" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="reels" disabled={activePlans.includes('reels')}>
+                                    Reels {activePlans.includes('reels') ? '(активен)' : ''}
+                                </SelectItem>
+                                <SelectItem value="carousels" disabled={activePlans.includes('carousels')}>
+                                    Карусели {activePlans.includes('carousels') ? '(активен)' : ''}
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                <DialogFooter>
+                    <Button
+                        onClick={handleGrant}
+                        disabled={isLoading || !plan}
+                        className="w-full bg-amber-600 hover:bg-amber-700"
+                    >
+                        <Crown className="h-4 w-4 mr-1" />
+                        {isLoading ? 'Выдаю...' : 'Выдать на 30 дней'}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 // Compact date format: "5.02"
 function formatCompactDate(date: Date): string {
     const d = new Date(date)
@@ -284,7 +382,10 @@ export function AdminUsersClient({ users }: AdminUsersClientProps) {
                                             </div>
                                         </TableCell>
                                         <TableCell className="text-center py-2">
-                                            <TariffBadge subscriptions={user.subscriptions} />
+                                            <div className="flex items-center justify-center gap-1">
+                                                <TariffBadge subscriptions={user.subscriptions} />
+                                                <SubscriptionModal user={user} onUpdate={() => forceUpdate({})} />
+                                            </div>
                                         </TableCell>
                                         <TableCell className="text-center text-muted-foreground text-xs py-2 whitespace-nowrap">
                                             {formatCompactDate(user.createdAt)}
