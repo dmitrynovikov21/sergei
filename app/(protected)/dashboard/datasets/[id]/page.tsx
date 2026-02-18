@@ -28,6 +28,23 @@ export default async function DatasetPage({ params }: DatasetPageProps) {
                         {dataset.description}
                     </p>
                 )}
+                {/* Analysis Stats */}
+                {dataset.analysisStats && (
+                    <div className="flex items-center gap-4 mt-3 text-sm">
+                        <span className="text-muted-foreground">
+                            📊 <span className="font-medium text-foreground">{dataset.analysisStats.total}</span> постов
+                        </span>
+                        <span className={dataset.analysisStats.missingHeadline > 0 ? "text-orange-400" : "text-emerald-400"}>
+                            📝 {dataset.analysisStats.withHeadline}/{dataset.analysisStats.total} заголовков
+                        </span>
+                        <span className={dataset.analysisStats.missingTopic > 0 ? "text-orange-400" : "text-emerald-400"}>
+                            🏷️ {dataset.analysisStats.withTopic}/{dataset.analysisStats.total} тем
+                        </span>
+                        <span className="text-muted-foreground">
+                            🖼️ {dataset.analysisStats.withCover}/{dataset.analysisStats.total} обложек
+                        </span>
+                    </div>
+                )}
             </div>
 
             <DatasetTabs

@@ -116,7 +116,11 @@ export function ContentDetailDialog({ item, onClose }: ContentDetailDialogProps)
 
     return (
         <>
-            <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
+            <Dialog open={!!item} onOpenChange={(open) => {
+                // Block dialog close when lightbox is open
+                if (!open && lightboxOpen) return
+                if (!open) onClose()
+            }}>
                 <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden flex flex-col">
                     <DialogHeader className="shrink-0">
                         <DialogTitle className="text-lg flex items-center gap-2">

@@ -147,10 +147,24 @@ export async function getDataset(id: string) {
         }))
     }))
 
+    // Compute analysis stats
+    const totalItems = transformedItems.length
+    const withHeadline = dataset.items.filter(i => i.headline !== null && i.headline !== '').length
+    const withTopic = dataset.items.filter(i => i.aiTopic !== null && i.aiTopic !== '').length
+    const withCover = dataset.items.filter(i => i.coverUrl !== null).length
+
     return {
         ...dataset,
         sources: transformedSources,
-        items: transformedItems
+        items: transformedItems,
+        analysisStats: {
+            total: totalItems,
+            withHeadline,
+            withTopic,
+            withCover,
+            missingHeadline: totalItems - withHeadline,
+            missingTopic: totalItems - withTopic,
+        }
     }
 }
 
