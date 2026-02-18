@@ -1,7 +1,5 @@
-import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/session";
 import { constructMetadata } from "@/lib/utils";
-import { getUserChats } from "@/actions/chat";
 import { getFeaturedAgents } from "@/actions/agents";
 import { AgentGrid } from "@/components/dashboard/agent-grid";
 
@@ -13,15 +11,7 @@ export const metadata = constructMetadata({
 export default async function DashboardPage() {
   const user = await getCurrentUser();
 
-  // Get user's recent chats
-  const chats = await getUserChats();
-
-  // If user has chats, redirect to the most recent one
-  if (chats && chats.length > 0) {
-    redirect(`/dashboard/chat/${chats[0].id}`);
-  }
-
-  // Otherwise show agent selection
+  // Show agent selection (no auto-redirect to last chat)
   const agents = await getFeaturedAgents();
 
   return (
