@@ -44,9 +44,6 @@ export function useStartChat() {
                     }
 
                     router.push(url)
-
-                    // Refresh layout (sidebar) after navigation starts
-                    setTimeout(() => router.refresh(), 100)
                 }
             } catch (error) {
                 console.error("Failed to start chat", error)
