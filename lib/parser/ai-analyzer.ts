@@ -240,10 +240,14 @@ export async function analyzeContentBatch(items: ContentForAnalysis[]): Promise<
 /**
  * Analyze content items and save results to database
  */
-export async function analyzeAndSaveContentItems(itemIds: string[]): Promise<number> {
+export async function analyzeAndSaveContentItems(
+  itemIds: string[],
+  options?: { skipViewsFilter?: boolean }
+): Promise<number> {
   if (itemIds.length === 0) return 0
 
   const MIN_VIEWS_FOR_AI = 50000
+  const skipViews = options?.skipViewsFilter ?? false
 
   // Fetch items from database (simple query without relations)
   const items = await prisma.contentItem.findMany({
@@ -252,16 +256,22 @@ export async function analyzeAndSaveContentItems(itemIds: string[]): Promise<num
     }
   })
 
-  // Filter: only items with 50K+ views that haven't been analyzed yet
-  const itemsToAnalyze = items.filter(item => !item.aiAnalyzedAt && item.views >= MIN_VIEWS_FOR_AI)
+  // Filter: only items that haven't been analyzed yet, optionally skip views check
+  const itemsToAnalyze = items.filter(item => {
+    if (item.aiAnalyzedAt) return false
+    if (!skipViews && item.views < MIN_VIEWS_FOR_AI) return false
+    return true
+  })
 
-  const skippedLowViews = items.filter(item => !item.aiAnalyzedAt && item.views < MIN_VIEWS_FOR_AI).length
-  if (skippedLowViews > 0) {
-    console.log(`[AI Analyzer] Skipped ${skippedLowViews} items with < ${MIN_VIEWS_FOR_AI} views`)
+  if (!skipViews) {
+    const skippedLowViews = items.filter(item => !item.aiAnalyzedAt && item.views < MIN_VIEWS_FOR_AI).length
+    if (skippedLowViews > 0) {
+      console.log(`[AI Analyzer] Skipped ${skippedLowViews} items with < ${MIN_VIEWS_FOR_AI} views`)
+    }
   }
 
   if (itemsToAnalyze.length === 0) {
-    console.log(`[AI Analyzer] No items to analyze (min ${MIN_VIEWS_FOR_AI} views required)`)
+    console.log(`[AI Analyzer] No items to analyze${skipViews ? '' : ` (min ${MIN_VIEWS_FOR_AI} views required)`}`)
     return 0
   }
 

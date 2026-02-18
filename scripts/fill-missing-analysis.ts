@@ -130,7 +130,7 @@ async function fillMissingTopics() {
         console.log(`[Batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(items.length / BATCH_SIZE)}] Analyzing ${batchIds.length} items...`)
 
         try {
-            const analyzed = await analyzeAndSaveContentItems(batchIds)
+            const analyzed = await analyzeAndSaveContentItems(batchIds, { skipViewsFilter: true })
             console.log(`  ✅ Analyzed: ${analyzed} items`)
             totalAnalyzed += analyzed
         } catch (err: any) {
