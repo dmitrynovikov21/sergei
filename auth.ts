@@ -93,7 +93,11 @@ export const {
 
       const dbUser = await getUserById(token.sub);
 
-      if (!dbUser) return token;
+      // User deleted from DB (e.g. backup restore) — invalidate session
+      // Returning empty token forces auth() to return null → re-login
+      if (!dbUser) {
+        return {} as typeof token;
+      }
 
       token.name = dbUser.name;
       token.email = dbUser.email;
