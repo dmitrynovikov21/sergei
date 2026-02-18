@@ -97,7 +97,9 @@ export async function getDataset(id: string) {
                     aiSuccessReason: true,
                     aiEmotionalTrigger: true,
                     aiTargetAudience: true,
-                    aiAnalyzedAt: true
+                    aiAnalyzedAt: true,
+                    createdAt: true,
+                    updatedAt: true
                 }
             }
         }

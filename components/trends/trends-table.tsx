@@ -6,7 +6,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { ExternalLink, ChevronUp, ChevronDown, Image, Copy } from "lucide-react"
+import { ExternalLink, ChevronUp, ChevronDown, Image, Copy, ArrowUp } from "lucide-react"
 import { Icons } from "@/components/shared/icons"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -46,6 +46,8 @@ interface ContentItem {
     likes: number
     comments: number
     viralityScore: number | null
+    createdAt?: Date | null
+    updatedAt?: Date | null
     publishedAt: Date | null
     sourceUsername: string
     datasetName: string
@@ -241,6 +243,14 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K'
         return num.toString()
+    }
+
+    // Check if item was updated (updatedAt > createdAt + 60s)
+    const isUpdated = (item: ContentItem): boolean => {
+        if (!item.updatedAt || !item.createdAt) return false
+        const created = new Date(item.createdAt).getTime()
+        const updated = new Date(item.updatedAt).getTime()
+        return (updated - created) > 60_000
     }
 
     const formatDate = (date: Date | null) => {
@@ -443,9 +453,14 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                         className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                         onClick={() => setSelectedItem(item)}
                                     >
-                                        {/* Row number */}
+                                        {/* Row number + updated dot */}
                                         <TableCell className="p-2 text-center text-xs text-muted-foreground font-mono">
-                                            {index + 1}
+                                            <span className="flex items-center justify-center gap-0.5">
+                                                {index + 1}
+                                                {isUpdated(item) && (
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shrink-0" title="Обновлено" />
+                                                )}
+                                            </span>
                                         </TableCell>
                                         {/* Thumbnail with hover preview */}
                                         <TableCell className="p-1">
@@ -530,7 +545,12 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                         </TableCell>
                                         {/* Stats */}
                                         <TableCell className="text-center font-mono text-sm">
-                                            {formatNumber(item.views)}
+                                            <span className="inline-flex items-center gap-0.5">
+                                                {formatNumber(item.views)}
+                                                {isUpdated(item) && (
+                                                    <ArrowUp className="h-3 w-3 text-cyan-400" />
+                                                )}
+                                            </span>
                                         </TableCell>
                                         <TableCell className="text-center font-mono text-sm">
                                             {formatNumber(item.likes)}

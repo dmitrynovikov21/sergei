@@ -65,7 +65,9 @@ export async function GET(
                 aiSuccessReason: true,
                 aiEmotionalTrigger: true,
                 aiTargetAudience: true,
-                aiAnalyzedAt: true
+                aiAnalyzedAt: true,
+                createdAt: true,
+                updatedAt: true
             }
         })
 
