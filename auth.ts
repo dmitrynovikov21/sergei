@@ -59,6 +59,11 @@ export const {
     // @ts-ignore // Inherit authorized callback from auth.config
     ...authConfig.callbacks,
     async session({ token, session }) {
+      // JWT was invalidated (user deleted from DB) — return empty session
+      if (!token.sub) {
+        return { ...session, user: undefined } as any;
+      }
+
       if (session.user) {
         if (token.sub) {
           session.user.id = token.sub;

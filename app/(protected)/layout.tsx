@@ -18,7 +18,7 @@ interface ProtectedLayoutProps {
 export default async function Dashboard({ children }: ProtectedLayoutProps) {
   const sessionUser = await getCurrentUser();
 
-  if (!sessionUser) redirect("/login");
+  if (!sessionUser?.id) redirect("/login");
 
   // Fetch fresh user data to get accurate credits
   const user = await prisma.user.findUnique({
