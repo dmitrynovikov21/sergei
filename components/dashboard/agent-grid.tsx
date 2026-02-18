@@ -35,13 +35,16 @@ export function AgentGrid({ agents }: AgentGridProps) {
                     key={agent.id}
                     onClick={() => handleAgentClick(agent.id)}
                     className={cn(
-                        "group relative cursor-pointer rounded-xl border border-border/50",
-                        "bg-card dark:bg-[#30302E]",
+                        "group relative cursor-pointer rounded-xl",
+                        "border border-border/40",
+                        "bg-gradient-to-br from-zinc-900/80 via-zinc-800/50 to-zinc-900/80",
+                        "dark:from-zinc-900/90 dark:via-zinc-800/40 dark:to-zinc-900/90",
                         "p-6 h-full",
                         "transition-all duration-300 ease-out",
-                        "hover:border-border",
-                        "hover:shadow-lg",
+                        "hover:border-primary/30",
+                        "hover:shadow-[0_0_20px_-5px_rgba(var(--primary-rgb,139,92,246),0.15)]",
                         "hover:-translate-y-1 hover:scale-[1.01]",
+                        "backdrop-blur-sm",
                         loadingId === agent.id && "opacity-70 pointer-events-none"
                     )}
                 >
@@ -50,13 +53,12 @@ export function AgentGrid({ agents }: AgentGridProps) {
                             <Loader2 className="h-8 w-8 animate-spin text-white" />
                         </div>
                     )}
-                    {/* Settings button - REMOVED per product requirement */}
 
                     {/* Agent content */}
                     <div className="flex flex-col h-full">
                         {/* Text - NO icon */}
                         <div className="flex-1">
-                            <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-accent transition-colors">
+                            <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
                                 {agent.name}
                             </h3>
                             <p className="text-sm text-muted-foreground leading-relaxed line-clamp-3">
@@ -64,7 +66,7 @@ export function AgentGrid({ agents }: AgentGridProps) {
                             </p>
 
                             {(agent as any).dataset && (
-                                <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground bg-muted w-fit px-2 py-1 rounded-md">
+                                <div className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 w-fit px-2 py-1 rounded-md border border-border/30">
                                     <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
                                     </svg>

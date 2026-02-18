@@ -100,6 +100,20 @@ export function ContentDetailDialog({ item, onClose }: ContentDetailDialogProps)
     useEffect(() => { setMounted(true) }, [])
     useEffect(() => { if (!item) setLightboxOpen(false) }, [item])
 
+    // Close lightbox on Escape without closing the dialog
+    useEffect(() => {
+        if (!lightboxOpen) return
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.stopPropagation()
+                e.preventDefault()
+                setLightboxOpen(false)
+            }
+        }
+        window.addEventListener('keydown', handleKey, true)
+        return () => window.removeEventListener('keydown', handleKey, true)
+    }, [lightboxOpen])
+
     return (
         <>
             <Dialog open={!!item} onOpenChange={(open) => !open && onClose()}>
@@ -302,17 +316,26 @@ export function ContentDetailDialog({ item, onClose }: ContentDetailDialogProps)
             {mounted && lightboxOpen && item?.coverUrl && createPortal(
                 <div
                     className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center cursor-pointer"
-                    onClick={() => setLightboxOpen(false)}
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        setLightboxOpen(false)
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
                 >
                     <img
                         src={getProxyImageUrl(item.coverUrl)}
                         alt="Full size"
-                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+                        className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default"
                         onClick={(e) => e.stopPropagation()}
+                        onMouseDown={(e) => e.stopPropagation()}
                     />
                     <button
                         className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold"
-                        onClick={() => setLightboxOpen(false)}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setLightboxOpen(false)
+                        }}
                     >
                         ✕
                     </button>

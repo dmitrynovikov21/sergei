@@ -68,7 +68,7 @@ export async function getDataset(id: string) {
             },
             items: {
                 orderBy: { views: "desc" },
-                take: 100,
+                take: 2000,
                 select: {
                     id: true,
                     instagramId: true,
