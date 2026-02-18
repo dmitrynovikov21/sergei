@@ -400,6 +400,7 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     <TableHead className="w-[40px] text-center text-xs">#</TableHead>
                                     <TableHead className="w-[40px]"></TableHead>
+                                    <TableHead className="w-[110px]">Источник</TableHead>
                                     <TableHead className="w-[120px]">Тема</TableHead>
                                     <TableHead
                                         className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
@@ -442,7 +443,6 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                         </span>
                                     </TableHead>
                                     <TableHead className="min-w-[200px]">Заголовок</TableHead>
-                                    <TableHead className="w-[120px]">Источник</TableHead>
                                     <TableHead className="w-[40px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -509,6 +509,19 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                                     </TooltipContent>
                                                 )}
                                             </Tooltip>
+                                        </TableCell>
+                                        {/* Source username + link */}
+                                        <TableCell className="p-1">
+                                            <a
+                                                href={`https://instagram.com/${item.sourceUsername}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <span className="opacity-50">@</span>
+                                                <span className="truncate max-w-[90px]">{item.sourceUsername}</span>
+                                            </a>
                                         </TableCell>
                                         {/* AI Topic */}
                                         <TableCell>
@@ -585,10 +598,7 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                                 )}
                                             </div>
                                         </TableCell>
-                                        {/* Source - moved to end */}
-                                        <TableCell className="font-medium text-sm">
-                                            <span className="text-muted-foreground">@</span>{item.sourceUsername}
-                                        </TableCell>
+
                                         {/* External link */}
                                         <TableCell>
                                             <a
