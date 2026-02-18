@@ -40,9 +40,6 @@ export default async function DatasetPage({ params }: DatasetPageProps) {
                         <span className={dataset.analysisStats.missingTopic > 0 ? "text-orange-400" : "text-emerald-400"}>
                             🏷️ {dataset.analysisStats.withTopic}/{dataset.analysisStats.total} тем
                         </span>
-                        <span className="text-muted-foreground">
-                            🖼️ {dataset.analysisStats.withCover}/{dataset.analysisStats.total} обложек
-                        </span>
                     </div>
                 )}
             </div>
