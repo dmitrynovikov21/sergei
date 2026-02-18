@@ -32,7 +32,6 @@ import { Icons } from "@/components/shared/icons";
 import { SidebarUser } from "./sidebar-user";
 import { SidebarAgentLink } from "./SidebarAgentLink"; // Note: Filename case sensitivity
 import { CreateAgentDialog } from "@/components/dashboard/create-agent-dialog";
-import { FreeCreditsButton } from "./free-credits-button";
 
 import { LucideIcon } from "lucide-react";
 
@@ -323,10 +322,6 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
 
           </nav>
 
-          {/* Free Credits Button */}
-          <div className="mt-auto px-3 pb-2">
-            <FreeCreditsButton isExpanded={isSidebarExpanded} />
-          </div>
 
           {/* User Profile at Bottom */}
           {user && (
