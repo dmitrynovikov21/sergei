@@ -51,7 +51,13 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
     }, [agent.datasetId])
 
     React.useEffect(() => {
-        getDatasets().then(ds => setDatasets(ds))
+        getDatasets().then(ds => {
+            setDatasets(ds)
+            // Auto-select latest dataset if agent has no default
+            if (!agent.datasetId && !selectedDatasetId && ds.length > 0) {
+                setSelectedDatasetId(ds[0].id) // Latest (ordered by createdAt desc)
+            }
+        })
     }, [])
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {

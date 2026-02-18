@@ -119,7 +119,14 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     // Load datasets on mount
     useEffect(() => {
         getDatasets().then(data => {
-            setDatasets(data.map(d => ({ id: d.id, name: d.name })))
+            const mapped = data.map(d => ({ id: d.id, name: d.name }))
+            setDatasets(mapped)
+
+            // Auto-select latest dataset if nothing else is set
+            const effectiveId = initialDatasetId || agent.datasetId
+            if (!effectiveId && mapped.length > 0 && !selectedDatasetId) {
+                setSelectedDatasetId(mapped[0].id) // Latest (ordered by createdAt desc)
+            }
         }).catch(console.error)
     }, [])
 
