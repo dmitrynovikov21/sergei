@@ -25,20 +25,18 @@ export default async function DashboardPage() {
   const agents = await getFeaturedAgents();
 
   return (
-    <div className="flex h-full flex-col items-center p-8 pt-24 overflow-y-auto">
-      <div className="max-w-5xl w-full text-center space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Выберите агента для начала
+    <div className="flex h-full flex-col p-8 pt-16 overflow-y-auto">
+      <div className="max-w-5xl w-full space-y-8">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Агенты
           </h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Наши AI-агенты помогут вам с созданием контента. Выберите подходящего агента ниже, чтобы начать.
+          <p className="text-sm text-muted-foreground">
+            Выберите агента для создания контента
           </p>
         </div>
 
-        <div className="space-y-8">
-          <AgentGrid agents={agents} />
-        </div>
+        <AgentGrid agents={agents} />
       </div>
     </div>
   );
