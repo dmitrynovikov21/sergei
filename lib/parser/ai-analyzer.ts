@@ -246,7 +246,7 @@ export async function analyzeAndSaveContentItems(
 ): Promise<number> {
   if (itemIds.length === 0) return 0
 
-  const MIN_VIEWS_FOR_AI = 50000
+  const MIN_VIEWS_FOR_AI = 200000
   const skipViews = options?.skipViewsFilter ?? false
 
   // Fetch items from database (simple query without relations)
