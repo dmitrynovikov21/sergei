@@ -96,9 +96,14 @@ function sleep(ms: number) {
 async function scrapeAccount(username: string): Promise<any[]> {
     const client = new ApifyClient({ token: APIFY_TOKEN })
 
+    const directUrl = `https://www.instagram.com/${username}/`
+
     const runInput: any = {
-        username: [username],
+        directUrls: [directUrl],
+        resultsType: 'posts',
         resultsLimit: 500,
+        searchType: 'user',
+        onlyPostsNewerThan: `${DAYS_LIMIT} days`,
     }
 
     if (IG_USERNAME && IG_PASSWORD) {
@@ -106,9 +111,9 @@ async function scrapeAccount(username: string): Promise<any[]> {
         runInput.loginPassword = IG_PASSWORD
     }
 
-    console.log(`  🔍 Calling Apify instagram-reel-scraper for @${username}...`)
+    console.log(`  🔍 Calling Apify instagram-scraper for @${username} (last ${DAYS_LIMIT} days)...`)
 
-    const run = await client.actor('apify/instagram-reel-scraper').call(runInput, {
+    const run = await client.actor('apify/instagram-scraper').call(runInput, {
         waitSecs: 600
     })
 
@@ -120,19 +125,16 @@ async function scrapeAccount(username: string): Promise<any[]> {
     }
 
     const { items } = await client.dataset(run.defaultDatasetId).listItems()
-    console.log(`  📦 Fetched ${items.length} raw items from Apify`)
+    console.log(`  📦 Fetched ${items.length} items from Apify (pre-filtered by date)`)
 
-    // Filter by date (last N days)
-    const cutoff = new Date()
-    cutoff.setDate(cutoff.getDate() - DAYS_LIMIT)
-
-    const filtered = items.filter((item: any) => {
-        if (!item.timestamp) return true
-        return new Date(item.timestamp) >= cutoff
+    // Filter only Video (reels) type
+    const reels = items.filter((item: any) => {
+        const type = item.type || (item.isVideo || item.productType === 'clips' || item.videoUrl ? 'Video' : 'Other')
+        return type === 'Video'
     })
 
-    console.log(`  📅 After date filter (${DAYS_LIMIT} days): ${filtered.length} items`)
-    return filtered
+    console.log(`  🎬 Reels only: ${reels.length} items (from ${items.length} total)`)
+    return reels
 }
 
 // ============================================
