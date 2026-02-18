@@ -73,7 +73,7 @@ type SortOrder = 'asc' | 'desc'
 
 export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
     const [search, setSearch] = useState("")
-    const [typeFilters, setTypeFilters] = useState<Set<string>>(new Set(['Reel', 'Carousel']))
+
     const [sourceFilters, setSourceFilters] = useState<Set<string>>(new Set())
     const [topicFilters, setTopicFilters] = useState<Set<string>>(new Set())
     const [datasetFilters, setDatasetFilters] = useState<Set<string>>(new Set())
@@ -171,10 +171,7 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
             )
         }
 
-        // Type filter
-        if (typeFilters.size > 0) {
-            result = result.filter(item => typeFilters.has(item.contentType))
-        }
+
 
         // Source filter
         if (sourceFilters.size > 0 && sourceFilters.size < sources.length) {
@@ -238,7 +235,7 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
         })
 
         return result
-    }, [items, search, typeFilters, sourceFilters, sources.length, topicFilters, topics.length, datasetFilters, datasets.length, sortField, sortOrder, minViews, minLikes, minVirality, minComments, dateFrom, dateTo])
+    }, [items, search, sourceFilters, sources.length, topicFilters, topics.length, datasetFilters, datasets.length, sortField, sortOrder, minViews, minLikes, minVirality, minComments, dateFrom, dateTo])
 
     const formatNumber = (num: number) => {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M'
@@ -276,14 +273,8 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                         className="w-56 bg-muted border-border/50"
                     />
 
-                    {/* Type multi-select */}
-                    <MultiSelect
-                        options={['Reel', 'Carousel']}
-                        selected={typeFilters}
-                        onChange={setTypeFilters}
-                        placeholder="Тип контента"
-                        allLabel="Все типы"
-                    />
+
+
 
                     {/* Source multi-select */}
                     <MultiSelect
@@ -399,8 +390,6 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                 <TableRow className="bg-muted/50 hover:bg-muted/50">
                                     <TableHead className="w-[40px] text-center text-xs">#</TableHead>
                                     <TableHead className="w-[40px]"></TableHead>
-                                    <TableHead className="w-[120px]">Источник</TableHead>
-                                    <TableHead className="min-w-[200px]">Заголовок</TableHead>
                                     <TableHead className="w-[120px]">Тема</TableHead>
                                     <TableHead
                                         className="w-[80px] text-center cursor-pointer hover:text-foreground transition-colors"
@@ -442,6 +431,8 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                             Вирал. <SortIcon field="virality" />
                                         </span>
                                     </TableHead>
+                                    <TableHead className="min-w-[200px]">Заголовок</TableHead>
+                                    <TableHead className="w-[120px]">Источник</TableHead>
                                     <TableHead className="w-[40px]"></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -456,61 +447,53 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                         <TableCell className="p-2 text-center text-xs text-muted-foreground font-mono">
                                             {index + 1}
                                         </TableCell>
-                                        {/* Image preview - click opens detail popup */}
+                                        {/* Thumbnail with hover preview */}
                                         <TableCell className="p-1">
-                                            {item.coverUrl ? (
-                                                <Tooltip>
-                                                    <TooltipTrigger asChild>
-                                                        <button
-                                                            className="block focus:outline-none"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation()
-                                                                setSelectedItem(item)
-                                                            }}
-                                                        >
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        className="block focus:outline-none"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation()
+                                                            setSelectedItem(item)
+                                                        }}
+                                                    >
+                                                        {item.coverUrl ? (
                                                             <img
                                                                 src={getProxyImageUrl(item.coverUrl)}
                                                                 alt=""
                                                                 className="w-8 h-8 rounded object-cover hover:ring-2 hover:ring-primary/50 transition-all cursor-pointer"
                                                                 onError={(e) => {
-                                                                    e.currentTarget.style.display = 'none'
+                                                                    const parent = e.currentTarget.parentElement
+                                                                    if (parent) {
+                                                                        e.currentTarget.style.display = 'none'
+                                                                        const fallback = document.createElement('div')
+                                                                        fallback.className = 'w-8 h-8 rounded bg-muted/30 flex items-center justify-center'
+                                                                        fallback.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-muted-foreground/40"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>'
+                                                                        parent.appendChild(fallback)
+                                                                    }
                                                                 }}
                                                             />
-                                                        </button>
-                                                    </TooltipTrigger>
+                                                        ) : (
+                                                            <div className="w-8 h-8 rounded bg-muted/30 flex items-center justify-center">
+                                                                <Image className="h-3 w-3 text-muted-foreground/40" />
+                                                            </div>
+                                                        )}
+                                                    </button>
+                                                </TooltipTrigger>
+                                                {item.coverUrl && (
                                                     <TooltipContent side="right" className="p-0">
                                                         <img
                                                             src={getProxyImageUrl(item.coverUrl)}
                                                             alt="Preview"
-                                                            className="w-48 h-48 object-cover rounded"
+                                                            className="w-[300px] h-[300px] object-cover rounded"
+                                                            onError={(e) => {
+                                                                e.currentTarget.parentElement!.style.display = 'none'
+                                                            }}
                                                         />
                                                     </TooltipContent>
-                                                </Tooltip>
-                                            ) : (
-                                                <div className="w-8 h-8 rounded bg-muted/30 flex items-center justify-center">
-                                                    <Image className="h-3 w-3 text-muted-foreground/40" />
-                                                </div>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="font-medium text-sm">
-                                            <span className="text-muted-foreground">@</span>{item.sourceUsername}
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="flex items-center gap-2">
-                                                <span className="line-clamp-1 text-sm flex-1">
-                                                    {item.headline || item.description?.slice(0, 80) || '—'}
-                                                </span>
-                                                {(item.headline || item.description) && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
-                                                        onClick={(e) => copyText(item.headline || item.description || '', e)}
-                                                    >
-                                                        <Copy className="h-3 w-3" />
-                                                    </Button>
                                                 )}
-                                            </div>
+                                            </Tooltip>
                                         </TableCell>
                                         {/* AI Topic */}
                                         <TableCell>
@@ -541,9 +524,11 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                                 <span className="text-xs text-muted-foreground">—</span>
                                             )}
                                         </TableCell>
+                                        {/* Date */}
                                         <TableCell className="text-center text-sm text-muted-foreground">
                                             {formatDate(item.publishedAt)}
                                         </TableCell>
+                                        {/* Stats */}
                                         <TableCell className="text-center font-mono text-sm">
                                             {formatNumber(item.views)}
                                         </TableCell>
@@ -562,6 +547,29 @@ export function TrendsTable({ items, hideDatasetFilter }: TrendsTableProps) {
                                                 {item.viralityScore?.toFixed(1) || '—'}
                                             </span>
                                         </TableCell>
+                                        {/* Headline */}
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <span className="line-clamp-1 text-sm flex-1">
+                                                    {item.headline || item.description?.slice(0, 80) || '—'}
+                                                </span>
+                                                {(item.headline || item.description) && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 shrink-0"
+                                                        onClick={(e) => copyText(item.headline || item.description || '', e)}
+                                                    >
+                                                        <Copy className="h-3 w-3" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        {/* Source - moved to end */}
+                                        <TableCell className="font-medium text-sm">
+                                            <span className="text-muted-foreground">@</span>{item.sourceUsername}
+                                        </TableCell>
+                                        {/* External link */}
                                         <TableCell>
                                             <a
                                                 href={item.originalUrl}
