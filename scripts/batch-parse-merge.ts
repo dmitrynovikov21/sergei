@@ -13,6 +13,7 @@ import { prisma } from '../lib/db'
 import { analyzeAndSaveContentItems } from '../lib/parser/ai-analyzer'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as crypto from 'crypto'
 
 // ============================================
 // CONFIG
@@ -193,6 +194,7 @@ async function mergeIntoDatabase(username: string, posts: any[]): Promise<MergeR
             // INSERT new content
             const newItem = await prisma.contentItem.create({
                 data: {
+                    id: crypto.randomUUID().replace(/-/g, '').slice(0, 25),
                     instagramId,
                     originalUrl,
                     sourceUrl,
