@@ -1,52 +1,52 @@
 /**
  * Restore 200K+ items re-parse script
  * 
- * Re-parses ALL 21 accounts using instagram-scraper + instagram-reel-scraper
+ * Re-parses ALL 21 accounts using instagram-scraper (directUrls format)
  * Filters to items with >= 200K views
  * Merges into the user's main dataset (c78b0e15a63700581c8a657ce)
- * Sets updatedAt on existing items that get updated stats
+ * Uses @updatedAt for automatic timestamp tracking
  */
 
 import { ApifyClient } from 'apify-client'
-import { PrismaClient } from '@prisma/client'
-import * as crypto from 'crypto'
-import * as dotenv from 'dotenv'
+import { prisma } from '../lib/db'
+import { analyzeAndSaveContentItems } from '../lib/parser/ai-analyzer'
 import * as fs from 'fs'
-
-dotenv.config()
-
-const prisma = new PrismaClient()
-const client = new ApifyClient({ token: process.env.APIFY_TOKEN })
+import * as path from 'path'
+import * as crypto from 'crypto'
 
 const DATASET_ID = 'c78b0e15a63700581c8a657ce'
 const MIN_VIEWS = 200_000
 const DAYS_LIMIT = 14
+const APIFY_TOKEN = process.env.APIFY_TOKEN!
+const IG_USERNAME = process.env.IG_USERNAME
+const IG_PASSWORD = process.env.IG_PASSWORD
 
 const ACCOUNTS = [
+    'lipodat_vadim',
+    'mesedu.bulach',
+    'demi_anfer',
+    'wowviking',
+    'dianissimmo',
+    'nina_khodakovskaya',
+    'neiro_gleb',
+    'themayeralexander',
+    'romanpopular',
     'polishuk01',
     'demin_trader',
-    'panchenko_sport',
-    'mikhailshmt',
+    'avetisdemchenko',
+    'psiholog_pavlokazarian',
+    'dobmox',
+    'bymorozov',
+    'vladimir__hack',
     'psy.gleb',
+    'panchenko_sport',
+    'natalia_rubtsovskaya',
+    'mikhailshmt',
     'izhmukov_777',
-    'kara_nigina',
-    'alisher_morgenshtern',
-    'reginka_official',
-    'karolinakurkova',
-    'siergiej.official',
-    'garik_kharlamov',
-    'laysan_utiasheva',
-    'nataly_osmann',
-    'nataliavorozhbit',
-    'anastasivashukevich',
-    'therock',
-    'willsmith',
-    'emmawatson',
-    'zfrancescaofficial',
-    'belfrancesco_'
 ]
 
-const PROGRESS_FILE = '/root/sergei/data/parse-logs/restore-progress.json'
+const LOG_DIR = path.join(__dirname, '../data/parse-logs')
+const PROGRESS_FILE = path.join(LOG_DIR, 'restore-progress.json')
 
 function loadProgress(): Set<string> {
     try {
@@ -61,82 +61,91 @@ function saveProgress(processed: Set<string>) {
     fs.writeFileSync(PROGRESS_FILE, JSON.stringify([...processed], null, 2))
 }
 
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms))
+}
+
 async function scrapeAccount(username: string): Promise<any[]> {
-    const cutoffDate = new Date()
-    cutoffDate.setDate(cutoffDate.getDate() - DAYS_LIMIT)
-    const onlyPostsNewerThan = cutoffDate.toISOString().split('T')[0]
+    const apifyClient = new ApifyClient({ token: APIFY_TOKEN })
+    const directUrl = `https://www.instagram.com/${username}/`
 
-    console.log(`  🔍 Scraping @${username} (last ${DAYS_LIMIT} days, >=${MIN_VIEWS / 1000}K views)...`)
-
-    // Use instagram-scraper for broader coverage
-    const input = {
-        "username": [username],
-        "resultsLimit": 500,
-        "onlyPostsNewerThan": onlyPostsNewerThan,
-        "addParentData": true,
-        "loginCookies": [],
-        "proxy": {
-            "useApifyProxy": true,
-            "apifyProxyGroups": ["RESIDENTIAL"]
-        }
+    const runInput: any = {
+        directUrls: [directUrl],
+        resultsType: 'posts',
+        resultsLimit: 500,
+        searchType: 'user',
+        onlyPostsNewerThan: `${DAYS_LIMIT} days`,
     }
 
-    // Add credentials if available
-    if (process.env.IG_USERNAME && process.env.IG_PASSWORD) {
-        (input as any).loginUsername = process.env.IG_USERNAME;
-        (input as any).loginPassword = process.env.IG_PASSWORD
+    if (IG_USERNAME && IG_PASSWORD) {
+        runInput.loginUsername = IG_USERNAME
+        runInput.loginPassword = IG_PASSWORD
     }
 
-    const run = await client.actor("apify/instagram-scraper").call(input, { timeout: 600 })
+    console.log(`  🔍 Calling instagram-scraper for @${username}...`)
+
+    const run = await apifyClient.actor('apify/instagram-scraper').call(runInput, {
+        waitSecs: 600
+    })
 
     console.log(`  ✅ Status: ${run.status}`)
+
     if (run.status !== 'SUCCEEDED') {
         console.log(`  ❌ Failed, skipping`)
         return []
     }
 
-    const { items } = await client.dataset(run.defaultDatasetId).listItems({ limit: 1000 })
-    console.log(`  📦 Fetched ${items.length} raw items`)
+    const { items } = await apifyClient.dataset(run.defaultDatasetId).listItems()
+    console.log(`  📦 Fetched ${items.length} items total`)
 
-    // Filter by date and views
+    // Filter: Reels only + >= 200K views
     const filtered = items.filter((item: any) => {
-        const ts = item.timestamp ? new Date(item.timestamp) : null
-        if (!ts || ts < cutoffDate) return false
+        const type = item.type || (item.isVideo || item.productType === 'clips' || item.videoUrl ? 'Video' : 'Other')
+        if (type !== 'Video') return false
 
-        const views = item.videoViewCount || item.videoPlayCount || 0
+        const views = item.videoViewCount || item.playCount || item.viewCount || item.videoPlayCount || 0
         return views >= MIN_VIEWS
     })
 
-    console.log(`  📅 After date+views filter (${DAYS_LIMIT}d, >=${MIN_VIEWS / 1000}K): ${filtered.length} items`)
+    console.log(`  🎬 Reels >= ${MIN_VIEWS / 1000}K: ${filtered.length} items`)
     return filtered
 }
 
-async function mergeItems(items: any[], username: string): Promise<{ added: number; updated: number; skipped: number }> {
-    let added = 0, updated = 0, skipped = 0
+interface MergeResult {
+    updated: number
+    inserted: number
+    skipped: number
+    newItemIds: string[]
+}
 
-    for (const item of items) {
+async function mergeItems(posts: any[], username: string): Promise<MergeResult> {
+    const result: MergeResult = { updated: 0, inserted: 0, skipped: 0, newItemIds: [] }
+
+    for (const post of posts) {
+        const instagramId = post.id || post.shortCode
+        if (!instagramId) {
+            result.skipped++
+            continue
+        }
+
+        const views = post.videoViewCount || post.playCount || post.viewCount || post.videoPlayCount || 0
+        const likes = post.likesCount || 0
+        const comments = post.commentsCount || 0
+        const coverUrl = post.displayUrl || null
+        const videoUrl = post.videoUrl || null
+        const originalUrl = post.url || `https://www.instagram.com/p/${post.shortCode}/`
+        const sourceUrl = `https://www.instagram.com/${username}/`
+        const publishedAt = post.timestamp ? new Date(post.timestamp) : null
+        const description = post.caption || null
+        const viralityScore = views > 0 ? ((likes + comments) / views) * 100 : 0
+
         try {
-            const instagramId = item.id || item.shortCode || `${item.url}_${item.timestamp}`
-            const views = item.videoViewCount || item.videoPlayCount || 0
-            const likes = item.likesCount || 0
-            const comments = item.commentsCount || 0
-            const publishedAt = item.timestamp ? new Date(item.timestamp) : null
-            const coverUrl = item.displayUrl || item.thumbnailUrl || null
-            const videoUrl = item.videoUrl || null
-            const originalUrl = item.url || `https://www.instagram.com/reel/${item.shortCode}/`
-            const sourceUrl = `https://www.instagram.com/${username}/`
-            const contentType = item.type === 'Video' ? 'Video' : item.type === 'Sidecar' ? 'Sidecar' : 'Image'
-            const description = item.caption || null
-
-            // Calculate virality
-            const viralityScore = likes > 0 ? (views / likes) : 0
-
             const existing = await prisma.contentItem.findFirst({
                 where: { instagramId, datasetId: DATASET_ID }
             })
 
             if (existing) {
-                // Update stats if changed
+                // Update stats — @updatedAt auto-sets timestamp
                 if (existing.views !== views || existing.likes !== likes || existing.comments !== comments) {
                     await prisma.contentItem.update({
                         where: { id: existing.id },
@@ -144,20 +153,18 @@ async function mergeItems(items: any[], username: string): Promise<{ added: numb
                             views,
                             likes,
                             comments,
-                            viralityScore,
+                            viralityScore: Math.round(viralityScore * 10) / 10,
                             coverUrl: coverUrl || existing.coverUrl,
-                            videoUrl: videoUrl || existing.videoUrl,
-                            // updatedAt auto-set by @updatedAt
                         }
                     })
-                    updated++
+                    result.updated++
                 } else {
-                    skipped++
+                    result.skipped++
                 }
             } else {
-                await prisma.contentItem.create({
+                const newItem = await prisma.contentItem.create({
                     data: {
-                        id: crypto.randomUUID(),
+                        id: crypto.randomUUID().replace(/-/g, '').slice(0, 25),
                         instagramId,
                         originalUrl,
                         sourceUrl,
@@ -166,68 +173,96 @@ async function mergeItems(items: any[], username: string): Promise<{ added: numb
                         views,
                         likes,
                         comments,
-                        viralityScore,
                         publishedAt,
                         description,
-                        contentType,
+                        viralityScore: Math.round(viralityScore * 10) / 10,
                         datasetId: DATASET_ID,
+                        contentType: 'Video',
                     }
                 })
-                added++
+                result.inserted++
+                result.newItemIds.push(newItem.id)
             }
         } catch (err: any) {
             if (err?.code === 'P2002') {
-                skipped++
+                result.skipped++
             } else {
                 console.error(`  ⚠️ Error:`, err.message)
             }
         }
     }
 
-    return { added, updated, skipped }
+    return result
 }
 
 async function main() {
-    console.log(`🚀 Restore 200K+ items — re-parsing ${ACCOUNTS.length} accounts`)
-    console.log(`📊 Filter: >= ${MIN_VIEWS / 1000}K views, last ${DAYS_LIMIT} days`)
-    console.log(`📁 Target dataset: ${DATASET_ID}\n`)
+    if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true })
+
+    console.log('='.repeat(60))
+    console.log('🔄 RESTORE 200K+ ITEMS')
+    console.log(`📊 Dataset: ${DATASET_ID}`)
+    console.log(`📅 Days: ${DAYS_LIMIT}, Min views: ${MIN_VIEWS / 1000}K`)
+    console.log(`👥 Accounts: ${ACCOUNTS.length}`)
+    console.log('='.repeat(60))
 
     const processed = loadProgress()
     const remaining = ACCOUNTS.filter(a => !processed.has(a))
-    console.log(`✅ Already processed: ${processed.size}, remaining: ${remaining.length}\n`)
+
+    console.log(`\n✅ Already processed: ${processed.size}`)
+    console.log(`📋 Remaining: ${remaining.length}\n`)
 
     let totalAdded = 0, totalUpdated = 0
 
     for (let i = 0; i < remaining.length; i++) {
         const username = remaining[i]
-        console.log(`[${i + 1}/${remaining.length}] 🎯 @${username}`)
+        console.log(`\n[${i + 1}/${remaining.length}] 🎯 @${username}`)
 
         try {
             const items = await scrapeAccount(username)
 
             if (items.length === 0) {
-                console.log(`  ⚠️ No items matching filter`)
+                console.log(`  ⚠️ No reels >= ${MIN_VIEWS / 1000}K views`)
             } else {
                 const result = await mergeItems(items, username)
-                console.log(`  📊 added=${result.added}, updated=${result.updated}, skipped=${result.skipped}`)
-                totalAdded += result.added
+                console.log(`  📊 added=${result.inserted}, updated=${result.updated}, skipped=${result.skipped}`)
+                totalAdded += result.inserted
                 totalUpdated += result.updated
+
+                // AI analysis for new items
+                if (result.newItemIds.length > 0) {
+                    console.log(`  🤖 AI analysis on ${result.newItemIds.length} new items...`)
+                    try {
+                        const analyzed = await analyzeAndSaveContentItems(result.newItemIds)
+                        console.log(`  🤖 AI analyzed: ${analyzed} items`)
+                    } catch (aiErr: any) {
+                        console.error(`  ⚠️ AI error (non-fatal): ${aiErr.message}`)
+                    }
+                }
             }
 
             processed.add(username)
             saveProgress(processed)
+            console.log(`  ✅ @${username} done!`)
         } catch (err: any) {
             console.error(`  ❌ Error: ${err.message}`)
         }
 
-        console.log()
+        // Pause between accounts
+        if (i < remaining.length - 1) {
+            await sleep(10000)
+        }
     }
 
     const total = await prisma.contentItem.count({ where: { datasetId: DATASET_ID } })
-    console.log(`\n📦 DONE! Total items in dataset: ${total}`)
+    console.log(`\n${'='.repeat(60)}`)
+    console.log(`📦 DONE! Total items in dataset: ${total}`)
     console.log(`   Added: ${totalAdded}, Updated: ${totalUpdated}`)
+    console.log('='.repeat(60))
 
     await prisma.$disconnect()
 }
 
-main().catch(console.error)
+main().catch(err => {
+    console.error('FATAL:', err)
+    process.exit(1)
+})
