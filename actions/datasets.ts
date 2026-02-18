@@ -151,6 +151,7 @@ export async function getDataset(id: string) {
     const totalItems = transformedItems.length
     const withHeadline = dataset.items.filter(i => i.headline !== null && i.headline !== '').length
     const withTopic = dataset.items.filter(i => i.aiTopic !== null && i.aiTopic !== '').length
+    const withCover = dataset.items.filter(i => i.coverUrl !== null && i.coverUrl !== '').length
 
     return {
         ...dataset,
@@ -160,6 +161,7 @@ export async function getDataset(id: string) {
             total: totalItems,
             withHeadline,
             withTopic,
+            withCover,
             missingHeadline: totalItems - withHeadline,
             missingTopic: totalItems - withTopic,
         }
