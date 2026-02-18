@@ -34,15 +34,19 @@ export function useStartChat() {
                         }
                     }
 
-                    router.refresh() // Update sidebar
-
-                    // Construct URL
+                    // Navigate first, then refresh sidebar
+                    // IMPORTANT: router.refresh() MUST come AFTER router.push()
+                    // Otherwise Next.js re-renders the current page while navigating,
+                    // causing a flash of the old page at the new URL
                     let url = `/dashboard/chat/${chatId}`
                     if (options.initialMessage) {
                         url += `?init=${encodeURIComponent(options.initialMessage)}`
                     }
 
                     router.push(url)
+
+                    // Refresh layout (sidebar) after navigation starts
+                    setTimeout(() => router.refresh(), 100)
                 }
             } catch (error) {
                 console.error("Failed to start chat", error)
