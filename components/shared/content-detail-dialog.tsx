@@ -320,18 +320,20 @@ export function ContentDetailDialog({ item, onClose }: ContentDetailDialogProps)
             {mounted && lightboxOpen && item?.coverUrl && createPortal(
                 <div
                     className="fixed inset-0 z-[200] bg-black/90 flex items-center justify-center cursor-pointer"
-                    onClick={(e) => {
+                    onPointerDown={(e) => {
                         e.stopPropagation()
+                        e.preventDefault()
                         setLightboxOpen(false)
                     }}
+                    onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
-                    onPointerDown={(e) => e.stopPropagation()}
                 >
                     <img
                         src={getProxyImageUrl(item.coverUrl)}
                         alt="Full size"
                         className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg cursor-default"
                         onClick={(e) => e.stopPropagation()}
+                        onPointerDown={(e) => e.stopPropagation()}
                         onMouseDown={(e) => e.stopPropagation()}
                     />
                     <button
