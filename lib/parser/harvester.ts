@@ -343,6 +343,56 @@ async function archiveOldContent(datasetId: string): Promise<number> {
 // ==========================================
 
 /**
+ * Validate that a headline is real text from the image, not an AI-generated description.
+ * AI vision models sometimes describe faces/scenes instead of reading text.
+ */
+function isValidHeadline(headline: string): boolean {
+    const h = headline.trim()
+
+    // Too short — likely garbage
+    if (h.length < 3) return false
+
+    // Known AI image description patterns (Russian)
+    const aiDescriptionPatterns = [
+        /не\s*могу\s*идентифицировать/i,
+        /изображен[а-яё]*\s+(мужчин|женщин|человек|лиц)/i,
+        /на\s+фоне\s+(синего|красного|зелёного|белого|чёрного|серого)/i,
+        /вижу\s+(мужчин|женщин|человек)/i,
+        /одет[а-яё]*\s+в\s/i,
+        /с\s+(тёмными|светлыми|короткими|длинными)\s+(волосами|кудрями)/i,
+        /с\s+бородой/i,
+        /с\s+усами/i,
+        /на\s+фотографии/i,
+        /на\s+изображении/i,
+        /на\s+снимке/i,
+        /портрет\s/i,
+        /лицо\s+(мужчины|женщины|человека)/i,
+        /описание\s+изображения/i,
+        /cannot\s+identify/i,
+        /i\s+see\s+a\s+(man|woman|person)/i,
+        /wearing\s+a\s/i,
+    ]
+
+    for (const pattern of aiDescriptionPatterns) {
+        if (pattern.test(h)) return false
+    }
+
+    // Single word, all Latin, looks like a random name/word from image (e.g. "FRYMAN")
+    // Real headlines are usually multi-word or contain Cyrillic
+    if (/^[A-Za-z]+$/.test(h) && h.length < 15 && !h.includes(' ')) {
+        return false
+    }
+
+    // Very long text that looks like a scene description (50+ chars without any punctuation typical for headlines)
+    if (h.length > 80 && !/[?!«»""\d]/.test(h) && /\s(с|в|на|и|но|или|что)\s/i.test(h)) {
+        // Likely a description, not a headline
+        return false
+    }
+
+    return true
+}
+
+/**
  * Run AI processing on a content item
  * - Extract headline from cover via Claude Vision
  * - Transcribe audio via Whisper (if video)
@@ -364,8 +414,16 @@ export async function processContentItemAI(contentItemId: string): Promise<void>
     if (item.coverUrl) {
         try {
             console.log(`[AI] Extracting headline from cover...`)
-            headline = await extractHeadlineFromCover(item.coverUrl)
-            console.log(`[AI] Headline: "${headline}"`)
+            const rawHeadline = await extractHeadlineFromCover(item.coverUrl)
+
+            // Validate headline — reject AI image descriptions
+            if (rawHeadline && isValidHeadline(rawHeadline)) {
+                headline = rawHeadline
+                console.log(`[AI] Headline: "${headline}"`)
+            } else {
+                console.log(`[AI] Headline rejected (AI image description): "${rawHeadline}"`)
+                headline = null
+            }
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : "Vision error"
             processingError = `Headline extraction failed: ${errorMsg}`
