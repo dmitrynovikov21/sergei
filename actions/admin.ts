@@ -100,7 +100,15 @@ export async function updateUserCredits({
     amount: number
     reason: string
 }): Promise<{ success: boolean; newBalance?: number; error?: string }> {
-    const currentUser = await getCurrentUser()
+    const sessionUser = await getCurrentUser()
+    if (!sessionUser?.id) {
+        return { success: false, error: "Unauthorized" }
+    }
+    // Check role from DB directly (session token may be stale)
+    const currentUser = await prisma.user.findUnique({
+        where: { id: sessionUser.id },
+        select: { role: true }
+    })
     if (!currentUser || currentUser.role !== 'ADMIN') {
         return { success: false, error: "Unauthorized" }
     }
