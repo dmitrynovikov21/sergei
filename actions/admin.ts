@@ -131,6 +131,7 @@ export async function updateUserCredits({
         }
 
         // Update user credits and log transaction
+        const { v4: uuidv4 } = await import("uuid")
         const [updatedUser] = await prisma.$transaction([
             prisma.user.update({
                 where: { id: userId },
@@ -138,12 +139,15 @@ export async function updateUserCredits({
             }),
             prisma.creditTransaction.create({
                 data: {
+                    id: uuidv4(),
                     userId,
                     amount: Math.abs(amount),
-                    type: amount > 0 ? 'purchase' : 'usage',
-                    description: `[Admin] ${reason}`,
-                    creditsBefore: user.credits,
-                    creditsAfter: newBalance
+                    reason: `[Admin] ${reason}`,
+                    metadata: JSON.stringify({
+                        type: amount > 0 ? 'topup' : 'deduction',
+                        creditsBefore: user.credits,
+                        creditsAfter: newBalance
+                    })
                 }
             })
         ])
