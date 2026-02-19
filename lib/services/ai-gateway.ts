@@ -99,9 +99,13 @@ export class AiGateway {
                 model: modelInstance,
                 messages: messages as any,
                 system,
-                temperature: temperature,
-                // Extended thinking disabled — adds 3-8s latency with minimal quality gain for content generation
-                // Re-enable only if complex reasoning tasks are needed
+                temperature: provider === 'anthropic' ? 1 : temperature, // Thinking requires temperature 1
+                // Enable extended thinking for Claude models
+                providerOptions: provider === 'anthropic' ? {
+                    anthropic: {
+                        thinking: { type: 'enabled', budgetTokens: 4000 }
+                    }
+                } : undefined,
                 onFinish: async ({ usage, text }) => {
                     const inputTokens = (usage as any)?.inputTokens ?? (usage as any)?.promptTokens ?? 0;
                     const outputTokens = (usage as any)?.outputTokens ?? (usage as any)?.completionTokens ?? 0;
