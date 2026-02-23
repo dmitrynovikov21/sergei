@@ -225,7 +225,15 @@ export function ChatMessage({
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-muted-foreground/50 hover:text-muted-foreground hover:bg-muted animate-in fade-in duration-300"
-                                onClick={() => onCopy(msg.content)}
+                                onClick={() => {
+                                    // Strip thinking tags and DESC markers before copying
+                                    const clean = msg.content
+                                        .replace(/<thinking>[\s\S]*?<\/thinking>\n*/g, '')
+                                        .replace(/【DESC】/g, '')
+                                        .replace(/【\/DESC】/g, '')
+                                        .trim()
+                                    onCopy(clean)
+                                }}
                             >
                                 <Icons.copy className="h-3.5 w-3.5" />
                             </Button>
