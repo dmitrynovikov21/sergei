@@ -21,8 +21,7 @@ import { Settings, AlertTriangle } from "lucide-react"
 import { AgentGeneralSettings } from "./edit-agent/agent-general-settings"
 import { AgentDescriptionSettings } from "./edit-agent/agent-description-settings"
 import { AgentFilesManager } from "./edit-agent/agent-files-manager"
-// Settings are stored in agent fields and injected at runtime by ChatService
-// No need for updateSystemPrompt — it was causing settings block duplication in DB
+
 
 
 interface EditAgentDialogProps {
