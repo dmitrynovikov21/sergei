@@ -2,7 +2,7 @@
 
 import React, { useState, useTransition, useRef } from "react"
 import { useRouter } from "next/navigation"
-import { Agent, AgentFile } from "@prisma/client"
+import { Agent, agent_files as AgentFile } from "@prisma/client"
 import { updateAgentPrompt, addAgentFile, deleteAgentFile, updateAgentSettings, updateAgentDataset } from "@/actions/agents"
 import { getDatasets } from "@/actions/datasets" // Для выбора датасета
 import { Button } from "@/components/ui/button"
@@ -21,7 +21,8 @@ import { Settings, AlertTriangle } from "lucide-react"
 import { AgentGeneralSettings } from "./edit-agent/agent-general-settings"
 import { AgentDescriptionSettings } from "./edit-agent/agent-description-settings"
 import { AgentFilesManager } from "./edit-agent/agent-files-manager"
-import { updateSystemPrompt } from "@/lib/agent-prompt-utils"
+// Settings are stored in agent fields and injected at runtime by ChatService
+// No need for updateSystemPrompt — it was causing settings block duplication in DB
 
 
 interface EditAgentDialogProps {
@@ -62,7 +63,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
     const [codeWord, setCodeWord] = useState(agent.codeWord || "")
     const [useCodeWord, setUseCodeWord] = useState(!!agent.codeWord) // Toggle state
 
-    const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "Какая у вас ниша?")
+    const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
     const [useAudienceQuestion, setUseAudienceQuestion] = useState(!!agent.audienceQuestion) // Toggle state
 
     const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
@@ -119,42 +120,9 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
         }
     }, [open])
 
-    // Auto-update prompt when settings change (only for description/structure agents)
-    const isFirstRender = useRef(true)
-
-    React.useEffect(() => {
-        if (!showDescriptionSettings) return
-
-        // Skip first render to avoid overwriting initial fetch
-        if (isFirstRender.current) {
-            isFirstRender.current = false
-            return
-        }
-
-        const newPrompt = updateSystemPrompt(systemPrompt, {
-            useEmoji,
-            useSubscribe,
-            useLinkInBio,
-            subscribeLink,
-            codeWord: useCodeWord ? codeWord : "",
-            audienceQuestion, // Pass raw text
-            useAudienceQuestion // Pass toggle state
-        })
-
-        if (newPrompt !== systemPrompt) {
-            setSystemPrompt(newPrompt)
-        }
-    }, [
-        useEmoji,
-        useSubscribe,
-        useLinkInBio,
-        subscribeLink,
-        codeWord,
-        useCodeWord,
-        audienceQuestion,
-        useAudienceQuestion,
-        showDescriptionSettings
-    ])
+    // Settings (emoji, subscribe, codeWord, etc.) are stored in agent DB fields
+    // and injected into the prompt at RUNTIME by ChatService.buildDescriptionAgentInstructions()
+    // No need to modify systemPrompt here — that was causing duplication bugs
 
     // Main Save Handler (Single Button)
     const handleSaveAll = () => {

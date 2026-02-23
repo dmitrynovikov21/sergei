@@ -1,7 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { constructMetadata } from "@/lib/utils";
-import { getChat, createChat } from "@/actions/chat";
-import { getAgentById } from "@/actions/agents";
+import { getChat } from "@/actions/chat";
 import { auth } from "@/auth";
 import { ChatInterface } from "@/components/dashboard/chat-interface";
 
@@ -26,18 +25,8 @@ export default async function ChatPage({ params, searchParams }: ChatPageProps) 
     // 1. Try to fetch the chat by ID
     let chat = await getChat(params.id);
 
-    // 2. If not found, check if 'id' is actually an Agent ID (Start new chat flow)
+    // 2. If not found, return 404
     if (!chat) {
-        const agent = await getAgentById(params.id);
-        if (agent) {
-            // Get datasetId from searchParams (passed from client with localStorage value)
-            const datasetId = typeof searchParams.datasetId === 'string' ? searchParams.datasetId : undefined;
-            // Create a new chat for this agent with optional datasetId
-            const newChatId = await createChat(agent.id, undefined, datasetId);
-            redirect(`/dashboard/chat/${newChatId}`);
-        }
-
-        // If neither chat nor agent, 404
         return notFound();
     }
 
