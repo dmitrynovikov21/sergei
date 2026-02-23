@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { AlertCircle, Info } from "lucide-react"
 
 interface AgentDescriptionSettingsProps {
     useEmoji: boolean
@@ -40,6 +41,33 @@ export function AgentDescriptionSettings({
     selectedDatasetId, setSelectedDatasetId,
     datasets
 }: AgentDescriptionSettingsProps) {
+    // Вычисляем активные инструкции на лету для предпросмотра
+    const calculateActiveInstructions = () => {
+        const instructions: string[] = []
+
+        if (useEmoji) {
+            instructions.push("Добавляй в текст эмодзи, где это уместно, но без фанатизма. Например вместо пунктов в тексте, можно сделать соответствующие эмодзи, но если подразумевается нумерованный список, то сделай цифры, а не эмодзи.")
+        }
+
+        if (useSubscribe) {
+            instructions.push(subscribeLink || "В конце текста должен быть призыв подписаться.")
+        } else if (useLinkInBio) {
+            instructions.push("Упомяни что полезная информация есть в ТГ по ссылке в шапке профиля.")
+        }
+
+        if (useCodeWord && codeWord) {
+            instructions.push(`Добавь призыв написать кодовое слово "${codeWord}" в директ/комментарии`)
+        }
+
+        if (useAudienceQuestion && audienceQuestion) {
+            instructions.push(audienceQuestion)
+        }
+
+        return instructions
+    }
+
+    const activeInstructions = calculateActiveInstructions()
+
     return (
         <div className="p-6">
             <div className="space-y-5 p-5 bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl">
@@ -142,6 +170,24 @@ export function AgentDescriptionSettings({
                     </div>
                 </div>
             </div>
+
+            {/* Блок предпросмотра инструкций */}
+            {activeInstructions.length > 0 && (
+                <div className="mt-6 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                    <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400">
+                        <Info className="h-4 w-4" />
+                        <span className="text-sm font-medium">Предпросмотр активных инструкций</span>
+                    </div>
+                    <div className="bg-zinc-100/50 dark:bg-zinc-900/30 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-sm font-mono text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap leading-relaxed shadow-inner">
+                        <span className="text-zinc-400 dark:text-zinc-500 block mb-2 opacity-70">{"=== ВАЖНЫЕ ИНСТРУКЦИИ ДЛЯ ЭТОГО ОТВЕТА ==="}</span>
+                        {activeInstructions.join("\n\n")}
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-500 flex items-center gap-1.5 ml-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Этот текст будет автоматически добавлен к запросу нейросети.
+                    </p>
+                </div>
+            )}
         </div>
     )
 }
