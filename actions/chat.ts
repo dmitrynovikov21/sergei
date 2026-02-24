@@ -184,6 +184,7 @@ export const updateChatProject = moveChatToProject
 // ==========================================
 
 export async function likeMessage(messageId: string) {
+    console.log("[likeMessage] called with messageId:", messageId)
     await requireAuth()
 
     try {
