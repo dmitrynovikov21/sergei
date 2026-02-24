@@ -4,6 +4,7 @@
  * View and manage sources and content items
  */
 
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { getDataset } from "@/actions/datasets"
 import { DatasetTabs } from "@/components/datasets/dataset-tabs"
@@ -12,15 +13,16 @@ interface DatasetPageProps {
     params: { id: string }
 }
 
-export default async function DatasetPage({ params }: DatasetPageProps) {
-    const dataset = await getDataset(params.id)
+/** Async content — fetches heavy data inside Suspense boundary */
+async function DatasetContent({ id }: { id: string }) {
+    const dataset = await getDataset(id)
 
     if (!dataset) {
         return notFound()
     }
 
     return (
-        <div className="container py-8">
+        <>
             <div className="mb-8">
                 <h1 className="text-3xl font-bold">{dataset.name}</h1>
                 {dataset.description && (
@@ -52,6 +54,21 @@ export default async function DatasetPage({ params }: DatasetPageProps) {
                 initialItems={dataset.items}
                 sources={dataset.sources}
             />
+        </>
+    )
+}
+
+export default function DatasetPage({ params }: DatasetPageProps) {
+    return (
+        <div className="container py-8">
+            <Suspense fallback={
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    Загрузка датасета...
+                </div>
+            }>
+                <DatasetContent id={params.id} />
+            </Suspense>
         </div>
     )
 }
+

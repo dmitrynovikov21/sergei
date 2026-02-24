@@ -3,35 +3,25 @@
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-
-interface AgentSettings {
-    useEmoji: boolean
-    useSubscribe: boolean
-    useLinkInBio: boolean
-    codeWord: string
-    audienceQuestion: string
-    subscribeLink: string
-}
+import {
+    hasBlock, addBlock, removeBlock, getBlockText, updateBlockText,
+    EMOJI_MARKER, SUBSCRIBE_MARKER, TG_MARKER, QUESTION_MARKER,
+    EMOJI_TEXT, SUBSCRIBE_DEFAULT, TG_TEXT, QUESTION_DEFAULT
+} from "@/components/dashboard/edit-agent/agent-description-settings"
 
 interface AgentGenerationSettingsProps {
-    settings: AgentSettings
-    onSettingChange: (updates: Partial<AgentSettings>) => void
-    onSave: (updates: Partial<AgentSettings>) => void
+    systemPrompt: string
+    onPromptChange: (newPrompt: string) => void
 }
 
-export function AgentGenerationSettings({
-    settings,
-    onSettingChange,
-    onSave
-}: AgentGenerationSettingsProps) {
-    const {
-        useEmoji,
-        useSubscribe,
-        useLinkInBio,
-        codeWord,
-        audienceQuestion,
-        subscribeLink
-    } = settings
+export function AgentGenerationSettings({ systemPrompt, onPromptChange }: AgentGenerationSettingsProps) {
+    const emojiOn = hasBlock(systemPrompt, EMOJI_MARKER)
+    const subscribeOn = hasBlock(systemPrompt, SUBSCRIBE_MARKER)
+    const tgOn = hasBlock(systemPrompt, TG_MARKER)
+    const questionOn = hasBlock(systemPrompt, QUESTION_MARKER)
+
+    const subscribeText = getBlockText(systemPrompt, SUBSCRIBE_MARKER, SUBSCRIBE_DEFAULT)
+    const questionText = getBlockText(systemPrompt, QUESTION_MARKER, QUESTION_DEFAULT)
 
     return (
         <div>
@@ -43,11 +33,8 @@ export function AgentGenerationSettings({
                     <Label htmlFor="emoji" className="text-sm text-muted-foreground font-medium">Эмодзи 😎</Label>
                     <Switch
                         id="emoji"
-                        checked={useEmoji}
-                        onCheckedChange={(checked) => {
-                            onSettingChange({ useEmoji: checked })
-                            onSave({ useEmoji: checked })
-                        }}
+                        checked={emojiOn}
+                        onCheckedChange={(on) => onPromptChange(on ? addBlock(systemPrompt, EMOJI_MARKER, EMOJI_TEXT) : removeBlock(systemPrompt, EMOJI_MARKER))}
                     />
                 </div>
 
@@ -56,26 +43,21 @@ export function AgentGenerationSettings({
                     <Label htmlFor="subscribe" className="text-sm text-muted-foreground font-medium">Призыв подписаться</Label>
                     <Switch
                         id="subscribe"
-                        checked={useSubscribe}
-                        onCheckedChange={(checked) => {
-                            onSettingChange({ useSubscribe: checked })
-                            onSave({ useSubscribe: checked })
-                        }}
+                        checked={subscribeOn}
+                        onCheckedChange={(on) => onPromptChange(on ? addBlock(systemPrompt, SUBSCRIBE_MARKER, SUBSCRIBE_DEFAULT) : removeBlock(systemPrompt, SUBSCRIBE_MARKER))}
                     />
                 </div>
 
-                {/* Subscribe Link Input — directly under subscribe toggle */}
-                {useSubscribe && (
+                {subscribeOn && (
                     <div className="pt-1 pb-2 space-y-1">
                         <Label htmlFor="subscribe-instruction" className="text-[10px] text-zinc-400">
-                            Инструкция для призыва (вшивается в промпт):
+                            Инструкция для призыва:
                         </Label>
                         <Textarea
                             id="subscribe-instruction"
                             placeholder="В конце текста должен быть призыв подписаться..."
-                            value={subscribeLink}
-                            onChange={(e) => onSettingChange({ subscribeLink: e.target.value })}
-                            onBlur={() => onSave({ subscribeLink })}
+                            value={subscribeText}
+                            onChange={(e) => onPromptChange(updateBlockText(systemPrompt, SUBSCRIBE_MARKER, e.target.value))}
                             className="text-sm bg-zinc-800 border-zinc-700 text-foreground min-h-[70px]"
                         />
                     </div>
@@ -86,11 +68,8 @@ export function AgentGenerationSettings({
                     <Label htmlFor="link" className="text-sm text-muted-foreground font-medium">Призыв на ТГ в шапке профиля</Label>
                     <Switch
                         id="link"
-                        checked={useLinkInBio}
-                        onCheckedChange={(checked) => {
-                            onSettingChange({ useLinkInBio: checked })
-                            onSave({ useLinkInBio: checked })
-                        }}
+                        checked={tgOn}
+                        onCheckedChange={(on) => onPromptChange(on ? addBlock(systemPrompt, TG_MARKER, TG_TEXT) : removeBlock(systemPrompt, TG_MARKER))}
                     />
                 </div>
 
@@ -99,26 +78,21 @@ export function AgentGenerationSettings({
                     <Label htmlFor="question-toggle" className="text-sm text-muted-foreground font-medium">Вопрос к аудитории</Label>
                     <Switch
                         id="question-toggle"
-                        checked={!!audienceQuestion}
-                        onCheckedChange={(checked) => {
-                            const val = checked ? "В самом конце текста заканчивай пост виральным вопросом к зрителям по теме поста. Используй перед вопросом эмодзи ❓" : ""
-                            onSettingChange({ audienceQuestion: val })
-                            onSave({ audienceQuestion: val })
-                        }}
+                        checked={questionOn}
+                        onCheckedChange={(on) => onPromptChange(on ? addBlock(systemPrompt, QUESTION_MARKER, QUESTION_DEFAULT) : removeBlock(systemPrompt, QUESTION_MARKER))}
                     />
                 </div>
 
-                {!!audienceQuestion && (
+                {questionOn && (
                     <div className="pt-1 pb-2 space-y-1">
                         <Label htmlFor="audience-instruction" className="text-[10px] text-zinc-400">
-                            Инструкция для вопроса (вшивается в промпт):
+                            Инструкция для вопроса:
                         </Label>
                         <Textarea
                             id="audience-instruction"
                             placeholder="В самом конце текста заканчивай пост виральным вопросом..."
-                            value={audienceQuestion}
-                            onChange={(e) => onSettingChange({ audienceQuestion: e.target.value })}
-                            onBlur={() => onSave({ audienceQuestion })}
+                            value={questionText}
+                            onChange={(e) => onPromptChange(updateBlockText(systemPrompt, QUESTION_MARKER, e.target.value))}
                             className="text-sm bg-zinc-800 border-zinc-700 text-foreground min-h-[70px]"
                         />
                     </div>

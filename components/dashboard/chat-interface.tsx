@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import ReactMarkdown from "react-markdown"
-import { saveMessage } from "@/actions/chat"
+import { saveMessage, likeMessage, dislikeMessage } from "@/actions/chat"
 import { getDatasets } from "@/actions/datasets"
 import type { Agent } from "@prisma/client"
 import { Button } from "@/components/ui/button"
@@ -77,6 +77,10 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     // Dataset selector state
     const [datasets, setDatasets] = useState<{ id: string, name: string }[]>([])
     const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>(null)
+
+    // Check if dataset selector should be shown (hide for description agents)
+    const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
+    const useDatasetEnabled = !isDescriptionAgent
 
     // Get greeting based on time of day
     const getGreeting = useCallback(() => {
@@ -427,13 +431,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
                 } catch (error: any) {
                     if (error.name === 'AbortError') {
-                        setMessages((prev) =>
-                            prev.map((msg) =>
-                                msg.id === aiMsgId
-                                    ? { ...msg, content: msg.content + "\n\n[Остановлено]" }
-                                    : msg
-                            )
-                        )
+                        // handleStop already preserved the partial response — do nothing here
                     } else {
                         console.error("Failed to send message:", error)
                         setMessages((prev) =>
@@ -447,6 +445,8 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                 } finally {
                     setIsLoading(false)
                     abortControllerRef.current = null
+                    // Refresh layout to update sidebar credits after AI usage
+                    router.refresh()
                 }
             })()
     }
@@ -489,10 +489,14 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     }
 
     // Submit feedback
-    const handleSubmitFeedback = () => {
-        if (!feedbackText.trim()) return
-        // TODO: Save feedback to database
-        toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
+    const handleSubmitFeedback = async () => {
+        if (!feedbackText.trim() || !feedbackMessageId) return
+        try {
+            await dislikeMessage(feedbackMessageId, feedbackText)
+            toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
+        } catch {
+            toast.error("Не удалось сохранить отзыв")
+        }
         setFeedbackOpen(false)
         setFeedbackText("")
         setFeedbackMessageId(null)
@@ -503,9 +507,13 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         setFeedbackOpen(true)
     }
 
-    const handleLike = (messageId: string) => {
-        toast.success("Спасибо за оценку!")
-        // TODO: Save to DB
+    const handleLike = async (messageId: string) => {
+        try {
+            await likeMessage(messageId)
+            toast.success("Спасибо за оценку!")
+        } catch {
+            toast.error("Не удалось сохранить оценку")
+        }
     }
 
 
@@ -540,44 +548,46 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                             onFileDrop={handleFileDrop}
                             attachments={attachments}
                             removeAttachment={removeAttachment}
-                            datasets={datasets}
-                            selectedDatasetId={selectedDatasetId}
-                            onDatasetChange={setSelectedDatasetId}
+                            datasets={useDatasetEnabled ? datasets : []}
+                            selectedDatasetId={useDatasetEnabled ? selectedDatasetId : null}
+                            onDatasetChange={useDatasetEnabled ? setSelectedDatasetId : undefined}
                         />
                     </div>
-                    {/* Action Chips */}
-                    <div className="grid grid-cols-2 gap-3 w-full max-w-2xl">
-                        {(
-                            (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
-                                [
-                                    { text: "Придумай заголовки для Reels" },
-                                    { text: "Заголовки на тему" },
-                                ] :
-                                (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
+                    {/* Action Chips — only for system agents, not user's custom agents */}
+                    {agent.isPublic && (
+                        <div className="grid grid-cols-2 gap-3 w-full max-w-2xl">
+                            {(
+                                (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
                                     [
-                                        { text: "Написать сценарий" },
-                                        { text: "Анализ трендов" },
+                                        { text: "Придумай заголовки для Reels" },
+                                        { text: "Заголовки на тему" },
                                     ] :
-                                    [
-                                        { text: "Написать сценарий" },
-                                        { text: "Анализ трендов" },
-                                    ]
-                        ).map((item) => (
-                            <button
-                                key={item.text}
-                                onClick={() => {
-                                    if (item.text.includes("на тему")) {
-                                        setInput(item.text + " ")
-                                    } else {
-                                        handleSendMessage(item.text)
-                                    }
-                                }}
-                                className="text-sm text-muted-foreground bg-transparent border border-border rounded-xl px-4 py-3 hover:bg-muted hover:text-foreground transition-colors text-left"
-                            >
-                                {item.text}
-                            </button>
-                        ))}
-                    </div>
+                                    (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
+                                        [
+                                            { text: "Написать сценарий" },
+                                            { text: "Анализ трендов" },
+                                        ] :
+                                        [
+                                            { text: "Написать сценарий" },
+                                            { text: "Анализ трендов" },
+                                        ]
+                            ).map((item) => (
+                                <button
+                                    key={item.text}
+                                    onClick={() => {
+                                        if (item.text.includes("на тему")) {
+                                            setInput(item.text + " ")
+                                        } else {
+                                            handleSendMessage(item.text)
+                                        }
+                                    }}
+                                    className="text-sm text-muted-foreground bg-transparent border border-border rounded-xl px-4 py-3 hover:bg-muted hover:text-foreground transition-colors text-left"
+                                >
+                                    {item.text}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         )
@@ -629,19 +639,21 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                     {/* Quick Actions - Ещё / Дай другие */}
                     {messages.length > 0 && !isLoading && (
                         <div className="flex justify-center gap-3 mb-2">
+                            {isDescriptionAgent && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleSendMessage("Сократи на 200 символов")}
+                                    className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
+                                >
+                                    Сократи на 200 символов
+                                </button>
+                            )}
                             <button
                                 type="button"
                                 onClick={() => handleSendMessage("Дай другой вариант")}
                                 className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
                             >
                                 Дай другой вариант
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleSendMessage("Сократи на 200 символов")}
-                                className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
-                            >
-                                Сократи на 200 символов
                             </button>
                         </div>
                     )}
@@ -662,9 +674,9 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
                         onFileDrop={handleFileDrop}
                         attachments={attachments}
                         removeAttachment={removeAttachment}
-                        datasets={datasets}
-                        selectedDatasetId={selectedDatasetId}
-                        onDatasetChange={setSelectedDatasetId}
+                        datasets={useDatasetEnabled ? datasets : []}
+                        selectedDatasetId={useDatasetEnabled ? selectedDatasetId : null}
+                        onDatasetChange={useDatasetEnabled ? setSelectedDatasetId : undefined}
                     />
                 </div>
             </div>

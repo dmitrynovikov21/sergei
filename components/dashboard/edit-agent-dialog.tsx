@@ -34,6 +34,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
     const [open, setOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
     const [isLoading, setIsLoading] = useState(false)
+    const [isDataLoaded, setIsDataLoaded] = useState(false)
     const [systemPrompt, setSystemPrompt] = useState(agent.systemPrompt)
     const [agentName, setAgentName] = useState(agent.name)
     const [savedPrompt, setSavedPrompt] = useState(agent.systemPrompt)
@@ -80,14 +81,16 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
     // Fetch fresh data when dialog opens
     const fetchFreshData = async () => {
         setIsLoading(true)
+        setIsDataLoaded(false)
         try {
             const response = await fetch(`/api/agents/${agent.id}`)
             if (response.ok) {
                 const freshAgent = await response.json()
                 setSystemPrompt(freshAgent.systemPrompt)
                 setSavedPrompt(freshAgent.systemPrompt)
+                setAgentName(freshAgent.name)
                 setFiles(freshAgent.files || [])
-                // Update settings
+                // Update settings from DB
                 setUseEmoji(freshAgent.useEmoji || false)
                 setUseSubscribe(freshAgent.useSubscribe || false)
                 setUseLinkInBio(freshAgent.useLinkInBio || false)
@@ -110,6 +113,7 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
             console.error("Failed to fetch data:", error)
         }
         setIsLoading(false)
+        setIsDataLoaded(true)
     }
 
     // Fetch fresh data when dialog opens
@@ -119,41 +123,29 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
         }
     }, [open])
 
-    // Settings (emoji, subscribe, codeWord, etc.) are stored in agent DB fields
-    // and injected into the prompt at RUNTIME by ChatService.buildDescriptionAgentInstructions()
-    // No need to modify systemPrompt here — that was causing duplication bugs
-
-    // Main Save Handler (Single Button)
-    const handleSaveAll = () => {
+    // Save everything — systemPrompt now contains all toggle instructions inline
+    const handleSavePrompt = () => {
         startTransition(async () => {
             try {
-                // 1. Update Settings
-                await updateAgentSettings(agent.id, {
-                    name: agentName,
-                    useEmoji,
-                    useSubscribe,
-                    useLinkInBio,
-                    codeWord: useCodeWord ? codeWord : "",
-                    audienceQuestion: useAudienceQuestion ? audienceQuestion : "",
-                    subscribeLink
-                } as any)
-
-                // 2. Update Dataset (if description agent)
-                if (isDescriptionAgent) {
-                    await updateAgentDataset(agent.id, selectedDatasetId)
-                }
-
-                // 3. Update Prompt
                 await updateAgentPrompt(agent.id, systemPrompt)
-
                 setSavedPrompt(systemPrompt)
-                toast.success("Все настройки сохранены")
+                toast.success("Сохранено")
                 setOpen(false)
                 router.refresh()
             } catch (error) {
                 toast.error("Ошибка сохранения")
             }
         })
+    }
+
+    // Auto-save on toggle change (no dialog close, syncs sidebar)
+    const handleAutoSave = async (newPrompt: string) => {
+        try {
+            await updateAgentPrompt(agent.id, newPrompt)
+            router.refresh()
+        } catch (error) {
+            toast.error("Ошибка сохранения")
+        }
     }
 
     // Helper to update prompt locally based on settings logic (moved from switches)
@@ -281,34 +273,16 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 <div className="space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800">
                     {/* 1. General Settings */}
                     <AgentGeneralSettings
-                        name={agentName}
-                        setName={setAgentName}
                         systemPrompt={systemPrompt}
                         setSystemPrompt={setSystemPrompt}
                     />
 
-                    {/* 2. Description Settings (Conditional) */}
+                    {/* 2. Description Settings — toggles auto-save on change */}
                     {showDescriptionSettings && (
                         <AgentDescriptionSettings
-                            useEmoji={useEmoji}
-                            setUseEmoji={setUseEmoji}
-                            useSubscribe={useSubscribe}
-                            setUseSubscribe={setUseSubscribe}
-                            useLinkInBio={useLinkInBio}
-                            setUseLinkInBio={setUseLinkInBio}
-                            subscribeLink={subscribeLink}
-                            setSubscribeLink={setSubscribeLink}
-                            codeWord={codeWord}
-                            setCodeWord={setCodeWord}
-                            useCodeWord={useCodeWord}
-                            setUseCodeWord={setUseCodeWord}
-                            audienceQuestion={audienceQuestion}
-                            setAudienceQuestion={setAudienceQuestion}
-                            useAudienceQuestion={useAudienceQuestion}
-                            setUseAudienceQuestion={setUseAudienceQuestion}
-                            selectedDatasetId={selectedDatasetId}
-                            setSelectedDatasetId={setSelectedDatasetId}
-                            datasets={datasets}
+                            systemPrompt={systemPrompt}
+                            setSystemPrompt={setSystemPrompt}
+                            onAutoSave={handleAutoSave}
                         />
                     )}
 
@@ -326,12 +300,12 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                 {/* Footer */}
                 <DialogFooter className="p-6 pt-4 border-t border-zinc-100 dark:border-zinc-800">
                     <Button
-                        onClick={handleSaveAll}
+                        onClick={handleSavePrompt}
                         className="rounded-lg bg-foreground text-background hover:bg-foreground/90 w-full"
                         disabled={isPending}
                     >
                         {isPending && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-                        Сохранить настройки
+                        Сохранить промпт
                     </Button>
                 </DialogFooter>
             </DialogContent>

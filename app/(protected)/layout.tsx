@@ -20,24 +20,24 @@ export default async function Dashboard({ children }: ProtectedLayoutProps) {
 
   if (!sessionUser?.id) redirect("/login");
 
-  // Fetch fresh user data to get accurate credits
-  const user = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      credits: true,
-      emoji: true,
-      role: true, // Need role for sidebar logic if any
-    }
-  });
+  // Parallel fetch: user data + agents at the same time
+  const [user, starterAgents] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: sessionUser.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        credits: true,
+        emoji: true,
+        role: true,
+      }
+    }),
+    getFeaturedAgents(),
+  ]);
 
   if (!user) redirect("/login");
-
-  // Fetch data
-  const starterAgents = await getFeaturedAgents();
 
   return (
     <HeaderProvider>

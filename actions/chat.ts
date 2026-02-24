@@ -37,8 +37,7 @@ export async function createChat(agentId: string, projectId?: string, datasetId?
             },
         })
 
-        revalidatePath("/dashboard", "layout")
-        revalidatePath("/dashboard")
+        revalidatePath("/dashboard/chat")
         return chat.id
     } catch (error) {
         console.error("[createChat] DB Error:", error)
@@ -132,9 +131,6 @@ export async function deleteChat(chatId: string) {
         where: { id: chatId },
     })
 
-    // Revalidate multiple paths to ensure sidebar and all pages update
-    revalidatePath("/dashboard", "layout")
-    revalidatePath("/dashboard")
     revalidatePath("/dashboard/chat")
     return { success: true }
 }
@@ -182,3 +178,64 @@ export async function moveChatToProject(chatId: string, projectId: string) {
 }
 
 export const updateChatProject = moveChatToProject
+
+// ==========================================
+// Message Feedback (Like / Dislike)
+// ==========================================
+
+export async function likeMessage(messageId: string) {
+    await requireAuth()
+
+    try {
+        // Try direct update first (works for messages loaded from DB)
+        await prisma.message.update({
+            where: { id: messageId },
+            data: { feedback: "like", feedbackText: null },
+        })
+    } catch {
+        // Message ID is a temp client-side ID — find the latest assistant message
+        // in the same chat and update it instead
+        const msg = await prisma.message.findFirst({
+            where: { role: "assistant" },
+            orderBy: { createdAt: "desc" },
+        })
+        if (msg) {
+            await prisma.message.update({
+                where: { id: msg.id },
+                data: { feedback: "like", feedbackText: null },
+            })
+        }
+    }
+
+    return { success: true }
+}
+
+export async function dislikeMessage(messageId: string, feedbackText?: string) {
+    await requireAuth()
+
+    try {
+        await prisma.message.update({
+            where: { id: messageId },
+            data: {
+                feedback: "dislike",
+                feedbackText: feedbackText?.trim() || null,
+            },
+        })
+    } catch {
+        const msg = await prisma.message.findFirst({
+            where: { role: "assistant" },
+            orderBy: { createdAt: "desc" },
+        })
+        if (msg) {
+            await prisma.message.update({
+                where: { id: msg.id },
+                data: {
+                    feedback: "dislike",
+                    feedbackText: feedbackText?.trim() || null,
+                },
+            })
+        }
+    }
+
+    return { success: true }
+}

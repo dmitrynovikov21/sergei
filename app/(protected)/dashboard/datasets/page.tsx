@@ -14,9 +14,13 @@ export const metadata = {
     description: "Управление датасетами для AI",
 }
 
-export default async function DatasetsPage() {
+/** Async wrapper so Suspense actually catches the loading state */
+async function DatasetsContent() {
     const datasets = await getDatasets()
+    return <DatasetsList datasets={datasets} />
+}
 
+export default function DatasetsPage() {
     return (
         <div className="container py-8">
             <div className="flex items-center justify-between mb-8">
@@ -29,9 +33,14 @@ export default async function DatasetsPage() {
                 <CreateDatasetDialog />
             </div>
 
-            <Suspense fallback={<div>Loading...</div>}>
-                <DatasetsList datasets={datasets} />
+            <Suspense fallback={
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    Загрузка датасетов...
+                </div>
+            }>
+                <DatasetsContent />
             </Suspense>
         </div>
     )
 }
+

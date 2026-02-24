@@ -74,26 +74,22 @@ export async function getPublicAgents(): Promise<Agent[]> {
 }
 
 /**
- * Get agent by ID with optional user ownership check
+ * Get agent by ID with optional user ownership check.
+ * Single query with OR for performance.
  */
 export async function getAgentById(
     agentId: string,
     userId?: string
 ): Promise<Agent | null> {
-    // First check public agents
-    const publicAgent = await prisma.agent.findFirst({
-        where: { id: agentId, isPublic: true }
+    return prisma.agent.findFirst({
+        where: {
+            id: agentId,
+            OR: [
+                { isPublic: true },
+                ...(userId ? [{ userId }] : [])
+            ]
+        }
     })
-    if (publicAgent) return publicAgent
-
-    // If user provided, check their agents
-    if (userId) {
-        return prisma.agent.findFirst({
-            where: { id: agentId, userId }
-        })
-    }
-
-    return null
 }
 
 /**
@@ -196,7 +192,7 @@ export async function updateAgentSettings(
 ): Promise<Agent> {
     return prisma.agent.update({
         where: { id: agentId },
-        data: settings as any // Custom fields
+        data: settings as any
     })
 }
 

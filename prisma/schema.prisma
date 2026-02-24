@@ -195,6 +195,8 @@ model Message {
   promptTokens     Int           @default(0)
   completionTokens Int           @default(0)
   cost             Float         @default(0.0)
+  feedback         String?       // "like" | "dislike" | null
+  feedbackText     String?       // Optional text feedback for dislikes
   createdAt        DateTime      @default(now()) @map("created_at")
   attachments      attachments[]
   chat             Chat          @relation(fields: [chatId], references: [id], onDelete: Cascade)

@@ -3,14 +3,12 @@
 import React, { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Agent, AgentFile } from "@prisma/client"
-import { updateAgentSettings, updateAgentDataset } from "@/actions/agents"
-import { getDatasets, getDataset } from "@/actions/datasets"
+import { updateAgentPrompt } from "@/actions/agents"
 import { Settings } from "lucide-react"
 import { EditAgentDialog } from "@/components/dashboard/edit-agent-dialog"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import { AgentDatasetSelector } from "./right-panel/agent-dataset-selector"
 import { AgentGenerationSettings } from "./right-panel/agent-generation-settings"
 import { AgentFilePreview } from "./right-panel/agent-file-preview"
 
@@ -22,39 +20,24 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
     const router = useRouter()
     const [isPending, startTransition] = useTransition()
     const [previewFile, setPreviewFile] = useState<AgentFile | null>(null)
+    const [systemPrompt, setSystemPrompt] = useState(agent.systemPrompt)
 
-    // Settings state
-    const [useEmoji, setUseEmoji] = useState(agent.useEmoji || false)
-    const [useSubscribe, setUseSubscribe] = useState(agent.useSubscribe || false)
-    const [useLinkInBio, setUseLinkInBio] = useState(agent.useLinkInBio || false)
-    const [codeWord, setCodeWord] = useState(agent.codeWord || "")
-    const [audienceQuestion, setAudienceQuestion] = useState(agent.audienceQuestion || "")
-
-    const [subscribeLink, setSubscribeLink] = useState((agent as any).subscribeLink || "")
-
-    // Dataset info for Headlines agent
-    const [selectedDatasetId, setSelectedDatasetId] = useState<string | null>((agent as any).datasetId || null)
-    const [datasets, setDatasets] = useState<{ id: string, name: string }[]>([])
-    const [datasetName, setDatasetName] = useState<string>("")
-
+    // Sync when agent prop changes (after dialog save + router.refresh)
     React.useEffect(() => {
-        // Fetch all datasets
-        getDatasets().then(ds => setDatasets(ds))
-        // Fetch current dataset name
-        if (selectedDatasetId) {
-            getDataset(selectedDatasetId).then(ds => {
-                if (ds) setDatasetName(ds.name)
-            })
-        }
-    }, [selectedDatasetId])
+        setSystemPrompt(agent.systemPrompt)
+    }, [agent.systemPrompt])
 
-    const handleDatasetChange = (value: string) => {
-        const newId = value === "none" ? null : value
-        setSelectedDatasetId(newId)
+    // Check agent types
+    const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
+    const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
+
+    // When toggle changes prompt, save it immediately
+    const handlePromptChange = (newPrompt: string) => {
+        setSystemPrompt(newPrompt)
+        // Auto-save to DB
         startTransition(async () => {
             try {
-                await updateAgentDataset(agent.id, newId)
-                toast.success(newId ? "Датасет выбран" : "Датасет сброшен")
+                await updateAgentPrompt(agent.id, newPrompt)
                 router.refresh()
             } catch (error) {
                 toast.error("Ошибка сохранения")
@@ -62,79 +45,18 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
         })
     }
 
-    // Check agent types
-    const isDescriptionAgent = agent.name.toLowerCase().includes("описание") || agent.name.toLowerCase().includes("description")
-    const isHeadlinesAgent = agent.name.toLowerCase().includes("заголовки") || agent.name.toLowerCase().includes("headlines")
-    const isStructureAgent = agent.name.toLowerCase().includes("структура")
-
-    // Always show border on right panel
-    const shouldShowBorder = true
-
-    const saveSettings = (updates: Partial<{
-        useEmoji: boolean
-        useSubscribe: boolean
-        useLinkInBio: boolean
-        codeWord: string
-        audienceQuestion: string
-        subscribeLink: string
-    }>) => {
-        startTransition(async () => {
-            try {
-                await updateAgentSettings(agent.id, updates)
-                // Refresh to sync systemPrompt changes
-                router.refresh()
-            } catch (error) {
-                toast.error("Ошибка сохранения настроек")
-            }
-        })
-    }
-
-
-
-
     const handleFilePreviewClose = (open: boolean) => {
         if (!open) setPreviewFile(null)
-    }
-
-    const handleSettingsChange = (updates: Partial<any>) => {
-        // Update local state
-        if ('useEmoji' in updates) setUseEmoji(updates.useEmoji)
-        if ('useSubscribe' in updates) setUseSubscribe(updates.useSubscribe)
-        if ('useLinkInBio' in updates) setUseLinkInBio(updates.useLinkInBio)
-        if ('codeWord' in updates) setCodeWord(updates.codeWord)
-        if ('audienceQuestion' in updates) setAudienceQuestion(updates.audienceQuestion)
-        if ('subscribeLink' in updates) setSubscribeLink(updates.subscribeLink)
-    }
-
-    // Consolidated settings object
-    const currentSettings = {
-        useEmoji,
-        useSubscribe,
-        useLinkInBio,
-        codeWord,
-        audienceQuestion,
-        subscribeLink
     }
 
     return (
         <>
             <div className={cn(
                 "w-[280px] shrink-0 p-5 flex flex-col gap-6 h-fit ml-6 mt-10",
-                shouldShowBorder && "border border-border/50 rounded-xl"
+                "border border-border/50 rounded-xl"
             )}>
 
-                {/* Settings Header for Headlines agents */}
-                {isHeadlinesAgent && !isDescriptionAgent && (
-                    <div className="flex items-center gap-2">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                        </span>
-                        <span className="text-xs text-muted-foreground">Обновляется автоматически</span>
-                    </div>
-                )}
-
-                {/* "Invested" Badge (High Value) - Minimalist Style */}
+                {/* "Invested" Badge */}
                 {isDescriptionAgent && (
                     <div className="text-xs text-muted-foreground flex items-center gap-2 justify-center">
                         <span>💎</span>
@@ -142,7 +64,7 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                     </div>
                 )}
 
-                {/* Instructions Section - Hide for Headlines agent (per task 3.1) */}
+                {/* Instructions Section */}
                 {!isHeadlinesAgent && (
                     <div>
                         <div className="flex items-center justify-between mb-3">
@@ -164,13 +86,23 @@ export function AgentRightPanel({ agent }: AgentRightPanelProps) {
                     </div>
                 )}
 
-                {/* Chat Settings (only for Description agent) */}
+                {/* Settings toggles — read/write from systemPrompt markers */}
                 {isDescriptionAgent && (
                     <AgentGenerationSettings
-                        settings={currentSettings}
-                        onSettingChange={handleSettingsChange}
-                        onSave={saveSettings}
+                        systemPrompt={systemPrompt}
+                        onPromptChange={handlePromptChange}
                     />
+                )}
+
+                {/* Headlines agent header */}
+                {isHeadlinesAgent && !isDescriptionAgent && (
+                    <div className="flex items-center gap-2">
+                        <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                        <span className="text-xs text-muted-foreground">Обновляется автоматически</span>
+                    </div>
                 )}
 
             </div>

@@ -41,15 +41,37 @@ export async function registerUser(data: z.infer<typeof userAuthSchema>) {
         const hashedPassword = await hashPassword(password)
         const userId = uuidv4()
 
-        // Create new user with name and password (unverified)
+        // Create new user with name, password, and starter credits (unverified)
         await db.user.create({
             data: {
                 id: userId,
                 email: email.toLowerCase(),
-                name: name || "User", // Fallback name
+                name: name || "User",
                 password: hashedPassword,
+                credits: 100, // Starter credits for new users
             }
         })
+
+        // Setup: emoji, referral code, and credit transaction log
+        try {
+            const { nanoid } = await import("nanoid")
+            const referralCode = nanoid(6)
+
+            const userEmojis = ["🚀", "⚡", "🔥", "💎", "🌟", "🎯", "💫", "🦊", "🐱", "🦁", "🐼", "🐨", "🦄", "🐸", "🦋", "🌈", "🍀", "🌸", "🎨", "🎭"]
+            const randomEmoji = userEmojis[Math.floor(Math.random() * userEmojis.length)]
+
+            await db.user.update({
+                where: { id: userId },
+                data: { referralCode, emoji: randomEmoji }
+            })
+
+            // Log welcome bonus transaction
+            const { CreditManager } = await import("@/lib/services/credit-manager")
+            await CreditManager.addCredits(userId, 100, "welcome-bonus", { note: "Registration gift" })
+            console.log(`[Register] User ${userId} created with 100 credits, emoji: ${randomEmoji}`)
+        } catch (setupError) {
+            console.error("[Register] Failed to setup user bonus:", setupError)
+        }
 
         // Send verification email — await result to inform user
         let emailSent = false

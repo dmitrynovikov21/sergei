@@ -264,38 +264,40 @@ export function AgentChatStarter({ agent, subscriptionPlan }: AgentChatStarterPr
                     </div>
 
                     <div className="flex items-center gap-2">
-                        {/* Dataset Selector */}
-                        <Popover>
-                            <PopoverTrigger asChild>
-                                <button className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
-                                    <span>{selectedDatasetId ? datasets.find(d => d.id === selectedDatasetId)?.name : "Без контекста"}</span>
-                                    <ChevronDown className="h-3 w-3" />
-                                </button>
-                            </PopoverTrigger>
-                            <PopoverContent side="top" align="start" className="w-64 p-1 bg-card border-border/50 max-h-64 overflow-y-auto scrollbar-none">
-                                <button
-                                    onClick={() => setSelectedDatasetId(null)}
-                                    className={cn(
-                                        "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors",
-                                        !selectedDatasetId ? "bg-muted" : "hover:bg-muted"
-                                    )}
-                                >
-                                    Без контекста
-                                </button>
-                                {datasets.map(ds => (
+                        {/* Dataset Selector — hidden for description agents */}
+                        {!isDescriptionAgent && (
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <button className="flex items-center gap-1 px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors">
+                                        <span>{selectedDatasetId ? datasets.find(d => d.id === selectedDatasetId)?.name : "Без контекста"}</span>
+                                        <ChevronDown className="h-3 w-3" />
+                                    </button>
+                                </PopoverTrigger>
+                                <PopoverContent side="top" align="start" className="w-64 p-1 bg-card border-border/50 max-h-64 overflow-y-auto scrollbar-none">
                                     <button
-                                        key={ds.id}
-                                        onClick={() => setSelectedDatasetId(ds.id)}
+                                        onClick={() => setSelectedDatasetId(null)}
                                         className={cn(
-                                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors truncate",
-                                            selectedDatasetId === ds.id ? "bg-muted" : "hover:bg-muted"
+                                            "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors",
+                                            !selectedDatasetId ? "bg-muted" : "hover:bg-muted"
                                         )}
                                     >
-                                        <span className="truncate">{ds.name}</span>
+                                        Без контекста
                                     </button>
-                                ))}
-                            </PopoverContent>
-                        </Popover>
+                                    {datasets.map(ds => (
+                                        <button
+                                            key={ds.id}
+                                            onClick={() => setSelectedDatasetId(ds.id)}
+                                            className={cn(
+                                                "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors truncate",
+                                                selectedDatasetId === ds.id ? "bg-muted" : "hover:bg-muted"
+                                            )}
+                                        >
+                                            <span className="truncate">{ds.name}</span>
+                                        </button>
+                                    ))}
+                                </PopoverContent>
+                            </Popover>
+                        )}
 
                         <button
                             onClick={() => handleStartChat()}

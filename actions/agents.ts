@@ -81,11 +81,8 @@ export async function createAgent(data: CreateAgentData) {
         emoji: icon
     })
 
-    // Aggressive revalidation to show agent immediately in sidebar
-    revalidatePath("/", "layout")
-    revalidatePath("/dashboard", "layout")
+    // Targeted revalidation — only affected pages
     revalidatePath("/dashboard/agents")
-    revalidatePath("/dashboard/agents", "page")
 }
 
 export async function updateAgentIcon(agentId: string, icon: string) {
@@ -99,7 +96,6 @@ export async function updateAgentIcon(agentId: string, icon: string) {
     await AgentService.updateAgentIcon(agentId, icon)
 
     revalidatePath("/dashboard/chat/[id]", "page")
-    revalidatePath("/dashboard")
 }
 
 export async function updateAgentPrompt(agentId: string, systemPrompt: string) {
@@ -111,10 +107,7 @@ export async function updateAgentPrompt(agentId: string, systemPrompt: string) {
 
     await AgentService.updateAgentPrompt(agentId, systemPrompt)
 
-    revalidatePath("/dashboard", "layout")
-    revalidatePath("/dashboard")
     revalidatePath("/dashboard/agents")
-    revalidatePath("/dashboard/chat", "layout")
 }
 
 export async function updateAgentSettings(
@@ -135,7 +128,6 @@ export async function updateAgentSettings(
 
     await AgentService.updateAgentSettings(agentId, settings)
 
-    revalidatePath("/dashboard", "layout")
     revalidatePath(`/dashboard/agents/${agentId}`)
 }
 
@@ -148,7 +140,6 @@ export async function toggleAgentFavorite(agentId: string) {
 
     const agent = await AgentService.toggleAgentFavorite(agentId)
 
-    revalidatePath("/dashboard", "layout")
     revalidatePath(`/dashboard/agents/${agentId}`)
 
     return agent.isFavorite
@@ -166,7 +157,6 @@ export async function updateAgentDataset(agentId: string, datasetId: string | nu
         data: { datasetId }
     })
 
-    revalidatePath("/dashboard", "layout")
     revalidatePath(`/dashboard/agents/${agentId}`)
 }
 
@@ -188,8 +178,7 @@ export async function addAgentFile(
 
     const file = await AgentService.addAgentFile(agentId, name, content, type)
 
-    revalidatePath("/dashboard", "layout")
-    revalidatePath("/dashboard")
+    revalidatePath("/dashboard/agents")
 
     return file
 }
