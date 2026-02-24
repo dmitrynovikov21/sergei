@@ -1,7 +1,7 @@
 "use server"
 
 import { prisma } from "@/lib/db"
-import { requireAuth } from "@/lib/auth-utils"
+import { requireAuth } from "@/lib/auth-helpers"
 
 export interface FeedbackItem {
     id: string
