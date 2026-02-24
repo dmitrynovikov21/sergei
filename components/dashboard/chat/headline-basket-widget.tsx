@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useRef, useCallback, useEffect } from "react"
-import { useRouter } from "next/navigation"
 import { X, Trash2, FileText } from "lucide-react"
 import { useHeadlineBasket } from "./headline-basket-context"
+import { useStartChat } from "@/hooks/use-start-chat"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -12,6 +12,7 @@ const DESC_AGENT_ID = "cmkpetsp700034o2v1o755wd8"
 
 export function HeadlineBasketWidget() {
     const { headlines, removeHeadline, clearAll, count } = useHeadlineBasket()
+    const { startChat } = useStartChat()
     const [isOpen, setIsOpen] = useState(false)
     const [position, setPosition] = useState({ x: -1, y: -1 })
     const [isDragging, setIsDragging] = useState(false)
@@ -19,7 +20,6 @@ export function HeadlineBasketWidget() {
     const dragOffset = useRef({ x: 0, y: 0 })
     const widgetRef = useRef<HTMLDivElement>(null)
     const panelRef = useRef<HTMLDivElement>(null)
-    const router = useRouter()
 
     // Initialize position on mount (bottom-right)
     useEffect(() => {
@@ -43,10 +43,7 @@ export function HeadlineBasketWidget() {
                 setIsOpen(false)
             }
         }
-        // Delay to avoid triggering on the same click
-        setTimeout(() => {
-            document.addEventListener("mousedown", handleClickOutside)
-        }, 50)
+        setTimeout(() => document.addEventListener("mousedown", handleClickOutside), 50)
         return () => document.removeEventListener("mousedown", handleClickOutside)
     }, [isOpen])
 
@@ -65,7 +62,6 @@ export function HeadlineBasketWidget() {
 
     useEffect(() => {
         if (!isDragging) return
-
         const handleMouseMove = (e: MouseEvent) => {
             setHasDragged(true)
             setPosition({
@@ -73,9 +69,7 @@ export function HeadlineBasketWidget() {
                 y: Math.max(0, Math.min(window.innerHeight - 48, e.clientY - dragOffset.current.y)),
             })
         }
-
         const handleMouseUp = () => setIsDragging(false)
-
         window.addEventListener("mousemove", handleMouseMove)
         window.addEventListener("mouseup", handleMouseUp)
         return () => {
@@ -114,43 +108,27 @@ export function HeadlineBasketWidget() {
         }
     }, [isDragging])
 
-    // "Сделать описания"
-    const handleMakeDescriptions = async () => {
+    // "Сделать описания" — use the same flow as starting a chat from agent page
+    const handleMakeDescriptions = () => {
         if (count === 0) return
         const headlinesList = headlines.map((h, i) => `${i + 1}. ${h}`).join("\n")
-        const message = `Сделай описания для этих заголовков:\n\n${headlinesList}`
+        const message = `Сделай описания для каждого заголовка по одному:\n\n${headlinesList}`
 
-        try {
-            const res = await fetch("/api/chat/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ agentId: DESC_AGENT_ID, initialMessage: message }),
-            })
-            if (res.ok) {
-                const data = await res.json()
-                clearAll()
-                setIsOpen(false)
-                router.push(`/dashboard/chat/${data.chatId}`)
-                toast.success(`Создан чат с ${count} заголовками`)
-            } else {
-                clearAll()
-                setIsOpen(false)
-                router.push(`/dashboard/agents/${DESC_AGENT_ID}?input=${encodeURIComponent(message)}`)
-            }
-        } catch {
-            navigator.clipboard.writeText(headlinesList)
-            clearAll()
-            setIsOpen(false)
-            router.push(`/dashboard/agents/${DESC_AGENT_ID}`)
-            toast.success("Заголовки скопированы. Вставьте в чат.")
-        }
+        clearAll()
+        setIsOpen(false)
+        toast.success(`Создаю описания для ${count} заголовков...`)
+
+        // Uses the same startChat hook that agent pages use
+        // This creates a real chat and navigates with ?init= param
+        // so ChatInterface auto-sends the message and AI processes it
+        startChat(DESC_AGENT_ID, { initialMessage: message })
     }
 
     if (count === 0 && !isOpen) return null
 
     return (
         <>
-            {/* Floating Dot — dark theme, no color, orange glow */}
+            {/* Floating Dot — dark theme, orange glow */}
             <div
                 ref={widgetRef}
                 onMouseDown={handleMouseDown}
@@ -183,7 +161,7 @@ export function HeadlineBasketWidget() {
                 )}
             </div>
 
-            {/* Basket Panel — dark, no colors */}
+            {/* Basket Panel */}
             {isOpen && (
                 <div
                     ref={panelRef}
@@ -237,7 +215,7 @@ export function HeadlineBasketWidget() {
                         )}
                     </div>
 
-                    {/* Footer — orange-accented button */}
+                    {/* Footer — orange button */}
                     {count > 0 && (
                         <div className="px-4 py-3 border-t border-zinc-800">
                             <button
