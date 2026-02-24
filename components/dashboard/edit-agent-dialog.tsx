@@ -260,14 +260,10 @@ export function EditAgentDialog({ agent, trigger }: EditAgentDialogProps) {
                     </div>
                 )}
 
-                {/* Header */}
-                <DialogHeader className="p-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
-                    <DialogTitle className="flex items-center gap-3 text-xl">
-                        Настройки агента
-                    </DialogTitle>
-                    <DialogDescription className="text-zinc-500">
-                        {agentName}
-                    </DialogDescription>
+                {/* Header removed — dialog starts directly with content */}
+                <DialogHeader className="sr-only">
+                    <DialogTitle>Настройки</DialogTitle>
+                    <DialogDescription>{agentName}</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-0 divide-y divide-zinc-100 dark:divide-zinc-800">
