@@ -211,24 +211,71 @@ export function ChatMessage({
 
                         // Default rendering for non-description agents
                         // Check for 【H】headline【/H】 tags (Headlines agent)
-                        const hParts = stripDescMarkers(mainContent).split(/(【H】[\s\S]*?【\/H】)/g)
-                        const hasHTags = hParts.some(p => /【H】[\s\S]*?【\/H】/.test(p))
+                        const strippedContent = stripDescMarkers(mainContent)
+                        const hasHTags = /【H】[\s\S]*?【\/H】/.test(strippedContent)
 
                         if (hasHTags) {
+                            // Process content to merge numbers with their headlines
+                            // Split into lines, merge "N." lines with following H-tagged headline
+                            const lines = strippedContent.split('\n')
+                            const blocks: { type: 'headline' | 'text'; content: string; num?: string }[] = []
+                            let i = 0
+
+                            while (i < lines.length) {
+                                const line = lines[i]
+                                const hMatch = line.match(/【H】([\s\S]*?)【\/H】/)
+
+                                if (hMatch) {
+                                    // This line contains a headline tag
+                                    const numPrefix = line.match(/^(\d+\.)\s*【H】/)
+                                    blocks.push({
+                                        type: 'headline',
+                                        content: hMatch[1].trim(),
+                                        num: numPrefix ? numPrefix[1] : undefined,
+                                    })
+                                    i++
+                                } else if (/^\d+\.\s*$/.test(line.trim())) {
+                                    // This is just a number line (e.g. "1.")
+                                    // Check if next non-empty line has H tag
+                                    let j = i + 1
+                                    while (j < lines.length && lines[j].trim() === '') j++
+                                    if (j < lines.length && /【H】/.test(lines[j])) {
+                                        const nextMatch = lines[j].match(/【H】([\s\S]*?)【\/H】/)
+                                        if (nextMatch) {
+                                            blocks.push({
+                                                type: 'headline',
+                                                content: nextMatch[1].trim(),
+                                                num: line.trim(),
+                                            })
+                                            i = j + 1
+                                            continue
+                                        }
+                                    }
+                                    // Not followed by H tag — keep as text
+                                    blocks.push({ type: 'text', content: line })
+                                    i++
+                                } else {
+                                    // Regular text line — strip any partial H markers
+                                    const cleanLine = line
+                                        .replace(/【H】/g, '').replace(/【\/H】/g, '')
+                                        .replace(/【H/g, '').replace(/H】/g, '')
+                                    if (cleanLine.trim()) {
+                                        blocks.push({ type: 'text', content: cleanLine })
+                                    }
+                                    i++
+                                }
+                            }
+
                             return (
                                 <>{thinkingBlock}
-                                    {hParts.map((part, idx) => {
-                                        const hMatch = part.match(/【H】([\s\S]*?)【\/H】/)
-                                        if (hMatch) {
-                                            const headlineText = hMatch[1].trim()
-                                            return <HeadlineWithBasket key={idx} headline={headlineText} />
+                                    {blocks.map((block, idx) => {
+                                        if (block.type === 'headline') {
+                                            const displayText = block.num
+                                                ? `${block.num} ${block.content}`
+                                                : block.content
+                                            return <HeadlineWithBasket key={idx} headline={displayText} rawHeadline={block.content} />
                                         }
-                                        // Strip any partial H markers
-                                        const cleanPart = part
-                                            .replace(/【H】/g, '').replace(/【\/H】/g, '')
-                                            .replace(/【H/g, '').replace(/H】/g, '')
-                                            .replace(/【\/H/g, '').replace(/\/H】/g, '')
-                                        return cleanPart.trim() ? <ReactMarkdown key={idx}>{cleanPart}</ReactMarkdown> : null
+                                        return <ReactMarkdown key={idx}>{block.content}</ReactMarkdown>
                                     })}
                                 </>
                             )
@@ -355,43 +402,44 @@ export function ChatMessage({
 }
 
 // Inline component for rendering a headline with add-to-basket button
-function HeadlineWithBasket({ headline }: { headline: string }) {
+function HeadlineWithBasket({ headline, rawHeadline }: { headline: string; rawHeadline?: string }) {
     const [added, setAdded] = useState(false)
     let basket: ReturnType<typeof useHeadlineBasket> | null = null
     try {
         // eslint-disable-next-line react-hooks/rules-of-hooks
         basket = useHeadlineBasket()
     } catch {
-        // Context not available — render without basket button
+        // Context not available
     }
 
     return (
-        <div className="group flex items-start gap-1.5 my-0.5">
-            <div className="flex-1">
-                <ReactMarkdown>{headline}</ReactMarkdown>
-            </div>
+        <div className="group flex items-center gap-2 py-1">
+            <p className="flex-1 text-[15px] leading-relaxed">{headline}</p>
             {basket && (
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
-                        // Strip markdown numbering (1. 2. 3.) if present at start
-                        const cleanHeadline = headline.replace(/^\d+\.\s*/, '').trim()
-                        basket!.addHeadline(cleanHeadline)
+                        const textForBasket = (rawHeadline || headline).replace(/^\d+\.\s*/, '').trim()
+                        basket!.addHeadline(textForBasket)
                         setAdded(true)
                         toast.success("Добавлено в корзину")
                         setTimeout(() => setAdded(false), 1500)
                     }}
                     className={cn(
-                        "shrink-0 mt-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
+                        "shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200",
                         added
                             ? "bg-emerald-500 scale-110"
-                            : "bg-zinc-300 dark:bg-zinc-600 opacity-0 group-hover:opacity-100 hover:bg-violet-500 hover:scale-125"
+                            : "bg-zinc-700 opacity-0 group-hover:opacity-100 hover:bg-amber-500 hover:scale-110"
                     )}
                     title={added ? "Добавлено!" : "Добавить в корзину"}
                 >
-                    {added && (
+                    {added ? (
                         <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    ) : (
+                        <svg className="w-2.5 h-2.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                     )}
                 </button>
@@ -399,3 +447,4 @@ function HeadlineWithBasket({ headline }: { headline: string }) {
         </div>
     )
 }
+

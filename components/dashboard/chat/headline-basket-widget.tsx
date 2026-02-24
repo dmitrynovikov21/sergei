@@ -15,24 +15,46 @@ export function HeadlineBasketWidget() {
     const [isOpen, setIsOpen] = useState(false)
     const [position, setPosition] = useState({ x: -1, y: -1 })
     const [isDragging, setIsDragging] = useState(false)
+    const [hasDragged, setHasDragged] = useState(false)
     const dragOffset = useRef({ x: 0, y: 0 })
     const widgetRef = useRef<HTMLDivElement>(null)
+    const panelRef = useRef<HTMLDivElement>(null)
     const router = useRouter()
 
     // Initialize position on mount (bottom-right)
     useEffect(() => {
         if (position.x === -1) {
             setPosition({
-                x: window.innerWidth - 80,
-                y: window.innerHeight - 120,
+                x: window.innerWidth - 70,
+                y: window.innerHeight - 100,
             })
         }
     }, [position.x])
+
+    // Close on click outside
+    useEffect(() => {
+        if (!isOpen) return
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as Node
+            if (
+                panelRef.current && !panelRef.current.contains(target) &&
+                widgetRef.current && !widgetRef.current.contains(target)
+            ) {
+                setIsOpen(false)
+            }
+        }
+        // Delay to avoid triggering on the same click
+        setTimeout(() => {
+            document.addEventListener("mousedown", handleClickOutside)
+        }, 50)
+        return () => document.removeEventListener("mousedown", handleClickOutside)
+    }, [isOpen])
 
     // Drag handlers
     const handleMouseDown = useCallback((e: React.MouseEvent) => {
         if (widgetRef.current) {
             setIsDragging(true)
+            setHasDragged(false)
             dragOffset.current = {
                 x: e.clientX - position.x,
                 y: e.clientY - position.y,
@@ -45,15 +67,14 @@ export function HeadlineBasketWidget() {
         if (!isDragging) return
 
         const handleMouseMove = (e: MouseEvent) => {
+            setHasDragged(true)
             setPosition({
-                x: Math.max(0, Math.min(window.innerWidth - 56, e.clientX - dragOffset.current.x)),
-                y: Math.max(0, Math.min(window.innerHeight - 56, e.clientY - dragOffset.current.y)),
+                x: Math.max(0, Math.min(window.innerWidth - 48, e.clientX - dragOffset.current.x)),
+                y: Math.max(0, Math.min(window.innerHeight - 48, e.clientY - dragOffset.current.y)),
             })
         }
 
-        const handleMouseUp = () => {
-            setIsDragging(false)
-        }
+        const handleMouseUp = () => setIsDragging(false)
 
         window.addEventListener("mousemove", handleMouseMove)
         window.addEventListener("mouseup", handleMouseUp)
@@ -63,10 +84,11 @@ export function HeadlineBasketWidget() {
         }
     }, [isDragging])
 
-    // Touch drag handlers
+    // Touch drag
     const handleTouchStart = useCallback((e: React.TouchEvent) => {
         const touch = e.touches[0]
         setIsDragging(true)
+        setHasDragged(false)
         dragOffset.current = {
             x: touch.clientX - position.x,
             y: touch.clientY - position.y,
@@ -75,17 +97,15 @@ export function HeadlineBasketWidget() {
 
     useEffect(() => {
         if (!isDragging) return
-
         const handleTouchMove = (e: TouchEvent) => {
+            setHasDragged(true)
             const touch = e.touches[0]
             setPosition({
-                x: Math.max(0, Math.min(window.innerWidth - 56, touch.clientX - dragOffset.current.x)),
-                y: Math.max(0, Math.min(window.innerHeight - 56, touch.clientY - dragOffset.current.y)),
+                x: Math.max(0, Math.min(window.innerWidth - 48, touch.clientX - dragOffset.current.x)),
+                y: Math.max(0, Math.min(window.innerHeight - 48, touch.clientY - dragOffset.current.y)),
             })
         }
-
         const handleTouchEnd = () => setIsDragging(false)
-
         window.addEventListener("touchmove", handleTouchMove)
         window.addEventListener("touchend", handleTouchEnd)
         return () => {
@@ -94,44 +114,35 @@ export function HeadlineBasketWidget() {
         }
     }, [isDragging])
 
-    // "Сделать описания" handler
+    // "Сделать описания"
     const handleMakeDescriptions = async () => {
         if (count === 0) return
-
         const headlinesList = headlines.map((h, i) => `${i + 1}. ${h}`).join("\n")
         const message = `Сделай описания для этих заголовков:\n\n${headlinesList}`
 
         try {
-            // Create a new chat and navigate
             const res = await fetch("/api/chat/create", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    agentId: DESC_AGENT_ID,
-                    initialMessage: message,
-                }),
+                body: JSON.stringify({ agentId: DESC_AGENT_ID, initialMessage: message }),
             })
-
             if (res.ok) {
                 const data = await res.json()
                 clearAll()
                 setIsOpen(false)
                 router.push(`/dashboard/chat/${data.chatId}`)
-                toast.success(`Создан чат с ${count} заголовками для описаний`)
+                toast.success(`Создан чат с ${count} заголовками`)
             } else {
-                // Fallback: navigate to agent page with message in query
                 clearAll()
                 setIsOpen(false)
                 router.push(`/dashboard/agents/${DESC_AGENT_ID}?input=${encodeURIComponent(message)}`)
-                toast.success("Перенаправлен в агент описаний")
             }
         } catch {
-            // Ultimate fallback: copy and navigate
             navigator.clipboard.writeText(headlinesList)
             clearAll()
             setIsOpen(false)
             router.push(`/dashboard/agents/${DESC_AGENT_ID}`)
-            toast.success("Заголовки скопированы. Вставьте в чат с агентом описаний.")
+            toast.success("Заголовки скопированы. Вставьте в чат.")
         }
     }
 
@@ -139,22 +150,21 @@ export function HeadlineBasketWidget() {
 
     return (
         <>
-            {/* Floating Dot */}
+            {/* Floating Dot — dark theme, no color, orange glow */}
             <div
                 ref={widgetRef}
                 onMouseDown={handleMouseDown}
                 onTouchStart={handleTouchStart}
                 onClick={() => {
-                    if (!isDragging) setIsOpen(prev => !prev)
+                    if (!hasDragged) setIsOpen(prev => !prev)
                 }}
                 className={cn(
                     "fixed z-50 cursor-grab active:cursor-grabbing select-none",
-                    "w-14 h-14 rounded-full flex items-center justify-center",
-                    "bg-gradient-to-br from-violet-500 to-indigo-600",
-                    "shadow-lg shadow-violet-500/30",
+                    "w-12 h-12 rounded-full flex items-center justify-center",
+                    "bg-zinc-900 border border-zinc-700",
+                    "shadow-[0_0_15px_rgba(245,158,11,0.3)]",
                     "transition-transform duration-200",
-                    !isDragging && "hover:scale-110",
-                    !isDragging && count > 0 && "animate-pulse-slow"
+                    !isDragging && "hover:scale-110 hover:shadow-[0_0_20px_rgba(245,158,11,0.5)]",
                 )}
                 style={{
                     left: `${position.x}px`,
@@ -162,73 +172,77 @@ export function HeadlineBasketWidget() {
                 }}
                 title={`Корзина: ${count} заголовков`}
             >
-                <span className="text-white font-bold text-lg">{count}</span>
+                <span className="text-amber-500 font-bold text-sm">{count}</span>
 
-                {/* Pulse ring */}
+                {/* Subtle pulse ring */}
                 {count > 0 && !isOpen && (
-                    <span className="absolute inset-0 rounded-full bg-violet-400/40 animate-ping" style={{ animationDuration: "2s" }} />
+                    <span
+                        className="absolute inset-0 rounded-full border border-amber-500/30 animate-ping"
+                        style={{ animationDuration: "2.5s" }}
+                    />
                 )}
             </div>
 
-            {/* Basket Panel */}
+            {/* Basket Panel — dark, no colors */}
             {isOpen && (
                 <div
-                    className="fixed z-[60] w-96 max-h-[70vh] bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-200 dark:border-zinc-700 overflow-hidden flex flex-col"
+                    ref={panelRef}
+                    className="fixed z-[60] w-96 max-h-[70vh] bg-zinc-900 rounded-xl shadow-2xl border border-zinc-700 overflow-hidden flex flex-col"
                     style={{
                         left: `${Math.min(position.x - 160, window.innerWidth - 400)}px`,
                         top: `${Math.max(20, position.y - 400)}px`,
                     }}
                 >
                     {/* Header */}
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
-                        <h3 className="font-semibold text-sm">Корзина заголовков ({count})</h3>
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-800">
+                        <h3 className="font-medium text-sm text-zinc-300">Корзина ({count})</h3>
                         <div className="flex items-center gap-1">
                             {count > 0 && (
                                 <button
                                     onClick={() => { clearAll(); toast.success("Корзина очищена") }}
-                                    className="p-1.5 rounded-lg text-zinc-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-rose-400 transition-colors"
                                     title="Очистить всё"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <Trash2 className="h-3.5 w-3.5" />
                                 </button>
                             )}
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-colors"
+                                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-300 transition-colors"
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-3.5 w-3.5" />
                             </button>
                         </div>
                     </div>
 
-                    {/* Headlines List */}
-                    <div className="flex-1 overflow-y-auto divide-y divide-zinc-100 dark:divide-zinc-800">
+                    {/* Headlines */}
+                    <div className="flex-1 overflow-y-auto divide-y divide-zinc-800">
                         {count === 0 ? (
-                            <div className="p-6 text-center text-zinc-400 text-sm">
-                                Нажмите на точку возле заголовка, чтобы добавить его сюда
+                            <div className="p-6 text-center text-zinc-500 text-sm">
+                                Нажмите на точку рядом с заголовком
                             </div>
                         ) : (
                             headlines.map((headline, idx) => (
-                                <div key={idx} className="group flex items-start gap-2 px-4 py-2.5 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
-                                    <span className="text-xs text-zinc-400 font-mono mt-0.5 shrink-0">{idx + 1}.</span>
-                                    <p className="flex-1 text-sm text-zinc-700 dark:text-zinc-300 leading-snug">{headline}</p>
+                                <div key={idx} className="group flex items-start gap-2 px-4 py-2.5 hover:bg-zinc-800/50 transition-colors">
+                                    <span className="text-xs text-zinc-600 font-mono mt-0.5 shrink-0">{idx + 1}.</span>
+                                    <p className="flex-1 text-sm text-zinc-300 leading-snug">{headline}</p>
                                     <button
                                         onClick={() => removeHeadline(idx)}
-                                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-300 hover:text-rose-500 transition-all shrink-0"
+                                        className="opacity-0 group-hover:opacity-100 p-1 rounded text-zinc-600 hover:text-rose-400 transition-all shrink-0"
                                     >
-                                        <X className="h-3.5 w-3.5" />
+                                        <X className="h-3 w-3" />
                                     </button>
                                 </div>
                             ))
                         )}
                     </div>
 
-                    {/* Footer */}
+                    {/* Footer — orange-accented button */}
                     {count > 0 && (
-                        <div className="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+                        <div className="px-4 py-3 border-t border-zinc-800">
                             <button
                                 onClick={handleMakeDescriptions}
-                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-indigo-600 text-white font-medium text-sm hover:from-violet-600 hover:to-indigo-700 transition-all shadow-sm"
+                                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-zinc-800 text-amber-500 font-medium text-sm hover:bg-zinc-700 hover:shadow-[0_0_12px_rgba(245,158,11,0.2)] transition-all border border-zinc-700"
                             >
                                 <FileText className="h-4 w-4" />
                                 Сделать описания ({count})
@@ -237,17 +251,6 @@ export function HeadlineBasketWidget() {
                     )}
                 </div>
             )}
-
-            {/* Custom animation */}
-            <style jsx>{`
-                @keyframes pulse-slow {
-                    0%, 100% { transform: scale(1); }
-                    50% { transform: scale(1.05); }
-                }
-                .animate-pulse-slow {
-                    animation: pulse-slow 3s ease-in-out infinite;
-                }
-            `}</style>
         </>
     )
 }
