@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { Agent } from "@prisma/client"
 import type { Attachment, Message } from "./types"
+import { useHeadlineBasket } from "./headline-basket-context"
 
 export type { Message }
 
@@ -208,8 +209,36 @@ export function ChatMessage({
                             return <>{thinkingBlock}<ReactMarkdown>{stripDescMarkers(mainContent)}</ReactMarkdown></>
                         }
 
-                        // Default rendering for non-description agents - ALSO strip markers
-                        return <>{thinkingBlock}<ReactMarkdown>{stripDescMarkers(mainContent)}</ReactMarkdown></>
+                        // Default rendering for non-description agents
+                        // Check for 【H】headline【/H】 tags (Headlines agent)
+                        const hParts = stripDescMarkers(mainContent).split(/(【H】[\s\S]*?【\/H】)/g)
+                        const hasHTags = hParts.some(p => /【H】[\s\S]*?【\/H】/.test(p))
+
+                        if (hasHTags) {
+                            return (
+                                <>{thinkingBlock}
+                                    {hParts.map((part, idx) => {
+                                        const hMatch = part.match(/【H】([\s\S]*?)【\/H】/)
+                                        if (hMatch) {
+                                            const headlineText = hMatch[1].trim()
+                                            return <HeadlineWithBasket key={idx} headline={headlineText} />
+                                        }
+                                        // Strip any partial H markers
+                                        const cleanPart = part
+                                            .replace(/【H】/g, '').replace(/【\/H】/g, '')
+                                            .replace(/【H/g, '').replace(/H】/g, '')
+                                            .replace(/【\/H/g, '').replace(/\/H】/g, '')
+                                        return cleanPart.trim() ? <ReactMarkdown key={idx}>{cleanPart}</ReactMarkdown> : null
+                                    })}
+                                </>
+                            )
+                        }
+
+                        // No H tags — strip any partial H markers and render normally
+                        const cleanContent = stripDescMarkers(mainContent)
+                            .replace(/【H】/g, '').replace(/【\/H】/g, '')
+                            .replace(/【H/g, '').replace(/H】/g, '')
+                        return <>{thinkingBlock}<ReactMarkdown>{cleanContent}</ReactMarkdown></>
                     })() : null}
                 </div>
 
@@ -231,6 +260,8 @@ export function ChatMessage({
                                         .replace(/<thinking>[\s\S]*?<\/thinking>\n*/g, '')
                                         .replace(/【DESC】/g, '')
                                         .replace(/【\/DESC】/g, '')
+                                        .replace(/【H】/g, '')
+                                        .replace(/【\/H】/g, '')
                                         .trim()
                                     onCopy(clean)
                                 }}
@@ -319,6 +350,52 @@ export function ChatMessage({
                     </div>
                 </DialogContent>
             </Dialog>
+        </div>
+    )
+}
+
+// Inline component for rendering a headline with add-to-basket button
+function HeadlineWithBasket({ headline }: { headline: string }) {
+    const [added, setAdded] = useState(false)
+    let basket: ReturnType<typeof useHeadlineBasket> | null = null
+    try {
+        // eslint-disable-next-line react-hooks/rules-of-hooks
+        basket = useHeadlineBasket()
+    } catch {
+        // Context not available — render without basket button
+    }
+
+    return (
+        <div className="group flex items-start gap-1.5 my-0.5">
+            <div className="flex-1">
+                <ReactMarkdown>{headline}</ReactMarkdown>
+            </div>
+            {basket && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation()
+                        // Strip markdown numbering (1. 2. 3.) if present at start
+                        const cleanHeadline = headline.replace(/^\d+\.\s*/, '').trim()
+                        basket!.addHeadline(cleanHeadline)
+                        setAdded(true)
+                        toast.success("Добавлено в корзину")
+                        setTimeout(() => setAdded(false), 1500)
+                    }}
+                    className={cn(
+                        "shrink-0 mt-1.5 w-4 h-4 rounded-full flex items-center justify-center transition-all duration-200",
+                        added
+                            ? "bg-emerald-500 scale-110"
+                            : "bg-zinc-300 dark:bg-zinc-600 opacity-0 group-hover:opacity-100 hover:bg-violet-500 hover:scale-125"
+                    )}
+                    title={added ? "Добавлено!" : "Добавить в корзину"}
+                >
+                    {added && (
+                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                    )}
+                </button>
+            )}
         </div>
     )
 }
