@@ -9,6 +9,20 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  // Prevent stale JS bundles after deploy (fixes "Failed to find Server Action" error)
+  async headers() {
+    return [
+      {
+        source: '/((?!_next/static|_next/image|favicon.ico).*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

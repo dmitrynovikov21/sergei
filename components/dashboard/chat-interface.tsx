@@ -492,7 +492,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
     const handleSubmitFeedback = async () => {
         if (!feedbackText.trim() || !feedbackMessageId) return
         try {
-            await dislikeMessage(feedbackMessageId, feedbackText)
+            await dislikeMessage(feedbackMessageId, feedbackText, chatId)
             toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
         } catch {
             toast.error("Не удалось сохранить отзыв")
@@ -509,7 +509,7 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
 
     const handleLike = async (messageId: string) => {
         try {
-            await likeMessage(messageId)
+            await likeMessage(messageId, chatId)
             toast.success("Спасибо за оценку!")
         } catch {
             toast.error("Не удалось сохранить оценку")

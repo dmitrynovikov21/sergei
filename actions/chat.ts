@@ -183,8 +183,8 @@ export const updateChatProject = moveChatToProject
 // Message Feedback (Like / Dislike)
 // ==========================================
 
-export async function likeMessage(messageId: string) {
-    console.log("[likeMessage] called with messageId:", messageId)
+export async function likeMessage(messageId: string, chatId?: string) {
+    console.log("[likeMessage] called with messageId:", messageId, "chatId:", chatId)
     await requireAuth()
 
     try {
@@ -193,11 +193,16 @@ export async function likeMessage(messageId: string) {
             where: { id: messageId },
             data: { feedback: "like", feedbackText: null },
         })
+        console.log("[likeMessage] direct update success")
     } catch {
         // Message ID is a temp client-side ID — find the latest assistant message
         // in the same chat and update it instead
+        console.log("[likeMessage] direct update failed, trying fallback with chatId:", chatId)
         const msg = await prisma.message.findFirst({
-            where: { role: "assistant" },
+            where: {
+                role: "assistant",
+                ...(chatId ? { chatId } : {}),
+            },
             orderBy: { createdAt: "desc" },
         })
         if (msg) {
@@ -205,13 +210,16 @@ export async function likeMessage(messageId: string) {
                 where: { id: msg.id },
                 data: { feedback: "like", feedbackText: null },
             })
+            console.log("[likeMessage] fallback success, updated msg:", msg.id)
+        } else {
+            console.log("[likeMessage] ERROR: no fallback message found")
         }
     }
 
     return { success: true }
 }
 
-export async function dislikeMessage(messageId: string, feedbackText?: string) {
+export async function dislikeMessage(messageId: string, feedbackText?: string, chatId?: string) {
     await requireAuth()
 
     try {
@@ -224,7 +232,10 @@ export async function dislikeMessage(messageId: string, feedbackText?: string) {
         })
     } catch {
         const msg = await prisma.message.findFirst({
-            where: { role: "assistant" },
+            where: {
+                role: "assistant",
+                ...(chatId ? { chatId } : {}),
+            },
             orderBy: { createdAt: "desc" },
         })
         if (msg) {
