@@ -495,7 +495,20 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
             await dislikeMessage(feedbackMessageId, feedbackText, chatId)
             toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
         } catch {
-            toast.error("Не удалось сохранить отзыв")
+            try {
+                const res = await fetch("/api/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messageId: feedbackMessageId, chatId, feedback: "dislike", feedbackText }),
+                })
+                if (res.ok) {
+                    toast.success("Спасибо за отзыв! Мы учтём ваши пожелания.")
+                } else {
+                    toast.error("Перезагрузите страницу (Cmd+Shift+R) и попробуйте снова")
+                }
+            } catch {
+                toast.error("Перезагрузите страницу (Cmd+Shift+R) и попробуйте снова")
+            }
         }
         setFeedbackOpen(false)
         setFeedbackText("")
@@ -512,7 +525,21 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
             await likeMessage(messageId, chatId)
             toast.success("Спасибо за оценку!")
         } catch {
-            toast.error("Не удалось сохранить оценку")
+            // Server action hash mismatch (stale cache) — try direct API fallback
+            try {
+                const res = await fetch("/api/feedback", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ messageId, chatId, feedback: "like" }),
+                })
+                if (res.ok) {
+                    toast.success("Спасибо за оценку!")
+                } else {
+                    toast.error("Перезагрузите страницу (Cmd+Shift+R) и попробуйте снова")
+                }
+            } catch {
+                toast.error("Перезагрузите страницу (Cmd+Shift+R) и попробуйте снова")
+            }
         }
     }
 

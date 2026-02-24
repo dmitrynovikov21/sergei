@@ -13,6 +13,7 @@ import {
   LayoutDashboard,
   CreditCard,
   Users,
+  MessageSquare,
   Gift,
   TrendingUp
 } from "lucide-react";
@@ -226,6 +227,14 @@ export function DashboardSidebar({ agents, user }: DashboardSidebarProps) {
                 isExpanded={isSidebarExpanded}
               >
                 Выплаты
+              </DashboardAgentLink>
+              <DashboardAgentLink
+                href="/dashboard/admin/feedback"
+                active={path === "/dashboard/admin/feedback"}
+                icon={MessageSquare}
+                isExpanded={isSidebarExpanded}
+              >
+                Обратная связь
               </DashboardAgentLink>
             </div>
 
