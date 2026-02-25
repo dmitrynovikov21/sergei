@@ -422,23 +422,22 @@ function HeadlineWithBasket({ headline, rawHeadline }: { headline: string; rawHe
                         const textForBasket = (rawHeadline || headline).replace(/^\d+\.\s*/, '').trim()
                         basket!.addHeadline(textForBasket)
                         setAdded(true)
-                        toast.success("Добавлено в корзину")
                         setTimeout(() => setAdded(false), 1500)
                     }}
                     className={cn(
-                        "shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200",
+                        "shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200",
                         added
-                            ? "bg-emerald-500 scale-110"
-                            : "bg-zinc-700 opacity-0 group-hover:opacity-100 hover:bg-amber-500 hover:scale-110"
+                            ? "bg-emerald-500 scale-110 border border-emerald-400"
+                            : "border border-zinc-500 opacity-0 group-hover:opacity-100 hover:border-amber-500 hover:bg-amber-500/10 hover:scale-110"
                     )}
-                    title={added ? "Добавлено!" : "Добавить в корзину"}
+                    title={added ? "Добавлено!" : "В корзину"}
                 >
                     {added ? (
-                        <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                     ) : (
-                        <svg className="w-2.5 h-2.5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <svg className="w-3 h-3 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                     )}
