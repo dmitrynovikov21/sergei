@@ -505,62 +505,187 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         } catch {
             toast.error("Ошибка сети. Попробуйте снова.")
         }
+        setFeedbackOpen(false)
+        setFeedbackText("")
+        setFeedbackMessageId(null)
     }
-    setFeedbackOpen(false)
-    setFeedbackText("")
-    setFeedbackMessageId(null)
-}
 
-const handleDislike = (messageId: string) => {
-    setFeedbackMessageId(messageId)
-    setFeedbackOpen(true)
-}
+    const handleDislike = (messageId: string) => {
+        setFeedbackMessageId(messageId)
+        setFeedbackOpen(true)
+    }
 
-const handleLike = async (messageId: string) => {
-    try {
-        const res = await fetch("/api/feedback", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ messageId, chatId, feedback: "like" }),
-        })
-        if (res.ok) {
-            toast.success("Спасибо за оценку!")
-        } else {
-            toast.error("Ошибка. Попробуйте снова.")
+    const handleLike = async (messageId: string) => {
+        try {
+            const res = await fetch("/api/feedback", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ messageId, chatId, feedback: "like" }),
+            })
+            if (res.ok) {
+                toast.success("Спасибо за оценку!")
+            } else {
+                toast.error("Ошибка. Попробуйте снова.")
+            }
+        } catch {
+            toast.error("Ошибка сети. Попробуйте снова.")
         }
-    } catch {
-        toast.error("Ошибка сети. Попробуйте снова.")
     }
-}
 
 
 
-const isEmpty = messages.length === 0
+    const isEmpty = messages.length === 0
 
-if (isEmpty) {
-    return (
-        <div className="flex h-full flex-col items-center justify-center p-4 relative">
+    if (isEmpty) {
+        return (
+            <div className="flex h-full flex-col items-center justify-center p-4 relative">
 
 
-            <div className="flex flex-col items-center gap-6 max-w-2xl w-full -mt-20">
-                {/* Greeting / Logo */}
-                <div className="flex flex-col items-center gap-2 text-center">
-                    <h1 className="greeting-text text-3xl text-foreground flex items-center gap-3">
-                        <span className="text-accent">❋</span>
-                        {getGreeting()}, {userName}
-                    </h1>
-                    <p className="text-muted-foreground text-sm">
-                        Чем могу помочь?
-                    </p>
+                <div className="flex flex-col items-center gap-6 max-w-2xl w-full -mt-20">
+                    {/* Greeting / Logo */}
+                    <div className="flex flex-col items-center gap-2 text-center">
+                        <h1 className="greeting-text text-3xl text-foreground flex items-center gap-3">
+                            <span className="text-accent">❋</span>
+                            {getGreeting()}, {userName}
+                        </h1>
+                        <p className="text-muted-foreground text-sm">
+                            Чем могу помочь?
+                        </p>
+                    </div>
+
+                    <div className="w-full">
+                        <ChatInput
+                            input={input}
+                            setInput={setInput}
+                            onSubmit={onSubmit}
+                            isPending={isPending}
+                            centered
+                            onFileSelect={handleFileSelect}
+                            onFileDrop={handleFileDrop}
+                            attachments={attachments}
+                            removeAttachment={removeAttachment}
+                            datasets={useDatasetEnabled ? datasets : []}
+                            selectedDatasetId={useDatasetEnabled ? selectedDatasetId : null}
+                            onDatasetChange={useDatasetEnabled ? setSelectedDatasetId : undefined}
+                        />
+                    </div>
+                    {/* Action Chips — only for system agents, not user's custom agents */}
+                    {agent.isPublic && (
+                        <div className="grid grid-cols-2 gap-3 w-full max-w-2xl">
+                            {(
+                                (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
+                                    [
+                                        { text: "Придумай заголовки для Reels" },
+                                        { text: "Заголовки на тему" },
+                                    ] :
+                                    (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
+                                        [
+                                            { text: "Написать сценарий" },
+                                            { text: "Анализ трендов" },
+                                        ] :
+                                        [
+                                            { text: "Написать сценарий" },
+                                            { text: "Анализ трендов" },
+                                        ]
+                            ).map((item) => (
+                                <button
+                                    key={item.text}
+                                    onClick={() => {
+                                        if (item.text.includes("на тему")) {
+                                            setInput(item.text + " ")
+                                        } else {
+                                            handleSendMessage(item.text)
+                                        }
+                                    }}
+                                    className="text-sm text-muted-foreground bg-transparent border border-border rounded-xl px-4 py-3 hover:bg-muted hover:text-foreground transition-colors text-left"
+                                >
+                                    {item.text}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
+            </div>
+        )
+    }
 
-                <div className="w-full">
+    return (
+        <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
+
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+                {/* Sticky header - transparent, text flows under */}
+                <div className="sticky top-0 z-10 px-4 py-2 bg-transparent">
+                    <div className="flex flex-col">
+                        <Link
+                            href={`/dashboard/agents/${agent.id}`}
+                            className="text-sm font-medium text-foreground hover:bg-[#141413]/95 hover:text-white rounded px-2 py-0.5 transition-all duration-200 w-fit"
+                        >
+                            {agentName}
+                        </Link>
+
+                    </div>
+                </div>
+                <div className="mx-auto max-w-3xl px-4 pb-32">
+                    <div className="flex flex-col gap-6">
+                        {messages.map((msg) => (
+                            <ChatMessage
+                                key={msg.id}
+                                msg={msg}
+                                agent={agent}
+                                agentIcon={agentIcon}
+                                isPending={isPending}
+                                onResend={handleSendMessage}
+                                onRegenerate={handleRegenerate}
+                                onLike={handleLike}
+                                onDislike={handleDislike}
+                                onCopy={(content) => {
+                                    navigator.clipboard.writeText(content)
+                                    toast.success("Скопировано!")
+                                }}
+                            />
+                        ))}
+                        <div ref={scrollRef} />
+                    </div >
+                </div >
+            </div >
+
+            {/* Fixed bottom - absolute so content scrolls under */}
+            <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background via-background/95 to-transparent pt-8">
+                <div className="mx-auto max-w-3xl px-4">
+                    {/* Quick Actions - Ещё / Дай другие */}
+                    {messages.length > 0 && !isLoading && (
+                        <div className="flex justify-center gap-3 mb-2">
+                            {isDescriptionAgent && (
+                                <button
+                                    type="button"
+                                    onClick={() => handleSendMessage("Сократи на 200 символов")}
+                                    className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
+                                >
+                                    Сократи на 200 символов
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => handleSendMessage("Дай другой вариант")}
+                                className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
+                            >
+                                Дай другой вариант
+                            </button>
+                        </div>
+                    )}
                     <ChatInput
                         input={input}
                         setInput={setInput}
-                        onSubmit={onSubmit}
+                        onSubmit={(e) => {
+                            if (isPending) {
+                                e.preventDefault()
+                                handleStop()
+                            } else {
+                                onSubmit(e)
+                            }
+                        }}
+                        onStop={handleStop}
                         isPending={isPending}
-                        centered
                         onFileSelect={handleFileSelect}
                         onFileDrop={handleFileDrop}
                         attachments={attachments}
@@ -570,186 +695,60 @@ if (isEmpty) {
                         onDatasetChange={useDatasetEnabled ? setSelectedDatasetId : undefined}
                     />
                 </div>
-                {/* Action Chips — only for system agents, not user's custom agents */}
-                {agent.isPublic && (
-                    <div className="grid grid-cols-2 gap-3 w-full max-w-2xl">
-                        {(
-                            (agentName.toLowerCase().includes("headlines") || agentName.toLowerCase().includes("заголовки")) ?
-                                [
-                                    { text: "Придумай заголовки для Reels" },
-                                    { text: "Заголовки на тему" },
-                                ] :
-                                (agentName.toLowerCase().includes("reels") && (agentName.toLowerCase().includes("description") || agentName.toLowerCase().includes("описание"))) ?
-                                    [
-                                        { text: "Написать сценарий" },
-                                        { text: "Анализ трендов" },
-                                    ] :
-                                    [
-                                        { text: "Написать сценарий" },
-                                        { text: "Анализ трендов" },
-                                    ]
-                        ).map((item) => (
-                            <button
-                                key={item.text}
-                                onClick={() => {
-                                    if (item.text.includes("на тему")) {
-                                        setInput(item.text + " ")
-                                    } else {
-                                        handleSendMessage(item.text)
-                                    }
-                                }}
-                                className="text-sm text-muted-foreground bg-transparent border border-border rounded-xl px-4 py-3 hover:bg-muted hover:text-foreground transition-colors text-left"
-                            >
-                                {item.text}
-                            </button>
-                        ))}
-                    </div>
-                )}
             </div>
+
+            <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
+                <DialogContent className="sm:max-w-md bg-card border-border">
+                    <DialogHeader>
+                        <DialogTitle className="text-foreground">Что можно улучшить?</DialogTitle>
+                        <DialogDescription className="text-muted-foreground">
+                            Опишите, что было не так с ответом. Мы учтём ваш отзыв для улучшения.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="feedback" className="text-foreground">
+                                Ваш отзыв
+                            </Label>
+                            <Textarea
+                                id="feedback"
+                                value={feedbackText}
+                                onChange={(e) => setFeedbackText(e.target.value)}
+                                placeholder="Например: ответ был неточным, слишком длинным, не по теме..."
+                                className="min-h-[100px] bg-background border-border text-foreground placeholder:text-muted-foreground"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setFeedbackOpen(false)}
+                            className="bg-transparent border-border text-foreground hover:bg-muted"
+                        >
+                            Отмена
+                        </Button>
+                        <Button
+                            onClick={handleSubmitFeedback}
+                            disabled={!feedbackText.trim()}
+                            className="bg-accent text-accent-foreground hover:bg-accent/90"
+                        >
+                            Отправить
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <CreditBlockModal
+                isOpen={creditBlockOpen}
+                onClose={() => setCreditBlockOpen(false)}
+            />
+
+            <SubscriptionRequiredModal
+                isOpen={subscriptionModalOpen}
+                onClose={() => setSubscriptionModalOpen(false)}
+                requiredPlan={subscriptionModalPlan}
+                errorType={subscriptionModalType}
+            />
         </div>
     )
-}
-
-return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
-            {/* Sticky header - transparent, text flows under */}
-            <div className="sticky top-0 z-10 px-4 py-2 bg-transparent">
-                <div className="flex flex-col">
-                    <Link
-                        href={`/dashboard/agents/${agent.id}`}
-                        className="text-sm font-medium text-foreground hover:bg-[#141413]/95 hover:text-white rounded px-2 py-0.5 transition-all duration-200 w-fit"
-                    >
-                        {agentName}
-                    </Link>
-
-                </div>
-            </div>
-            <div className="mx-auto max-w-3xl px-4 pb-32">
-                <div className="flex flex-col gap-6">
-                    {messages.map((msg) => (
-                        <ChatMessage
-                            key={msg.id}
-                            msg={msg}
-                            agent={agent}
-                            agentIcon={agentIcon}
-                            isPending={isPending}
-                            onResend={handleSendMessage}
-                            onRegenerate={handleRegenerate}
-                            onLike={handleLike}
-                            onDislike={handleDislike}
-                            onCopy={(content) => {
-                                navigator.clipboard.writeText(content)
-                                toast.success("Скопировано!")
-                            }}
-                        />
-                    ))}
-                    <div ref={scrollRef} />
-                </div >
-            </div >
-        </div >
-
-        {/* Fixed bottom - absolute so content scrolls under */}
-        <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-background via-background/95 to-transparent pt-8">
-            <div className="mx-auto max-w-3xl px-4">
-                {/* Quick Actions - Ещё / Дай другие */}
-                {messages.length > 0 && !isLoading && (
-                    <div className="flex justify-center gap-3 mb-2">
-                        {isDescriptionAgent && (
-                            <button
-                                type="button"
-                                onClick={() => handleSendMessage("Сократи на 200 символов")}
-                                className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
-                            >
-                                Сократи на 200 символов
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => handleSendMessage("Дай другой вариант")}
-                            className="px-5 py-2 text-sm font-medium text-muted-foreground bg-muted border border-border rounded-full hover:text-foreground hover:border-foreground/30 transition-colors"
-                        >
-                            Дай другой вариант
-                        </button>
-                    </div>
-                )}
-                <ChatInput
-                    input={input}
-                    setInput={setInput}
-                    onSubmit={(e) => {
-                        if (isPending) {
-                            e.preventDefault()
-                            handleStop()
-                        } else {
-                            onSubmit(e)
-                        }
-                    }}
-                    onStop={handleStop}
-                    isPending={isPending}
-                    onFileSelect={handleFileSelect}
-                    onFileDrop={handleFileDrop}
-                    attachments={attachments}
-                    removeAttachment={removeAttachment}
-                    datasets={useDatasetEnabled ? datasets : []}
-                    selectedDatasetId={useDatasetEnabled ? selectedDatasetId : null}
-                    onDatasetChange={useDatasetEnabled ? setSelectedDatasetId : undefined}
-                />
-            </div>
-        </div>
-
-        <Dialog open={feedbackOpen} onOpenChange={setFeedbackOpen}>
-            <DialogContent className="sm:max-w-md bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle className="text-foreground">Что можно улучшить?</DialogTitle>
-                    <DialogDescription className="text-muted-foreground">
-                        Опишите, что было не так с ответом. Мы учтём ваш отзыв для улучшения.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="feedback" className="text-foreground">
-                            Ваш отзыв
-                        </Label>
-                        <Textarea
-                            id="feedback"
-                            value={feedbackText}
-                            onChange={(e) => setFeedbackText(e.target.value)}
-                            placeholder="Например: ответ был неточным, слишком длинным, не по теме..."
-                            className="min-h-[100px] bg-background border-border text-foreground placeholder:text-muted-foreground"
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => setFeedbackOpen(false)}
-                        className="bg-transparent border-border text-foreground hover:bg-muted"
-                    >
-                        Отмена
-                    </Button>
-                    <Button
-                        onClick={handleSubmitFeedback}
-                        disabled={!feedbackText.trim()}
-                        className="bg-accent text-accent-foreground hover:bg-accent/90"
-                    >
-                        Отправить
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-
-        <CreditBlockModal
-            isOpen={creditBlockOpen}
-            onClose={() => setCreditBlockOpen(false)}
-        />
-
-        <SubscriptionRequiredModal
-            isOpen={subscriptionModalOpen}
-            onClose={() => setSubscriptionModalOpen(false)}
-            requiredPlan={subscriptionModalPlan}
-            errorType={subscriptionModalType}
-        />
-    </div>
-)
 }
