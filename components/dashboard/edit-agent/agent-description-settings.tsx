@@ -91,9 +91,9 @@ interface AgentDescriptionSettingsProps {
 
 function InstructionCard({ icon: Icon, text }: { icon: React.ElementType, text: string }) {
     return (
-        <div className="flex items-start gap-3 bg-zinc-100 dark:bg-zinc-800/60 rounded-xl px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200">
-            <Icon className="h-5 w-5 text-zinc-400 dark:text-zinc-500 mt-0.5 shrink-0" />
-            <span className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">{text}</span>
+        <div className="flex items-start gap-3 bg-zinc-100 rounded-xl px-4 py-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Icon className="h-5 w-5 text-zinc-400 mt-0.5 shrink-0" />
+            <span className="text-sm text-zinc-600 leading-relaxed">{text}</span>
         </div>
     )
 }
@@ -127,7 +127,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                             <Label htmlFor="edit-emoji" className="text-base font-medium">Эмодзи 😎</Label>
                             <Switch
                                 id="edit-emoji"
-                                className="data-[state=checked]:bg-green-500 will-change-transform"
+                                className="data-[state=checked]:bg-green-500 will-change-transform focus-visible:ring-zinc-300 focus-visible:ring-offset-0"
                                 checked={emojiOn}
                                 onCheckedChange={(on) => update(on ? addBlock(systemPrompt, EMOJI_MARKER, EMOJI_TEXT) : removeBlock(systemPrompt, EMOJI_MARKER))}
                             />
@@ -141,7 +141,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                             <Label htmlFor="edit-subscribe" className="text-base font-medium">Призыв подписаться</Label>
                             <Switch
                                 id="edit-subscribe"
-                                className="data-[state=checked]:bg-green-500 will-change-transform"
+                                className="data-[state=checked]:bg-green-500 will-change-transform focus-visible:ring-zinc-300 focus-visible:ring-offset-0"
                                 checked={subscribeOn}
                                 onCheckedChange={(on) => update(on ? addBlock(systemPrompt, SUBSCRIBE_MARKER, SUBSCRIBE_DEFAULT) : removeBlock(systemPrompt, SUBSCRIBE_MARKER))}
                             />
@@ -154,7 +154,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                                     onChange={(e) => setSystemPrompt(updateBlockText(systemPrompt, SUBSCRIBE_MARKER, e.target.value))}
                                     onBlur={() => onAutoSave?.(systemPrompt)}
                                     placeholder="Напишите свою инструкцию для призыва..."
-                                    className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400 min-h-[80px] text-sm"
+                                    className="bg-white border-zinc-200 focus-visible:ring-zinc-300 min-h-[80px] text-sm"
                                 />
                             </div>
                         )}
@@ -166,7 +166,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                             <Label htmlFor="edit-tg" className="text-base font-medium">Призыв на ТГ в шапке профиля</Label>
                             <Switch
                                 id="edit-tg"
-                                className="data-[state=checked]:bg-green-500 will-change-transform"
+                                className="data-[state=checked]:bg-green-500 will-change-transform focus-visible:ring-zinc-300 focus-visible:ring-offset-0"
                                 checked={tgOn}
                                 onCheckedChange={(on) => update(on ? addBlock(systemPrompt, TG_MARKER, TG_TEXT) : removeBlock(systemPrompt, TG_MARKER))}
                             />
@@ -180,7 +180,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                             <Label htmlFor="edit-question" className="text-base font-medium">Вопрос к аудитории</Label>
                             <Switch
                                 id="edit-question"
-                                className="data-[state=checked]:bg-green-500 will-change-transform"
+                                className="data-[state=checked]:bg-green-500 will-change-transform focus-visible:ring-zinc-300 focus-visible:ring-offset-0"
                                 checked={questionOn}
                                 onCheckedChange={(on) => update(on ? addBlock(systemPrompt, QUESTION_MARKER, QUESTION_DEFAULT) : removeBlock(systemPrompt, QUESTION_MARKER))}
                             />
@@ -193,7 +193,7 @@ export function AgentDescriptionSettings({ systemPrompt, setSystemPrompt, onAuto
                                     onChange={(e) => setSystemPrompt(updateBlockText(systemPrompt, QUESTION_MARKER, e.target.value))}
                                     onBlur={() => onAutoSave?.(systemPrompt)}
                                     placeholder="Напишите свою инструкцию для вопроса..."
-                                    className="bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 focus-visible:ring-zinc-400 min-h-[80px] text-sm"
+                                    className="bg-white border-zinc-200 focus-visible:ring-zinc-300 min-h-[80px] text-sm"
                                 />
                             </div>
                         )}
