@@ -6,6 +6,8 @@ interface HeadlineBasketContextType {
     headlines: string[]
     addHeadline: (headline: string) => void
     removeHeadline: (index: number) => void
+    removeByText: (headline: string) => void
+    hasHeadline: (headline: string) => boolean
     clearAll: () => void
     count: number
 }
@@ -42,6 +44,14 @@ export function HeadlineBasketProvider({ children }: { children: ReactNode }) {
         setHeadlines(prev => prev.filter((_, i) => i !== index))
     }, [])
 
+    const removeByText = useCallback((headline: string) => {
+        setHeadlines(prev => prev.filter(h => h !== headline))
+    }, [])
+
+    const hasHeadline = useCallback((headline: string) => {
+        return headlines.includes(headline)
+    }, [headlines])
+
     const clearAll = useCallback(() => {
         setHeadlines([])
     }, [])
@@ -51,6 +61,8 @@ export function HeadlineBasketProvider({ children }: { children: ReactNode }) {
             headlines,
             addHeadline,
             removeHeadline,
+            removeByText,
+            hasHeadline,
             clearAll,
             count: headlines.length,
         }}>

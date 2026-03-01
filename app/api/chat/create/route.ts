@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { agentId, initialMessage } = await req.json()
+    const { agentId, datasetId } = await req.json()
 
     if (!agentId) {
         return NextResponse.json({ error: "Missing agentId" }, { status: 400 })
@@ -16,27 +16,15 @@ export async function POST(req: NextRequest) {
 
     const chatId = crypto.randomUUID()
 
-    // Create chat
+    // Create empty chat — message will be sent client-side via ChatInterface auto-send
     await prisma.chat.create({
         data: {
             id: chatId,
             userId: session.user.id,
             agentId,
+            ...(datasetId ? { datasetId } : {}),
         },
     })
-
-    // If initial message provided, create user message
-    if (initialMessage) {
-        await prisma.message.create({
-            data: {
-                id: crypto.randomUUID(),
-                chatId,
-                role: "user",
-                content: initialMessage,
-                chat: { connect: { id: chatId } },
-            },
-        })
-    }
 
     return NextResponse.json({ chatId })
 }

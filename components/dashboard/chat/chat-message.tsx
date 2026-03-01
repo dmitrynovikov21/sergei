@@ -403,7 +403,6 @@ export function ChatMessage({
 
 // Inline component for rendering a headline with add-to-basket button
 function HeadlineWithBasket({ headline, rawHeadline }: { headline: string; rawHeadline?: string }) {
-    const [added, setAdded] = useState(false)
     let basket: ReturnType<typeof useHeadlineBasket> | null = null
     try {
         // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -412,6 +411,9 @@ function HeadlineWithBasket({ headline, rawHeadline }: { headline: string; rawHe
         // Context not available
     }
 
+    const cleanText = (rawHeadline || headline).replace(/^\d+\.\s*/, '').trim()
+    const isInBasket = basket?.hasHeadline(cleanText) ?? false
+
     return (
         <div className="group flex items-center gap-2 py-1">
             <p className="flex-1 text-[15px] leading-relaxed">{headline}</p>
@@ -419,20 +421,21 @@ function HeadlineWithBasket({ headline, rawHeadline }: { headline: string; rawHe
                 <button
                     onClick={(e) => {
                         e.stopPropagation()
-                        const textForBasket = (rawHeadline || headline).replace(/^\d+\.\s*/, '').trim()
-                        basket!.addHeadline(textForBasket)
-                        setAdded(true)
-                        setTimeout(() => setAdded(false), 1500)
+                        if (isInBasket) {
+                            basket!.removeByText(cleanText)
+                        } else {
+                            basket!.addHeadline(cleanText)
+                        }
                     }}
                     className={cn(
                         "shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200",
-                        added
-                            ? "bg-emerald-500 scale-110 border border-emerald-400"
-                            : "border border-zinc-500 opacity-0 group-hover:opacity-100 hover:border-amber-500 hover:bg-amber-500/10 hover:scale-110"
+                        isInBasket
+                            ? "bg-emerald-500 border border-emerald-400 scale-110"
+                            : "border border-zinc-500 opacity-60 group-hover:opacity-100 hover:border-amber-500 hover:bg-amber-500/10 hover:scale-110 animate-pulse"
                     )}
-                    title={added ? "Добавлено!" : "В корзину"}
+                    title={isInBasket ? "Убрать из корзины" : "В корзину"}
                 >
-                    {added ? (
+                    {isInBasket ? (
                         <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>

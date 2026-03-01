@@ -1,4 +1,4 @@
-import { useState, useTransition } from "react"
+import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { createChat } from "@/actions/chat"
 import { toast } from "sonner"
@@ -6,7 +6,8 @@ import { toast } from "sonner"
 interface StartChatOptions {
     datasetId?: string
     initialMessage?: string
-    attachments?: any[]
+    attachments?: unknown[]
+    useApi?: boolean // Force API route instead of server action
 }
 
 export function useStartChat() {
@@ -16,16 +17,27 @@ export function useStartChat() {
     const startChat = (agentId: string, options: StartChatOptions = {}) => {
         startTransition(async () => {
             try {
-                // If datasetId is not provided, try to get from localStorage context
-                // This preserves the user's "selected dataset" preference
                 const effectiveDatasetId = options.datasetId || window.localStorage.getItem("global_dataset_context") || undefined
 
-                console.log("[useStartChat] Creating chat for agent:", agentId, "dataset:", effectiveDatasetId)
+                let chatId: string | null = null
 
-                const chatId = await createChat(agentId, undefined, effectiveDatasetId)
+                if (options.useApi || options.initialMessage) {
+                    // Use API route — deploy-proof, no server action hash issues
+                    const res = await fetch("/api/chat/create", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ agentId, datasetId: effectiveDatasetId }),
+                    })
+                    if (!res.ok) throw new Error("Failed to create chat")
+                    const data = await res.json()
+                    chatId = data.chatId
+                } else {
+                    // Server action for normal agent page starts
+                    chatId = await createChat(agentId, undefined, effectiveDatasetId)
+                }
 
                 if (chatId) {
-                    // Handle attachments if present
+                    // Store attachments in sessionStorage if present
                     if (options.attachments && options.attachments.length > 0) {
                         try {
                             sessionStorage.setItem(`chat_attachments_${chatId}`, JSON.stringify(options.attachments))
@@ -34,16 +46,16 @@ export function useStartChat() {
                         }
                     }
 
-                    // Navigate first, then refresh sidebar
-                    // IMPORTANT: router.refresh() MUST come AFTER router.push()
-                    // Otherwise Next.js re-renders the current page while navigating,
-                    // causing a flash of the old page at the new URL
-                    let url = `/dashboard/chat/${chatId}`
+                    // Store initial message in sessionStorage (no URL length limits)
                     if (options.initialMessage) {
-                        url += `?init=${encodeURIComponent(options.initialMessage)}`
+                        try {
+                            sessionStorage.setItem(`chat_init_${chatId}`, options.initialMessage)
+                        } catch (e) {
+                            console.error("Failed to store init message", e)
+                        }
                     }
 
-                    router.push(url)
+                    router.push(`/dashboard/chat/${chatId}`)
                 }
             } catch (error) {
                 console.error("Failed to start chat", error)

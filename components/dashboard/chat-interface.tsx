@@ -462,12 +462,21 @@ export function ChatInterface({ chatId: initialChatId, initialMessages, agentNam
         const hasInitialAttachments = initialAttachments.length > 0
         const attachmentsReady = !hasInitialAttachments || attachments.length === initialAttachments.length
 
-        if (initialInput && !hasAutoSubmittedRef.current && messages.length === 0 && attachmentsReady) {
+        if (hasAutoSubmittedRef.current || messages.length > 0 || !attachmentsReady) return
+
+        // Check sessionStorage first (basket flow), then URL ?init= param
+        const storageKey = `chat_init_${chatId}`
+        const storedMessage = typeof window !== 'undefined' ? sessionStorage.getItem(storageKey) : null
+        const messageToSend = storedMessage || initialInput
+
+        if (messageToSend) {
             hasAutoSubmittedRef.current = true
-            handleSendMessage(initialInput)
+            // Clean up sessionStorage and URL
+            if (storedMessage) sessionStorage.removeItem(storageKey)
             window.history.replaceState(null, '', window.location.pathname)
+            handleSendMessage(messageToSend)
         }
-    }, [initialInput, messages.length, attachments.length, initialAttachments.length])
+    }, [initialInput, messages.length, attachments.length, initialAttachments.length, chatId])
 
     const getLastUserMessage = () => {
         for (let i = messages.length - 1; i >= 0; i--) {
